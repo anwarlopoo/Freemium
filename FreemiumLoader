@@ -1,0 +1,81 @@
+-- NW Hub FREE loader — genere par build_dist.py (ne pas editer a la main)
+-- Charge les scripts FREE depuis GitHub (repo Freemium). Pas de cle requise.
+-- Usage client :
+--   loadstring(game:HttpGet("https://raw.githubusercontent.com/anwarlopoo/Freemium/refs/heads/main/FreemiumLoader"))()
+
+-- Pose le flag de tier FREE lu par chaque script (IsFreeTier)
+do
+    local _g = (type(getgenv) == "function" and getgenv()) or _G or {}
+    _g.__NW_IS_FREE = true
+    _g.__NW_TIER = "Free"
+    _g.FREE = true
+    _g.FORCE_FREE = true
+end
+
+
+local function detectGame()
+    local pId = game.PlaceId or 0
+    local gId = game.GameId or 0
+    local title = ""
+    pcall(function()
+        local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
+        if info and info.Name then title = info.Name:lower() end
+    end)
+    if pId == 75556147183481 or title:find("ouwigahara")
+        or (gId == 5595353122 and (title:find("minigame") or title:find("dungeon"))) then
+        return "slayers2_dungeon"
+    elseif pId == 136406881576517 or pId == 16205713724 or pId == 130395143593224
+        or gId == 5595353122 or title:find("ouwland")
+        or (title:find("slayer") and not title:find("dungeon")) then
+        return "slayers2"
+    elseif pId == 125503525638054 or gId == 7970033072 or gId == 9125560083
+        or pId == 92746366113993 or pId == 101711949062342 or pId == 74308544038303
+        or title:find("veil") or title:find("vail") then
+        return "the_veil"
+    elseif pId == 10595058975 or pId == 13794358487 or title:find("arcane") then
+        return "arcane_lineage"
+    elseif pId == 6549794549 or pId == 4349133742 or pId == 6678600773
+        or pId == 13272886093 or gId == 2459091562
+        or title:find("rh2") or title:find("journey") then
+        return "rh2"
+    elseif pId == 1458767429 or pId == 2295322555 or pId == 2008032602
+        or pId == 3780918737 or pId == 5240600335 or pId == 5411459567
+        or pId == 14597298866 or gId == 578392296
+        or title:find("aba") or title:find("anime battle arena") then
+        return "aba"
+    elseif pId == 114234929420007 or gId == 7633926880
+        or title:find("bloxstrike") or title:find("blox strike") then
+        return "bloxstrike"
+    elseif pId == 91220286841086 or gId == 9246027831 or title:find("forgotten") then
+        return "forgotten_stories"
+    end
+    return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
+end
+
+local GH_BASE = 'https://raw.githubusercontent.com/anwarlopoo/Freemium/refs/heads/main/games/'
+
+local function loadGameFile(slug)
+    local url = GH_BASE .. slug .. ".lua"
+    local ok, code = pcall(function() return game:HttpGet(url) end)
+    if not ok or type(code) ~= "string" or #code < 100 then
+        warn("[NW Hub Free] telechargement impossible : " .. url)
+        return false
+    end
+    local fn, err = loadstring(code)
+    if not fn then
+        warn("[NW Hub Free] erreur compile (" .. slug .. ") : " .. tostring(err))
+        return false
+    end
+    local ok2, err2 = pcall(fn)
+    if not ok2 then
+        warn("[NW Hub Free] erreur runtime (" .. slug .. ") : " .. tostring(err2))
+    end
+    return ok2
+end
+
+local slug = detectGame()
+if slug == "bloxstrike" then
+    warn("[NW Hub Free] pas de version free pour ce jeu (BloxStrike = paid only).")
+else
+    loadGameFile(slug)
+end

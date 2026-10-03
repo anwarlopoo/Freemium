@@ -6076,28 +6076,9 @@ local QTE_GUI_NAMES = {
 -- Durée réaliste du mini-jeu par type de QTE (secondes).
 -- Préfixé 'QTE_' pour immuniser totalement la table contre toute introspection GC
 local function QTEDelay(name, data)
-    local map = {
-        ["QTE_DodgeQTE"]          = 1.5,
-        ["QTE_AxeQTE"]            = 2.6,
-        ["QTE_SwordQTE"]          = 2.4,
-        ["QTE_SpearQTE"]          = 2.4,
-        ["QTE_DaggerQTE"]         = 2.6,
-        ["QTE_HammerQTE"]         = 2.6,
-        ["QTE_MagicQTE"]          = 3.2,
-        ["QTE_FistQTE"]           = 4.2,
-        ["QTE_ThorianQTE"]        = 3.2,
-        ["QTE_NewThorianQTE"]     = 3.2,
-        ["QTE_YarthulQTE"]        = 3.2,
-        ["QTE_LockpickQTE"]       = 2.6,
-        ["QTE_WG_GospelQTE"]      = 3.2,
-        ["QTE_UniqueQuestChoice"] = 1.2,
-    }
-    -- FistQTE : la durée dépend du nombre de coups (Amount).
-    if name == "FistQTE" and type(data) == "table" then
-        local amount = math.clamp(tonumber(data.Amount) or 8, 5, 13)
-        return amount / 2.3 + 1.6 + math.random() * 0.4
-    end
-    return (map["QTE_" .. tostring(name)] or 2.5) + math.random() * 0.4
+    -- INSTANT FIX (Withered Grove v10373) : les fenetres QTE serveur sont
+    -- plus courtes, tout wait >0 fait rater dodge + attaques. Retour 0 = zero freeze.
+    return 0
 end
 
 -- 1. Stealth UI Suppressor: Hide and move all QTE frames off-screen instantaneously
@@ -6152,7 +6133,7 @@ local function HookQTEModules(handleScript)
                                 task.wait(QTEDelay("DodgeQTE", data))
                                 return { true, true }
                             elseif Config.LegitDodge then
-                                task.wait(0.4 + math.random() * 0.5)
+                                task.wait()
                                 return { true, true }
                             end
                         elseif mName == "NewThorianQTE" then
@@ -6228,7 +6209,7 @@ local function PatchU3Table(tbl)
                 task.wait(QTEDelay("DodgeQTE", data))
                 return { true, true }
             elseif Config.LegitDodge then
-                task.wait(0.4 + math.random() * 0.5)
+                task.wait()
                 return { true, true }
             end
             return passthrough("DodgeQTE", data, { false, false })

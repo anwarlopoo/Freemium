@@ -74,8 +74,8 @@ local function loadGameFile(slug)
 end
 
 local slug = detectGame()
-if slug == "bloxstrike" then
-    warn("[NW Hub Free] pas de version free pour ce jeu (BloxStrike = paid only).")
+if slug == "the_veil" or slug == "aba" or slug == "bloxstrike" then
+    warn("[NW Hub Free] pas de version free pour ce jeu (paid only).")
 else
     loadGameFile(slug)
 end

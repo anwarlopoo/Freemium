@@ -6081,6 +6081,19 @@ local function QTEDelay(name, data)
     return 0
 end
 
+-- Perfect dodge avec echo du Nonce serveur (Withered Grove) : le vrai
+-- NewDodgeQTE.Run retourne { block, dodge, position, Nonce }. Sans le
+-- Nonce le serveur rejette le dodge et on prend les damages.
+local function PerfectDodge(data)
+    local pos = 0.6
+    local nonce = nil
+    if type(data) == "table" then
+        if type(data.Position) == "number" then pos = data.Position end
+        nonce = data.Nonce
+    end
+    return { true, true, pos, nonce }
+end
+
 -- 1. Stealth UI Suppressor: Hide and move all QTE frames off-screen instantaneously
 local function SuppressQTEGui(combatGui)
     if not combatGui then return end
@@ -6131,10 +6144,10 @@ local function HookQTEModules(handleScript)
                         if mName == "NewDodgeQTE" then
                             if Config.AutoDodge then
                                 task.wait(QTEDelay("DodgeQTE", data))
-                                return { true, true }
+                                return PerfectDodge(data)
                             elseif Config.LegitDodge then
                                 task.wait()
-                                return { true, true }
+                                return PerfectDodge(data)
                             end
                         elseif mName == "NewThorianQTE" then
                             if Config.AutoThorianQTE then
@@ -6207,10 +6220,10 @@ local function PatchU3Table(tbl)
         tbl.DodgeQTE = function(data)
             if Config.AutoDodge then
                 task.wait(QTEDelay("DodgeQTE", data))
-                return { true, true }
+                return PerfectDodge(data)
             elseif Config.LegitDodge then
                 task.wait()
-                return { true, true }
+                return PerfectDodge(data)
             end
             return passthrough("DodgeQTE", data, { false, false })
         end
@@ -6294,7 +6307,7 @@ local function ApplyAllQTEHooks(forceGC)
                             if rName == "DodgeMiniGame" then
                                 if Config.AutoDodge then
                                     task.wait(QTEDelay("DodgeQTE", data))
-                                    return { true, true }
+                                    return PerfectDodge(data)
                                 end
                             else
                                 if Config.AutoQTE then

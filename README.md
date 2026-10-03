@@ -10,8 +10,9 @@ Le loader detecte le jeu et charge le fichier correspondant :
 
 - `games/slayers2.lua` (621 Ko)
 - `games/slayers2_dungeon.lua` (311 Ko)
-- `games/arcane_lineage.lua` (259 Ko)
+- `games/arcane_lineage.lua` (260 Ko)
 - `games/rh2.lua` (304 Ko)
+- `games/coldwar.lua` (246 Ko)
 - `games/bloxstrike.lua` (180 Ko)
 - `games/forgotten_stories.lua` (291 Ko)
 

@@ -43,6 +43,8 @@ local function detectGame()
         or pId == 14597298866 or gId == 578392296
         or title:find("aba") or title:find("anime battle arena") then
         return "aba"
+    elseif pId == 13687899540 or title:find("cold war") then
+        return "coldwar"
     elseif pId == 114234929420007 or gId == 7633926880
         or title:find("bloxstrike") or title:find("blox strike") then
         return "bloxstrike"

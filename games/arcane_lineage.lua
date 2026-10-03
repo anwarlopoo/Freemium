@@ -6052,6 +6052,12 @@ local function TrackConnection(conn)
 end
 -- Registry for RemoteFunction client-hooks (Instances can't hold raw flags).
 local HubHookedRF = {}
+-- Registres anti double-wrap + watchdog : le jeu peut (re)creer CombatHandle,
+-- ses ModuleScripts ou les remotes APRES le load du hub. Sans re-application,
+-- les hooks meurent silencieusement (aucun dodge). Sets faibles : pas de fuite.
+local HookedModules = setmetatable({}, { __mode = "k" })
+local HookedU3 = setmetatable({}, { __mode = "k" })
+local U3HookedOnce = false
 
 -- Soft capability gates: disable features whose UNC functions are missing
 -- instead of failing silently mid-fight.
@@ -6076,20 +6082,39 @@ local QTE_GUI_NAMES = {
 -- Durée réaliste du mini-jeu par type de QTE (secondes).
 -- Préfixé 'QTE_' pour immuniser totalement la table contre toute introspection GC
 local function QTEDelay(name, data)
-    -- INSTANT FIX (Withered Grove v10373) : les fenetres QTE serveur sont
-    -- plus courtes, tout wait >0 fait rater dodge + attaques. Retour 0 = zero freeze.
-    return 0
+    local map = {
+        ["QTE_DodgeQTE"]          = 1.5,
+        ["QTE_AxeQTE"]            = 2.6,
+        ["QTE_SwordQTE"]          = 2.4,
+        ["QTE_SpearQTE"]          = 2.4,
+        ["QTE_DaggerQTE"]         = 2.6,
+        ["QTE_HammerQTE"]         = 2.6,
+        ["QTE_MagicQTE"]          = 3.2,
+        ["QTE_FistQTE"]           = 4.2,
+        ["QTE_ThorianQTE"]        = 3.2,
+        ["QTE_NewThorianQTE"]     = 3.2,
+        ["QTE_YarthulQTE"]        = 3.2,
+        ["QTE_LockpickQTE"]       = 2.6,
+        ["QTE_WG_GospelQTE"]      = 3.2,
+        ["QTE_UniqueQuestChoice"] = 1.2,
+    }
+    -- FistQTE : la durée dépend du nombre de coups (Amount).
+    if name == "FistQTE" and type(data) == "table" then
+        local amount = math.clamp(tonumber(data.Amount) or 8, 5, 13)
+        return amount / 2.3 + 1.6 + math.random() * 0.4
+    end
+    return (map["QTE_" .. tostring(name)] or 2.5) + math.random() * 0.4
 end
 
--- Perfect dodge avec echo du Nonce serveur (Withered Grove) : le vrai
--- NewDodgeQTE.Run retourne { block, dodge, position, Nonce }. Sans le
--- Nonce le serveur rejette le dodge et on prend les damages.
-local function PerfectDodge(data)
-    local pos = 0.6
+-- Le jeu valide le Nonce renvoye (anti-spoof) : un resultat dodge doit etre
+-- {block, dodge, position, Nonce}, sinon le serveur le rejette (aucun dodge).
+-- (Global volontaire : le chunk principal est proche du plafond de 200 locals.)
+function NW_DodgeResult(data)
     local nonce = nil
+    local pos = 0.6
     if type(data) == "table" then
-        if type(data.Position) == "number" then pos = data.Position end
         nonce = data.Nonce
+        if tonumber(data.Position) then pos = tonumber(data.Position) end
     end
     return { true, true, pos, nonce }
 end
@@ -6140,14 +6165,15 @@ local function HookQTEModules(handleScript)
                 if type(mod) == "table" and type(mod.Run) == "function" then
                     local mName = child.Name
                     local origRun = mod.Run
+                    if HookedModules[mod] then return end
                     mod.Run = function(data)
                         if mName == "NewDodgeQTE" then
                             if Config.AutoDodge then
                                 task.wait(QTEDelay("DodgeQTE", data))
-                                return PerfectDodge(data)
+                                return NW_DodgeResult(data)
                             elseif Config.LegitDodge then
-                                task.wait()
-                                return PerfectDodge(data)
+                                task.wait(0.4 + math.random() * 0.5)
+                                return NW_DodgeResult(data)
                             end
                         elseif mName == "NewThorianQTE" then
                             if Config.AutoThorianQTE then
@@ -6181,6 +6207,7 @@ local function HookQTEModules(handleScript)
                         -- au QTE original du jeu au lieu de le faire échouer.
                         return origRun(data)
                     end
+                    HookedModules[mod] = true
                 end
             end)
         end
@@ -6200,6 +6227,7 @@ local function PatchU3Table(tbl)
 
     -- Bonus : la vraie u3 n'a PAS la clé NewThorianQTE
     if rawget(tbl, "NewThorianQTE") ~= nil then return end
+    if HookedU3[tbl] then return end
 
     -- On sauve les fonctions originales : quand l'automation est OFF,
     -- on rend la main au jeu au lieu de faire échouer les QTE manuels.
@@ -6220,10 +6248,10 @@ local function PatchU3Table(tbl)
         tbl.DodgeQTE = function(data)
             if Config.AutoDodge then
                 task.wait(QTEDelay("DodgeQTE", data))
-                return PerfectDodge(data)
+                return NW_DodgeResult(data)
             elseif Config.LegitDodge then
-                task.wait()
-                return PerfectDodge(data)
+                task.wait(0.4 + math.random() * 0.5)
+                return NW_DodgeResult(data)
             end
             return passthrough("DodgeQTE", data, { false, false })
         end
@@ -6287,6 +6315,8 @@ local function PatchU3Table(tbl)
             end
         end
     end
+    HookedU3[tbl] = true
+    U3HookedOnce = true
 end
 
 local function ApplyAllQTEHooks(forceGC)
@@ -6307,7 +6337,7 @@ local function ApplyAllQTEHooks(forceGC)
                             if rName == "DodgeMiniGame" then
                                 if Config.AutoDodge then
                                     task.wait(QTEDelay("DodgeQTE", data))
-                                    return PerfectDodge(data)
+                                    return NW_DodgeResult(data)
                                 end
                             else
                                 if Config.AutoQTE then
@@ -6354,6 +6384,24 @@ end
 
 -- Initialize QTE hooks once on script load
 pcall(function() ApplyAllQTEHooks(true) end)
+
+-- Watchdog : re-applique les hooks en continu. Le jeu (re)cree CombatHandle,
+-- ses ModuleScripts et parfois les remotes APRES le load ; sans ca les hooks
+-- meurent silencieusement et plus aucun dodge ne part. Les registres rendent
+-- chaque passage idempotent et quasi gratuit ; le scan GC (couteux) ne tourne
+-- que jusqu'au premier succes puis toutes les 30 s.
+task.spawn(function()
+    local lastFull = 0
+    while task.wait(3) do
+        if HubUnloaded then break end
+        pcall(function()
+            local now = os.clock()
+            local needGC = (not U3HookedOnce) or ((now - lastFull) > 30)
+            if needGC then lastFull = now end
+            ApplyAllQTEHooks(needGC)
+        end)
+    end
+end)
 
 ------------------------------------------------------------------------
 -- FEATURE 3: DYNAMIC SKILL DISCOVERY (LIVE, POLLING-BASED)

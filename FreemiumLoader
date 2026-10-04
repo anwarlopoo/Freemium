@@ -76,7 +76,7 @@ local function loadGameFile(slug)
 end
 
 local slug = detectGame()
-if slug == "the_veil" or slug == "aba" then
+if slug == "slayers2" or slug == "the_veil" or slug == "aba" then
     warn("[NW Hub Free] pas de version free pour ce jeu (paid only).")
 else
     loadGameFile(slug)

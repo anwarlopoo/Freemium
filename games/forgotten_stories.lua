@@ -912,6 +912,18 @@ local function ShouldDodgeAttack(skillName)
     return false
 end
 
+-- Choix Parry/Dodge (hybride). DOIT etre defini : sans lui, tout le dispatch
+-- de defense partait en pcall error -> degats appliques malgre l'anim de parade.
+local function PickDefense(skillName)
+    local st = GetState()
+    if st and type(st.DefenseMode) == "string" and st.DefenseMode:find("Dodge") then
+        if ShouldDodgeAttack(skillName) then
+            return "Dodge"
+        end
+    end
+    return "Parry"
+end
+
 local function ResetTakeHitWindow()
     TakeHitUntil = 0
 end
@@ -1545,14 +1557,11 @@ local function InstallMasterHooks()
 
                 -- AUTO PARRY / DODGE (0 SP)
                 if self.Name == "HitResult" then
-                    -- Force Autododged = false on ALL outgoing HitResult so the
-                    -- server treats our defense as a manual parry, not a Seraphic auto-parry.
+                    -- NE PLUS muter Autododged ici : les defenses natives du jeu
+                    -- (Seraphic auto-parry = Autododged=true) doivent passer telles
+                    -- quelles. Le dispatch ne force Autododged=false QUE s'il
+                    -- remplace lui-meme le resultat (injection de parade).
                     local args = {...}
-                    if typeof(args[5]) == "table" then
-                        args[5].Autododged = false
-                    else
-                        args[5] = { Side = "None", Streampath = false, Autododged = false }
-                    end
                     if _genv.FS_DispatchHitResult then
                         inHook = true
                         local ok, modified, newArgs = pcall(_genv.FS_DispatchHitResult, args)

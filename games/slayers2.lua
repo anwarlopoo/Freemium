@@ -7069,9 +7069,9 @@ Hub = {
         AutoSkills = true,
         SkillInterval = 1.0,
         InstantKill = false,
-        AutoCollectChests = false,
+        AutoCollectChests = true,
         AutoCollectLoot = true,
-        AutoCollectSouls = false,
+        AutoCollectSouls = true,
         BossLootWaitTime = 4.0,
         MobLootWaitTime = 1.8,
         -- Auto Quest Engine
@@ -7657,6 +7657,22 @@ local function TeleportToPosition(targetPos, name)
         sameArea = (pa ~= nil and ta ~= nil and pa == ta)
     end
     if sameArea then
+        -- TP DIRECT (rapide) : CFrame + snap sol + verification serveur.
+        -- Si le serveur rejette (rubber-band / zone), fallback fly classique.
+        local ground = FlyGroundAt(targetPos)
+        local dest = Vector3.new(targetPos.X, (ground and ground.Y or targetPos.Y) + 3, targetPos.Z)
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        root.CFrame = CFrame.new(dest)
+        EnsureFarmPlatform(root.CFrame)
+        task.wait(0.4)
+        local rtp = GetRootPart()
+        if rtp and (rtp.Position - targetPos).Magnitude <= 80 then
+            if name then
+                Kyoka:Notify({ Title = "Travel", Content = "TP: " .. name, Type = "success", Duration = 2 })
+            end
+            return
+        end
         if name then
             Kyoka:Notify({ Title = "Travel", Content = "En route vers " .. name .. " (fly)..." , Type = "info", Duration = 3 })
         end
@@ -7672,9 +7688,26 @@ local function TeleportToPosition(targetPos, name)
         end
         return
     end
+    -- Dernier segment : TP direct si possible, sinon fly.
+    local g2 = FlyGroundAt(targetPos)
+    local d2 = Vector3.new(targetPos.X, (g2 and g2.Y or targetPos.Y) + 3, targetPos.Z)
+    local rr = GetRootPart()
+    if rr then
+        rr.AssemblyLinearVelocity = Vector3.zero
+        rr.AssemblyAngularVelocity = Vector3.zero
+        rr.CFrame = CFrame.new(d2)
+        EnsureFarmPlatform(rr.CFrame)
+        task.wait(0.4)
+        local rr2 = GetRootPart()
+        if rr2 and (rr2.Position - targetPos).Magnitude <= 80 then
+            if name then
+                Kyoka:Notify({ Title = "Travel", Content = "TP: " .. name, Type = "success", Duration = 2 })
+            end
+            return
+        end
+    end
     if name then
-        local how = traveled and "Travel serveur + fly" or "Fly"
-        Kyoka:Notify({ Title = "Travel", Content = how .. " vers " .. name .. "..." , Type = "info", Duration = 3 })
+        Kyoka:Notify({ Title = "Travel", Content = "En route vers " .. name .. " (fly)..." , Type = "info", Duration = 3 })
     end
     FlyTravelTo(targetPos, name)
 end
@@ -9216,6 +9249,14 @@ CombatFarmGroup:AddToggle("AutoEquipWeaponToggle", {
     end
 })
 
+CombatFarmGroup:AddToggle("AutoChestsToggle", {
+    Text = "Auto Collect Chests (World & Boss)",
+    Default = true,
+    Tooltip = "Automatically detects, opens, and loots all nearby and unlocked chests (Boss Drops, World Events, Caches)!",
+    Callback = function(val)
+        Hub.Farm.AutoCollectChests = val
+    end
+})
 
 CombatFarmGroup:AddToggle("AutoLootToggle", {
     Text = "Auto Collect Loot Drops",
@@ -9223,6 +9264,15 @@ CombatFarmGroup:AddToggle("AutoLootToggle", {
     Tooltip = "Automatically vacuums up all nearby drop items, coins, and materials!",
     Callback = function(val)
         Hub.Farm.AutoCollectLoot = val
+    end
+})
+
+CombatFarmGroup:AddToggle("AutoSoulsToggle", {
+    Text = "Auto Collect Demon Souls",
+    Default = true,
+    Tooltip = "Automatically detects and absorbs all Demon Souls (Weak, Strong, Brave) dropped by demons upon death!",
+    Callback = function(val)
+        Hub.Farm.AutoCollectSouls = val
     end
 })
 

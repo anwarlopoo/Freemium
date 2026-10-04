@@ -7083,14 +7083,34 @@ Hub = {
         QuestBlacklist = {},
         QuestFailCount = {},
     },
+
+    -- Discord Boss-Farm Webhooks (loot drops + progress)
+    Webhook = {
+        Url = "",
+        DropsEnabled = false,
+        ProgressEnabled = false,
+        OnlyWhileFarming = true,
+        MinRarity = 3,
+        ProgressMinutes = 15,
+        LastProgressAt = 0,
+        LastBoss = nil,
+        LastBossAt = nil,
+        Defeated = {},
+        BossKillsTotal = 0,
+        WenStart = nil,
+        QuestsStart = nil,
+        StartTime = 0,
+        SeenItems = nil,
+        ItemMeta = {},
+        ThumbCache = {},
+        Label = nil,
+        KillsLabel = nil,
+        LabelAt = 0,
+    },
 }
 _G.SlayersKyokaHub = Hub
 
--- Compteur de kills bosse (utilise par la boucle farm ; stub local).
-Hub.BossKills = 0
-function Hub.RegisterBossKill()
-    Hub.BossKills = (Hub.BossKills or 0) + 1
-end
+-- Hub.RegisterBossKill est defini par la section Discord Webhooks (runtime).
 
 --=====================================================================
 -- Gestion de la Plateforme Anti-Chute
@@ -9463,6 +9483,129 @@ SessionGroup:AddButton("Unload Kyōka Hub", {
     end
 })
 
+do
+    local WebhookSettingsGroup = SettingsTab:AddGroup("Discord Webhook", "Right")
+    local WebhookStatsGroup = SettingsTab:AddGroup("Farm Session", "Right")
+
+    Hub.Webhook.Label = WebhookSettingsGroup:AddLabel("Session: - | Kills: 0 | Wen: +0 | No URL")
+    Hub.Webhook.KillsLabel = WebhookStatsGroup:AddLabel("Top Defeated: none yet")
+
+    WebhookSettingsGroup:AddTextbox("FarmWebhookURL", {
+        Text = "Webhook URL",
+        Placeholder = "https://discord.com/api/webhooks/...",
+        Default = "",
+        Tooltip = "Paste your Discord channel webhook URL. Drop pings and progress reports are posted here.",
+        Callback = function(val)
+            local url = tostring(val or ""):match("^%s*(.-)%s*$")
+            Hub.Webhook.Url = url
+            Hub.Webhook.SeenItems = nil
+            if url ~= "" then
+                Hub.GuiWrite(function()
+                    if Hub.Webhook.Label then Hub.Webhook.Label:SetText("Webhook URL saved. Enable drops / progress below.") end
+                end)
+            end
+        end
+    })
+
+    WebhookSettingsGroup:AddToggle("WebhookDropsToggle", {
+        Text = "Enable Loot Drop Webhooks",
+        Default = false,
+        Tooltip = "Posts a Discord embed each time you obtain an item at or above the min rarity.",
+        Callback = function(val)
+            Hub.Webhook.DropsEnabled = val and true or false
+            Hub.Webhook.SeenItems = nil
+        end
+    })
+
+    WebhookSettingsGroup:AddToggle("WebhookProgressToggle", {
+        Text = "Enable Progress Reports",
+        Default = false,
+        Tooltip = "Posts a Discord progress embed (level, exp, wen, kills) every X minutes.",
+        Callback = function(val)
+            Hub.Webhook.ProgressEnabled = val and true or false
+            if val then Hub.Webhook.LastProgressAt = 0 end
+        end
+    })
+
+    WebhookSettingsGroup:AddToggle("WebhookOnlyFarmingToggle", {
+        Text = "Only While Auto Farm Is Active",
+        Default = true,
+        Tooltip = "Only send webhooks while Auto Farm is running.",
+        Callback = function(val)
+            Hub.Webhook.OnlyWhileFarming = val and true or false
+        end
+    })
+
+    WebhookSettingsGroup:AddSlider("WebhookMinRaritySlider", {
+        Text = "Min Drop Rarity",
+        Min = 1,
+        Max = 7,
+        Default = 3,
+        Rounding = 0,
+        Tooltip = "1 Common, 2 UnCommon, 3 Rare, 4 Epic, 5 Legendary, 6 Mythic, 7 Impossible.",
+        Callback = function(val)
+            Hub.Webhook.MinRarity = math.floor(tonumber(val) or 3)
+        end
+    })
+
+    WebhookSettingsGroup:AddSlider("WebhookProgressMinutesSlider", {
+        Text = "Progress Every",
+        Min = 1,
+        Max = 120,
+        Default = 15,
+        Rounding = 0,
+        Suffix = " min",
+        Tooltip = "Minutes between automatic progress reports.",
+        Callback = function(val)
+            Hub.Webhook.ProgressMinutes = math.floor(tonumber(val) or 15)
+        end
+    })
+
+    WebhookSettingsGroup:AddButton("Send Test Webhook", {
+        Accent = true,
+        Tooltip = "Posts a small test embed to verify your URL.",
+        Callback = function()
+            task.spawn(function()
+                local ts = nil
+                pcall(function() ts = os.date("!%Y-%m-%dT%H:%M:%SZ") end)
+                local embed = {
+                    title = "Webhook Test",
+                    description = "Slayers 2 Hub webhooks are working.",
+                    color = 0x7C6CFF,
+                    fields = {
+                        { name = "Player", value = LocalPlayer.Name, inline = true },
+                    },
+                }
+                if ts then embed.timestamp = ts end
+                Hub.WebhookSend({ username = "Slayers 2 Hub | " .. LocalPlayer.Name, embeds = { embed } })
+            end)
+            Kyoka:Notify({ Title = "Webhook", Content = "Test embed sent (check Discord).", Type = "info", Duration = 3 })
+        end
+    })
+
+    WebhookSettingsGroup:AddButton("Send Progress Now", {
+        Tooltip = "Posts the farm progress embed immediately.",
+        Callback = function()
+            Hub.SendProgressWebhook(true)
+            Kyoka:Notify({ Title = "Webhook", Content = "Progress report sent.", Type = "info", Duration = 3 })
+        end
+    })
+
+    WebhookSettingsGroup:AddButton("Reset Counters", {
+        Tooltip = "Restarts session stats (kills, wen earned, session time) from now.",
+        Callback = function()
+            Hub.Webhook.Defeated = {}
+            Hub.Webhook.BossKillsTotal = 0
+            Hub.Webhook.WenStart = nil
+            Hub.Webhook.QuestsStart = nil
+            Hub.Webhook.StartTime = os.clock()
+            Hub.Webhook.SeenItems = nil
+            Hub.Webhook.LastBoss = nil
+            Hub.Webhook.LastBossAt = nil
+            Kyoka:Notify({ Title = "Webhook", Content = "Session counters reset.", Type = "info", Duration = 3 })
+        end
+    })
+end
 
 --=====================================================================
 -- Moteurs de Boucle & Logique en Temps Réel
@@ -10548,6 +10691,345 @@ end))
 
 
 
+-- =====================================================================
+-- Discord Webhooks : boss loot drops + farm progress
+-- =====================================================================
+do
+local function WebhookRequestFn()
+    if type(request) == "function" then return request end
+    if type(http_request) == "function" then return http_request end
+    if syn and type(syn.request) == "function" then return syn.request end
+    if http and type(http.request) == "function" then return http.request end
+    return nil
+end
+
+local function IsoNow()
+    local ok, s = pcall(os.date, "!%Y-%m-%dT%H:%M:%SZ")
+    if ok and type(s) == "string" then return s end
+    return nil
+end
+
+local function FmtNum(n)
+    n = math.floor(tonumber(n) or 0)
+    local s = tostring(n)
+    local out = ""
+    while #s > 3 do
+        out = "," .. string.sub(s, -3) .. out
+        s = string.sub(s, 1, #s - 3)
+    end
+    return s .. out
+end
+
+local function FmtSession(sec)
+    sec = math.max(0, math.floor(tonumber(sec) or 0))
+    local h = math.floor(sec / 3600)
+    local m = math.floor((sec % 3600) / 60)
+    if h > 0 then
+        return string.format("%dh %02dm", h, m)
+    end
+    local s = sec % 60
+    if m > 0 then
+        return string.format("%dm %02ds", m, s)
+    end
+    return string.format("%ds", s)
+end
+
+local function GetSlotData()
+    local slot = nil
+    pcall(function()
+        local Utility = require(ReplicatedStorage.CAM.Global.Utility)
+        slot = Utility.GetData(LocalPlayer, true)
+    end)
+    return slot
+end
+
+local function GetWen()
+    local slot = GetSlotData()
+    local w = slot and slot:FindFirstChild("Wen")
+    return w and tonumber(w.Value) or 0
+end
+
+local function GetExpInfo()
+    local slot = GetSlotData()
+    local exp = slot and slot:FindFirstChild("Exp")
+    local cur = exp and exp:FindFirstChild("Current") and tonumber(exp.Current.Value) or 0
+    local goal = exp and exp:FindFirstChild("Goal") and tonumber(exp.Goal.Value) or 0
+    return cur, goal
+end
+
+local function GetQuestsDoneTotal()
+    local slot = GetSlotData()
+    local quests = slot and slot:FindFirstChild("Quests")
+    local done = quests and quests:FindFirstChild("Completed")
+    if done then
+        local n = 0
+        for _ in ipairs(done:GetChildren()) do n = n + 1 end
+        return n
+    end
+    return 0
+end
+
+local function RarityColorInt(rarity)
+    local color = nil
+    pcall(function()
+        local Rar = require(ReplicatedStorage.CAM.Global.Rarities)
+        color = Rar.Colors and (Rar.Colors[rarity] or Rar.Colors[tostring(rarity)])
+    end)
+    if typeof(color) == "Color3" then
+        local v = math.floor(color.R * 255) * 65536 + math.floor(color.G * 255) * 256 + math.floor(color.B * 255)
+        if v > 0 then return v end
+    end
+    return 0x7C6CFF
+end
+
+local function SnapshotInventory()
+    local snap = {}
+    pcall(function()
+        local slot = GetSlotData()
+        local inv = slot and slot:FindFirstChild("Inventory")
+        local items = inv and inv:FindFirstChild("Inventory")
+        if items then
+            for _, it in ipairs(items:GetChildren()) do
+                local amt = 1
+                local a = it:FindFirstChild("Amount")
+                if a then amt = tonumber(a.Value) or 1 end
+                snap[it.Name] = (snap[it.Name] or 0) + amt
+            end
+        end
+    end)
+    return snap
+end
+
+Hub.RegisterBossKill = function(mob)
+    if not mob then return end
+    local hum = mob.Humanoid
+    if hum and hum.Health > 0 then return end
+    local name = tostring((mob.Name ~= "" and mob.Name) or mob.Type or "Unknown")
+    Hub.Webhook.Defeated[name] = (Hub.Webhook.Defeated[name] or 0) + 1
+    Hub.Webhook.BossKillsTotal = (Hub.Webhook.BossKillsTotal or 0) + 1
+    Hub.Webhook.LastBoss = name
+    Hub.Webhook.LastBossAt = os.clock()
+end
+
+Hub.WebhookSend = function(payload)
+    local url = Hub.Webhook.Url
+    if type(url) ~= "string" or #url < 10 then return false end
+    local req = WebhookRequestFn()
+    if not req then return false end
+    local body = nil
+    local okEnc = pcall(function()
+        body = game:GetService("HttpService"):JSONEncode(payload)
+    end)
+    if not okEnc or type(body) ~= "string" then return false end
+    task.spawn(function()
+        pcall(function()
+            req({ Url = url, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = body })
+        end)
+    end)
+    return true
+end
+
+Hub.GetItemMeta = function(name)
+    if type(name) ~= "string" or name == "" then return nil end
+    local cached = Hub.Webhook.ItemMeta[name]
+    if cached ~= nil then
+        if cached == false then return nil end
+        return cached
+    end
+    local meta = nil
+    pcall(function()
+        local Items = require(ReplicatedStorage.CAM.Global.Collectibles.Items)
+        local def = Items and Items[name]
+        if def then
+            meta = { Rarity = tonumber(def.Rarity) or 1, Icon = def.Icon }
+        end
+    end)
+    Hub.Webhook.ItemMeta[name] = meta or false
+    return meta
+end
+
+Hub.ResolveThumbUrl = function(name)
+    local hit = Hub.Webhook.ThumbCache[name]
+    if hit ~= nil then
+        if hit == false then return nil end
+        return hit
+    end
+    local url = nil
+    pcall(function()
+        local meta = Hub.GetItemMeta(name)
+        local iconId = meta and meta.Icon and string.match(tostring(meta.Icon), "%d+")
+        if iconId then
+            local req = WebhookRequestFn()
+            if req then
+                local resp = req({ Url = "https://thumbnails.roblox.com/v1/assets?assetIds=" .. iconId .. "&size=420x420&format=Png&isCircular=false", Method = "GET" })
+                local raw = nil
+                if type(resp) == "string" then raw = resp
+                elseif type(resp) == "table" then raw = resp.Body or resp.body end
+                if type(raw) == "string" and #raw > 5 then
+                    local data = game:GetService("HttpService"):JSONDecode(raw)
+                    local first = data and data.data and data.data[1]
+                    if first and type(first.imageUrl) == "string" and #first.imageUrl > 5 then
+                        url = first.imageUrl
+                    end
+                end
+            end
+        end
+    end)
+    Hub.Webhook.ThumbCache[name] = url or false
+    return url
+end
+
+Hub.BuildDropPayload = function(itemName, qty, source)
+    local meta = Hub.GetItemMeta(itemName)
+    local rarity = (meta and meta.Rarity) or 1
+    local fields = {
+        { name = "Player", value = LocalPlayer.Name, inline = true },
+    }
+    if source and source ~= "" then
+        table.insert(fields, { name = "Source", value = tostring(source), inline = true })
+    end
+    local embed = {
+        title = tostring(itemName),
+        description = string.format("Obtained x%d", qty),
+        color = RarityColorInt(rarity),
+        fields = fields,
+        footer = { text = "Slayers 2 Hub" },
+    }
+    local ts = IsoNow()
+    if ts then embed.timestamp = ts end
+    return { username = "Slayers 2 Hub | " .. LocalPlayer.Name, embeds = { embed } }
+end
+
+Hub.SendDropWebhook = function(itemName, qty, source)
+    if not Hub.Webhook.DropsEnabled then return false end
+    if Hub.Webhook.OnlyWhileFarming and not Hub.Farm.AutoFarm then return false end
+    local meta = Hub.GetItemMeta(itemName)
+    local rarity = (meta and meta.Rarity) or 1
+    if rarity < (Hub.Webhook.MinRarity or 3) then return false end
+    task.spawn(function()
+        local thumb = Hub.ResolveThumbUrl(itemName)
+        local payload = Hub.BuildDropPayload(itemName, qty, source)
+        if thumb and payload and payload.embeds and payload.embeds[1] then
+            payload.embeds[1].thumbnail = { url = thumb }
+        end
+        Hub.WebhookSend(payload)
+    end)
+    return true
+end
+
+Hub.BuildProgressPayload = function()
+    local now = os.clock()
+    local wen = GetWen()
+    local cur, goal = GetExpInfo()
+    if Hub.Webhook.WenStart == nil then Hub.Webhook.WenStart = wen end
+    if Hub.Webhook.StartTime == nil or Hub.Webhook.StartTime == 0 then Hub.Webhook.StartTime = now end
+    local earned = math.max(0, wen - (Hub.Webhook.WenStart or wen))
+    local questsTotal = GetQuestsDoneTotal()
+    if Hub.Webhook.QuestsStart == nil then Hub.Webhook.QuestsStart = questsTotal end
+    local sorted = {}
+    for name, count in pairs(Hub.Webhook.Defeated) do
+        table.insert(sorted, { name = name, count = count })
+    end
+    table.sort(sorted, function(a, b) return a.count > b.count end)
+    local lines = {}
+    for i = 1, math.min(#sorted, 10) do
+        lines[#lines+1] = string.format("%s x%d", sorted[i].name, sorted[i].count)
+    end
+    if #lines == 0 then lines = { "No boss kills yet" } end
+    local embed = {
+        title = "Farm Progress",
+        color = 0x7C6CFF,
+        fields = {
+            { name = "Level", value = tostring(GetPlayerLevel()), inline = true },
+            { name = "Exp", value = string.format("%s / %s", FmtNum(cur), FmtNum(goal)), inline = true },
+            { name = "Wen", value = FmtNum(wen), inline = true },
+            { name = "Wen Earned", value = FmtNum(earned), inline = true },
+            { name = "Quests Done", value = tostring(questsTotal), inline = true },
+            { name = "Session", value = FmtSession(now - (Hub.Webhook.StartTime or now)), inline = true },
+            { name = "Defeated", value = table.concat(lines, "\n"), inline = false },
+        },
+        footer = { text = "Slayers 2 Hub | " .. LocalPlayer.Name },
+    }
+    local ts = IsoNow()
+    if ts then embed.timestamp = ts end
+    return { username = "Slayers 2 Hub | " .. LocalPlayer.Name, embeds = { embed } }
+end
+
+Hub.SendProgressWebhook = function(manual)
+    if not Hub.Webhook.ProgressEnabled and not manual then return false end
+    local now = os.clock()
+    if not manual and Hub.Webhook.OnlyWhileFarming and not Hub.Farm.AutoFarm then return false end
+    task.spawn(function()
+        Hub.WebhookSend(Hub.BuildProgressPayload())
+    end)
+    if not manual then Hub.Webhook.LastProgressAt = now end
+    return true
+end
+
+local lastDropScan = 0
+table.insert(Hub.Connections, RunService.Heartbeat:Connect(function()
+    local now = os.clock()
+    if Hub.Webhook.StartTime == 0 then Hub.Webhook.StartTime = now end
+    if Hub.Webhook.WenStart == nil then Hub.Webhook.WenStart = GetWen() end
+    if Hub.Webhook.QuestsStart == nil then Hub.Webhook.QuestsStart = GetQuestsDoneTotal() end
+
+    if (Hub.Webhook.DropsEnabled or Hub.Webhook.ProgressEnabled) and (now - lastDropScan) >= 1.0 then
+        lastDropScan = now
+        local snap = SnapshotInventory()
+        local prev = Hub.Webhook.SeenItems
+        if not prev then
+            Hub.Webhook.SeenItems = snap
+        else
+            local farmingOk = (not Hub.Webhook.OnlyWhileFarming) or Hub.Farm.AutoFarm
+            for name, amt in pairs(snap) do
+                local before = prev[name] or 0
+                if amt > before then
+                    local delta = amt - before
+                    if Hub.Webhook.DropsEnabled and farmingOk then
+                        local source = nil
+                        if Hub.Webhook.LastBoss and Hub.Webhook.LastBossAt and (now - Hub.Webhook.LastBossAt) < 60 then
+                            source = "Boss: " .. tostring(Hub.Webhook.LastBoss)
+                        end
+                        Hub.SendDropWebhook(name, delta, source)
+                    end
+                end
+            end
+            Hub.Webhook.SeenItems = snap
+        end
+    end
+
+    if Hub.Webhook.ProgressEnabled then
+        local interval = (Hub.Webhook.ProgressMinutes or 15) * 60
+        if interval > 0 and (now - (Hub.Webhook.LastProgressAt or 0)) >= interval then
+            Hub.SendProgressWebhook(false)
+        end
+    end
+
+    if (Hub.Webhook.Label or Hub.Webhook.KillsLabel) and (now - (Hub.Webhook.LabelAt or 0)) >= 3 then
+        Hub.Webhook.LabelAt = now
+        local kills = Hub.Webhook.BossKillsTotal or 0
+        local wen = GetWen()
+        local earned = (Hub.Webhook.WenStart ~= nil) and math.max(0, wen - Hub.Webhook.WenStart) or 0
+        local reqOk = WebhookRequestFn() ~= nil
+        local urlOk = type(Hub.Webhook.Url) == "string" and #Hub.Webhook.Url > 10
+        local statusText = string.format("Session: %s | Kills: %d | Wen: +%s | %s", FmtSession(now - Hub.Webhook.StartTime), kills, FmtNum(earned), (urlOk and (reqOk and "Ready" or "No HTTP fn")) or "No URL")
+        local sorted = {}
+        for name, count in pairs(Hub.Webhook.Defeated) do
+            table.insert(sorted, { name = name, count = count })
+        end
+        table.sort(sorted, function(a, b) return a.count > b.count end)
+        local top = {}
+        for i = 1, math.min(#sorted, 5) do
+            top[#top+1] = string.format("%s x%d", sorted[i].name, sorted[i].count)
+        end
+        local killsText = (#top > 0) and ("Top: " .. table.concat(top, ", ")) or "Top Defeated: none yet"
+        Hub.GuiWrite(function()
+            if Hub.Webhook.Label then Hub.Webhook.Label:SetText(statusText) end
+            if Hub.Webhook.KillsLabel then Hub.Webhook.KillsLabel:SetText(killsText) end
+        end)
+    end
+end))
+end
 
 
 -- 8. Statut Race / Niveau (leger ; les buffs combat ont ete retires)

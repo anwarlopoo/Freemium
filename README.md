@@ -16,5 +16,6 @@ Le loader detecte le jeu et charge le fichier correspondant :
 - `games/bloxstrike.lua`
 - `games/forgotten_stories.lua`
 - `games/clover_time.lua`
+- `games/dahood.lua`
 
 Pas de version free (paid only) : the_veil, aba, bloodlines, deepwoken.

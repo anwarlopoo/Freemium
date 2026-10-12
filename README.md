@@ -10,6 +10,7 @@ Le loader detecte le jeu et charge le fichier correspondant :
 
 - `games/slayers2.lua`
 - `games/slayers2_dungeon.lua`
+- `games/the_veil.lua`
 - `games/arcane_lineage.lua`
 - `games/rh2.lua`
 - `games/coldwar.lua`
@@ -18,4 +19,4 @@ Le loader detecte le jeu et charge le fichier correspondant :
 - `games/clover_time.lua`
 - `games/dahood.lua`
 
-Pas de version free (paid only) : the_veil, aba, bloodlines, deepwoken.
+Pas de version free (paid only) : aba, bloodlines, deepwoken.

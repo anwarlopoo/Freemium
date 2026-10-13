@@ -58,6 +58,8 @@ local function detectGame()
         return "clover_time"
     elseif pId == 2788229376 or title:find("da hood") then
         return "dahood"
+    elseif pId == 111838814545019 or gId == 10768944846 or title:find("morioh") then
+        return "morioh_high"
     end
     return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
 end

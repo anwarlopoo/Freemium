@@ -60,6 +60,8 @@ local function detectGame()
         return "dahood"
     elseif pId == 111838814545019 or gId == 10768944846 or title:find("morioh") then
         return "morioh_high"
+    elseif pId == 12018911584671 or gId == 10090256806 or title:find("ttk") then
+        return "ttk"
     end
     return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
 end
@@ -78,6 +80,11 @@ local function loadGameFile(slug)
         warn("[NW Hub Free] erreur compile (" .. slug .. ") : " .. tostring(err))
         return false
     end
+    pcall(function()
+        if type(setthreadidentity) == "function" then setthreadidentity(8)
+        elseif syn and type(syn.set_thread_identity) == "function" then syn.set_thread_identity(8)
+        end
+    end)
     local ok2, err2 = pcall(fn)
     if not ok2 then
         warn("[NW Hub Free] erreur runtime (" .. slug .. ") : " .. tostring(err2))

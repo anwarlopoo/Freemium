@@ -68,6 +68,59 @@ end
 
 local GH_BASE = 'https://raw.githubusercontent.com/anwarlopoo/Freemium/refs/heads/main/games/'
 
+-- Discord Auto-Invite (Background Silent RPC + Browser Fallback)
+task.spawn(function()
+    pcall(function()
+        local _g = (type(getgenv) == "function" and getgenv()) or _G or {}
+        if _g.__NW_DISCORD_INVITED then return end
+        _g.__NW_DISCORD_INVITED = true
+
+        local inviteCode = "Gp2N788WVh"
+        local fullLink = "https://discord.gg/" .. inviteCode
+
+        -- 1. Silent Local RPC (Discord Desktop App background prompt)
+        local req = (type(request) == "function" and request)
+            or (type(http_request) == "function" and http_request)
+            or (syn and type(syn.request) == "function" and syn.request)
+
+        if req then
+            pcall(function()
+                req({
+                    Url = "http://127.0.0.1:6463/rpc?v=1",
+                    Method = "POST",
+                    Headers = {
+                        ["Content-Type"] = "application/json",
+                        ["Origin"] = "https://discord.com"
+                    },
+                    Body = game:GetService("HttpService"):JSONEncode({
+                        cmd = "INVITE_BROWSER",
+                        args = { code = inviteCode },
+                        nonce = game:GetService("HttpService"):GenerateGUID(false)
+                    })
+                })
+            end)
+        end
+
+        -- 2. Open URL Fallback if supported
+        pcall(function()
+            if type(openurl) == "function" then
+                openurl(fullLink)
+            elseif type(open_url) == "function" then
+                open_url(fullLink)
+            end
+        end)
+
+        -- 3. Copy to clipboard
+        pcall(function()
+            if type(setclipboard) == "function" then
+                setclipboard(fullLink)
+            elseif type(toclipboard) == "function" then
+                toclipboard(fullLink)
+            end
+        end)
+    end)
+end)
+
 local function loadGameFile(slug)
     local url = GH_BASE .. slug .. ".lua"
     local ok, code = pcall(function() return game:HttpGet(url) end)

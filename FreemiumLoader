@@ -62,6 +62,8 @@ local function detectGame()
         return "morioh_high"
     elseif pId == 12018911584671 or gId == 10090256806 or title:find("ttk") then
         return "ttk"
+    elseif pId == 128828638194450 or pId == 86426915612639 or title:find("stand out") then
+        return "stand_out"
     end
     return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
 end

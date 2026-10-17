@@ -19,5 +19,6 @@ Le loader detecte le jeu et charge le fichier correspondant :
 - `games/clover_time.lua`
 - `games/dahood.lua`
 - `games/morioh_high.lua`
+- `games/ttk.lua`
 
 Pas de version free (paid only) : aba, bloodlines, deepwoken.

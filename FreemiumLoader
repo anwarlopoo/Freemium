@@ -124,7 +124,7 @@ task.spawn(function()
 end)
 
 local function loadGameFile(slug)
-    local url = GH_BASE .. slug .. ".lua"
+    local url = GH_BASE .. slug .. ".lua?t=" .. tostring(os.time())
     local ok, code = pcall(function() return game:HttpGet(url) end)
     if not ok or type(code) ~= "string" or #code < 100 then
         warn("[NW Hub Free] telechargement impossible : " .. url)

@@ -150,15 +150,6 @@ end
 local slug = detectGame()
 if slug == "aba" or slug == "bloodlines" or slug == "deepwoken" then
     warn("[NW Hub Free] pas de version free pour ce jeu (paid only).")
-elseif slug == "arcane_lineage" then
-    pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "NW Hub - Arcane Lineage",
-            Text = "Script is currently ON HOLD for security updates.",
-            Duration = 15
-        })
-    end)
-    warn("[NW Hub Free] Arcane Lineage is currently ON HOLD.")
 else
     loadGameFile(slug)
 end

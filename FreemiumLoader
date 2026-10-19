@@ -64,6 +64,8 @@ local function detectGame()
         return "ttk"
     elseif pId == 128828638194450 or pId == 86426915612639 or title:find("stand out") then
         return "stand_out"
+    elseif pId == 136298789948164 or gId == 8014990599 or title:find("hollow") or title:find("karakura") then
+        return "hollow"
     end
     return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
 end
@@ -150,6 +152,15 @@ end
 local slug = detectGame()
 if slug == "aba" or slug == "bloodlines" or slug == "deepwoken" then
     warn("[NW Hub Free] pas de version free pour ce jeu (paid only).")
+elseif slug == "arcane_lineage" then
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "NW Hub - Arcane Lineage",
+            Text = "Script is currently ON HOLD for updates.",
+            Duration = 15
+        })
+    end)
+    warn("[NW Hub Free] Arcane Lineage is currently ON HOLD.")
 else
     loadGameFile(slug)
 end

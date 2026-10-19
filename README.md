@@ -30,24 +30,20 @@ Pas de version free (paid only) : aba, bloodlines, deepwoken.
 ## Update Log
 
 ### [SPIN] Morioh High — Update v2.0
-- **Universal Multi-Layer Stand Auto-Parry**:
-  - Full coverage for **all 15 Stands** (Gold Experience, The World, Silver Chariot, Star Platinum, Crazy Diamond, Whitesnake, Wonder of U, TWOH, Sticky Fingers, The Hand, Soft & Wet, King Crimson, Cream, SPTW, D4C) and custom skins.
-  - Added multi-layer detection: `StandController.Active.Visuals`, `Workspace.StandVisuals.ChildAdded` (FX parts), Stand model animators, and incoming `StandMoveRequest` packets.
-  - Zero-latency continuous barrage parry (`0.05s` interval + instant `NextParryTime = 0` miss wipe) to guard and parry every hit of a barrage without guard breaks.
-- **Spin & Hamon Auto-Parry**:
-  - Added dedicated parry toggles for Spin moves (Steel Ball Throw, Blender) and Hamon moves (Slam, Overdrive).
-  - High-frequency steel ball and projectile trajectory tracking in `Workspace.SpinEffects` and `Workspace.HamonEffects`.
-- **QTE & Exam Solver Unstuck Fix**:
-  - Fixed player freeze after passing class mini-games and sports QTEs.
-  - Explicitly restores Roblox `PlayerModule:GetControls():Enable()`, releases `ContextActionService` key bindings (`ClassGameKeys`, `SportsAction`), resets character attributes (`InSport`, `ClassGame`), and clears invisible `Desk.Modal` cursor locks.
-- **Stand Arrow Auto-Tween & Notifier**:
-  - Clean linear tween navigation to newly spawned Stand Arrows on the map with automatic pickup on arrival.
-  - In-game notification banner alerts when rare items or arrows spawn.
-- **Movement & Utilities Overhaul**:
-  - Cleaned up obsolete infinite jump (game has fixed jump physics).
-  - WalkSpeed boost hooked directly into `MovementSpeedController` with smooth CFrame offset fallback.
-  - 100% win solver for `BarrageClash` QTEs.
+```diff
++ Universal Stand Parry: Auto-parries all 15 Stands barrages & skills (GE, TW, SC, SP, CD, WS, WoU, TWOH, SF, The Hand, S&W, KC, Cream, SPTW, D4C)
++ Continuous Barrage Defense: 0.05s parry loop with instant miss-cooldown wiping to block every barrage hit without guard break
++ Spin & Hamon Defense: Auto-parries Steel Ball Throw, Blender, Hamon Slam and Overdrive with projectile trajectory tracking
++ Exam & Class QTE Unstuck Fix: PlayerModule controls explicitly re-enabled, Desk.Modal focus cleared, and CAS key bindings released upon passing
++ Stand Arrow Auto-Tween: Instant smooth navigation to newly spawned Stand Arrows with automatic grab
++ Stand Arrow Notifier: In-game Kyoka banner alerts when rare items or arrows appear on the map
++ Stand Clash 100% Win: Frame-perfect QTE solver for BarrageClash minigames
+- Infinite Jump: Removed obsolete jump multiplier (incompatible with custom game gravity)
+```
 
 ### Arcane Lineage
-- **Status Hold**: Script kept on hold with stable Halloween story & pumpkin routine per instructions.
+```diff
++ Halloween Automation: Story progression & pumpkin gathering loops stabilized
+! Maintenance: Script kept on hold per instructions
+```
 

@@ -41,9 +41,13 @@ Pas de version free (paid only) : aba, bloodlines, deepwoken.
 - Infinite Jump: Removed obsolete jump multiplier (incompatible with custom game gravity)
 ```
 
-### Arcane Lineage
+### Arcane Lineage — Anti-Ban & Safeguards Update
 ```diff
-+ Halloween Automation: Story progression & pumpkin gathering loops stabilized
-! Maintenance: Script kept on hold per instructions
++ Adonis AntiCheat Bypass: Complete hook on Detected and Kill methods + debug.info sanity check neutralization
++ Tree & Obstacle Noclip Safeguard: Active directional raycasting disables collisions on trees, trunks, branches, rocks, and foliage during tweens
++ Anti-Clipping Velocity Tuning: Reduced horizontal cruise speed (24 studs/s) and descent speed (18 studs/s) under server threshold
++ Max Height Adjustment: Capped flight ceiling at 780 studs to prevent sky-limit and void-detection flags
++ Physics Spike Prevention: Controlled BodyVelocity MaxForce (4e5) preventing rubberbanding and collision ban triggers
++ Character Collision Control: Automatic full noclip while airborne with clean ground re-enable on arrival
 ```
 

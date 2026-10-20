@@ -66,10 +66,10 @@ local function detectGame()
         return "stand_out"
     elseif pId == 136298789948164 or gId == 8014990599 or title:find("hollow") or title:find("karakura") then
         return "hollow"
-    elseif pId == 77649408247578 or gId == 9931749389 or title:find("dungeon quest") then
+    elseif pId == 77649408247578 or pId == 85776757589518 or gId == 9931749389 or title:find("dungeon quest") then
         return "dungeon_quest_reborn"
     end
-    return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
+    return nil  -- pas de fallback silencieux vers un autre jeu
 end
 
 local GH_BASE = 'https://raw.githubusercontent.com/anwarlopoo/Freemium/refs/heads/main/games/'

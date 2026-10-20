@@ -66,6 +66,8 @@ local function detectGame()
         return "stand_out"
     elseif pId == 136298789948164 or gId == 8014990599 or title:find("hollow") or title:find("karakura") then
         return "hollow"
+    elseif pId == 77649408247578 or gId == 9931749389 or title:find("dungeon quest") then
+        return "dungeon_quest_reborn"
     end
     return "forgotten_stories"  -- fallback par defaut (comme deliver.js)
 end

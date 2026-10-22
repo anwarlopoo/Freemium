@@ -68,6 +68,8 @@ local function detectGame()
         return "hollow"
     elseif pId == 77649408247578 or pId == 85776757589518 or gId == 9931749389 or title:find("dungeon quest") then
         return "dungeon_quest_reborn"
+    elseif pId == 9224601490 or gId == 3457700596 or title:find("fruit battleground") then
+        return "fruit_battlegrounds"
     end
     return nil  -- pas de fallback silencieux vers un autre jeu
 end

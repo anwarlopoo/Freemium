@@ -23,5 +23,6 @@ Le loader detecte le jeu et charge le fichier correspondant :
 - `games/stand_out.lua`
 - `games/hollow.lua`
 - `games/dungeon_quest_reborn.lua`
+- `games/fruit_battlegrounds.lua`
 
 Pas de version free (paid only) : aba, bloodlines, deepwoken.

@@ -25,7 +25,8 @@ local function detectGame()
         or (gId == 5595353122 and (title:find("minigame") or title:find("dungeon"))) then
         return "slayers2_dungeon"
     elseif pId == 136406881576517 or pId == 16205713724 or pId == 130395143593224
-        or gId == 5595353122 or title:find("ouwland")
+        or pId == 127923506695764 or pId == 134190081223854
+        or gId == 5595353122 or gId == 10121862468 or title:find("ouwland")
         or (title:find("slayer") and not title:find("dungeon")) then
         return "slayers2"
     elseif pId == 125503525638054 or gId == 7970033072 or gId == 9125560083
@@ -131,18 +132,32 @@ end)
 
 local function loadGameFile(slug)
     if not slug or slug == "" then
-        warn("[NW Hub Free] Aucun jeu valide specifie pour le chargement.")
+        warn("[NW Hub Free] No valid game specified for loading.")
         return false
     end
     local url = GH_BASE .. slug .. ".lua?t=" .. tostring(os.time())
     local ok, code = pcall(function() return game:HttpGet(url) end)
     if not ok or type(code) ~= "string" or #code < 100 then
-        warn("[NW Hub Free] telechargement impossible : " .. url)
+        warn("[NW Hub Free] Download failed: " .. url)
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "NW Hub Free",
+                Text = "Failed to download module: " .. tostring(slug),
+                Duration = 5
+            })
+        end)
         return false
     end
     local fn, err = loadstring(code)
     if not fn then
-        warn("[NW Hub Free] erreur compile (" .. slug .. ") : " .. tostring(err))
+        warn("[NW Hub Free] Compilation error (" .. slug .. "): " .. tostring(err))
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "NW Hub Free",
+                Text = "Compilation error on " .. tostring(slug),
+                Duration = 5
+            })
+        end)
         return false
     end
     pcall(function()
@@ -152,7 +167,7 @@ local function loadGameFile(slug)
     end)
     local ok2, err2 = pcall(fn)
     if not ok2 then
-        warn("[NW Hub Free] erreur runtime (" .. slug .. ") : " .. tostring(err2))
+        warn("[NW Hub Free] Runtime error (" .. slug .. "): " .. tostring(err2))
     end
     return ok2
 end
@@ -160,16 +175,23 @@ end
 local slug = detectGame()
 if not slug then
     local pId = tostring(game.PlaceId or 0)
-    warn("[NW Hub Free] Jeu non supporte ou non reconnu (PlaceId: " .. pId .. ").")
+    warn("[NW Hub Free] Game not supported or unrecognized (PlaceId: " .. pId .. ").")
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "NW Hub Free",
-            Text = "Jeu non reconnu (PlaceId: " .. pId .. ")",
+            Text = "Game not recognized (PlaceId: " .. pId .. ")",
             Duration = 6
         })
     end)
 elseif slug == "aba" or slug == "bloodlines" or slug == "deepwoken" then
-    warn("[NW Hub Free] pas de version free pour ce jeu (paid only).")
+    warn("[NW Hub Free] No free version available for this game (Paid only).")
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "NW Hub Free",
+            Text = "No free tier for this game (Paid only).",
+            Duration = 6
+        })
+    end)
 else
     loadGameFile(slug)
 end

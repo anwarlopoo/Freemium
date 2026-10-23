@@ -28,7 +28,7 @@ local function detectGame()
         or pId == 127923506695764 or pId == 134190081223854
         or gId == 5595353122 or gId == 10121862468 or title:find("ouwland")
         or (title:find("slayer") and not title:find("dungeon")) then
-        return "slayers2"
+        return "slayer"
     elseif pId == 125503525638054 or gId == 7970033072 or gId == 9125560083
         or pId == 92746366113993 or pId == 101711949062342 or pId == 74308544038303
         or title:find("veil") or title:find("vail") then

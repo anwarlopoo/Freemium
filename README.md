@@ -8,7 +8,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/anwarlopoo/Freemium/r
 
 Le loader detecte le jeu et charge le fichier correspondant :
 
-- `games/slayers2.lua`
+- `games/slayer.lua`
 - `games/slayers2_dungeon.lua`
 - `games/the_veil.lua`
 - `games/arcane_lineage.lua`

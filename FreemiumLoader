@@ -130,6 +130,10 @@ task.spawn(function()
 end)
 
 local function loadGameFile(slug)
+    if not slug or slug == "" then
+        warn("[NW Hub Free] Aucun jeu valide specifie pour le chargement.")
+        return false
+    end
     local url = GH_BASE .. slug .. ".lua?t=" .. tostring(os.time())
     local ok, code = pcall(function() return game:HttpGet(url) end)
     if not ok or type(code) ~= "string" or #code < 100 then
@@ -154,7 +158,17 @@ local function loadGameFile(slug)
 end
 
 local slug = detectGame()
-if slug == "aba" or slug == "bloodlines" or slug == "deepwoken" then
+if not slug then
+    local pId = tostring(game.PlaceId or 0)
+    warn("[NW Hub Free] Jeu non supporte ou non reconnu (PlaceId: " .. pId .. ").")
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "NW Hub Free",
+            Text = "Jeu non reconnu (PlaceId: " .. pId .. ")",
+            Duration = 6
+        })
+    end)
+elseif slug == "aba" or slug == "bloodlines" or slug == "deepwoken" then
     warn("[NW Hub Free] pas de version free pour ce jeu (paid only).")
 else
     loadGameFile(slug)

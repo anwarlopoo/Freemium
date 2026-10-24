@@ -6933,22 +6933,7 @@ _G.CloverRPG_Cleanup = function()
     for _, d in ipairs(Hub.Drawings) do pcall(function() d:Remove() end) end
     table.clear(Hub.Drawings)
 
-    -- Kill zombie Kyoka InputBegan connections (prevents re-blurring on RightShift)
-    if getconnections then
-        pcall(function()
-            local uis = game:GetService("UserInputService")
-            for _, conn in ipairs(getconnections(uis.InputBegan)) do
-                local fn = conn.Function
-                if fn and debug and debug.getupvalues then
-                    for _, u in pairs(debug.getupvalues(fn)) do
-                        if typeof(u) == "table" and (rawget(u, "ToggleKey") or rawget(u, "GameBlur") or rawget(u, "CreateWindow")) then
-                            pcall(function() conn:Disable() end)
-                        end
-                    end
-                end
-            end
-        end)
-    end
+    -- Zombie killer removed (preserves active UI ToggleKey)
     
     -- Thorough UI cleanup across CoreGui and PlayerGui
     local core = game:GetService("CoreGui")

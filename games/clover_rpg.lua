@@ -7199,10 +7199,10 @@ local cloverPathfinder = PathfindingService:CreatePath({
     WaypointSpacing = 6
 })
 
--- Continuous Stepped Noclip: prevents micro-snags on foliage/doors
+-- Continuous Stepped Noclip: Only when Fly or Noclip explicitly enabled (never during normal pathing)
 local noclipConn = RunService.Stepped:Connect(function()
     if not Hub.Alive then return end
-    if Hub.Flags.Noclip or Hub.Flags.AutoFarm or Hub.Flags.AutoQuest or Hub.Flags.BossFarm or Hub.Flags.Fly or isTravelling then
+    if Hub.Flags.Noclip or Hub.Flags.Fly then
         local char = LocalPlayer.Character
         if char then
             for _, p in ipairs(char:GetDescendants()) do
@@ -7221,93 +7221,54 @@ local function safeMoveTo(targetPos, speed)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum or hum.Health <= 0 then return end
 
-    -- Check if already at destination (prevent looping when standing on spot)
-    local horizDist = Vector2.new(hrp.Position.X - targetPos.X, hrp.Position.Z - targetPos.Z).Magnitude
-    local vertDist = math.abs(hrp.Position.Y - targetPos.Y)
-    if horizDist <= 5.0 and vertDist <= 7.0 then
-        return
-    end
+    local targetV3 = typeof(targetPos) == "CFrame" and targetPos.Position or targetPos
+    local totalDist = (hrp.Position - targetV3).Magnitude
+    if totalDist <= 6.0 then return end
 
     isTravelling = true
-    speed = math.clamp(speed or Hub.Flags.TravelGlideSpeed or 80, 40, 100)
     pcall(function() char:SetAttribute("DisableFallDamage", true) end)
 
-    groundRayParams.FilterDescendantsInstances = { char }
-    groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
+    local targetSpeed = math.clamp(speed or Hub.Flags.TravelGlideSpeed or 55, 30, 65)
+    local origSpeed = hum.WalkSpeed
+    hum.WalkSpeed = targetSpeed
 
-    -- Calculate intelligent path avoiding all buildings, fences, walls and roofs
+    -- Intelligent Pathfinding around obstacles, buildings, fences and terrain
     local waypoints = nil
     pcall(function()
-        cloverPathfinder:ComputeAsync(hrp.Position, targetPos)
+        cloverPathfinder:ComputeAsync(hrp.Position, targetV3)
         if cloverPathfinder.Status == Enum.PathStatus.Success then
             waypoints = cloverPathfinder:GetWaypoints()
         end
     end)
 
     if waypoints and #waypoints > 1 then
-        -- Follow pathfinding waypoints around obstacles
-        local currentWpIndex = 1
-        local startTime = os.clock()
-        local maxDuration = math.clamp((#waypoints * 6) / (speed * 0.7) + 3.0, 4.0, 30.0)
-
-        while Hub.Alive and char and hrp and hum and hum.Health > 0 and currentWpIndex <= #waypoints do
-            if os.clock() - startTime > maxDuration then break end
-
-            local wp = waypoints[currentWpIndex]
-            local wpPos = wp.Position + Vector3.new(0, 2.5, 0)
-            local cur = hrp.Position
-            local diff = (wpPos - cur)
-            local dist = diff.Magnitude
-
-            if dist < 4.0 then
-                currentWpIndex = currentWpIndex + 1
-            else
-                local dt = task.wait()
-                local moveStep = math.min(speed * dt, dist)
-                local nextPos = cur + (diff.Unit * moveStep)
-
-                hrp.CFrame = CFrame.new(nextPos, nextPos + diff.Unit)
-                hrp.Velocity = Vector3.zero
-                hrp.AssemblyLinearVelocity = Vector3.zero
+        for i = 2, #waypoints do
+            if not Hub.Alive or not hum or hum.Health <= 0 or not isTravelling then break end
+            local wp = waypoints[i]
+            hum:MoveTo(wp.Position)
+            if wp.Action == Enum.PathWaypointAction.Jump then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+            local t0 = os.clock()
+            while (hrp.Position - wp.Position).Magnitude > 4.5 and (os.clock() - t0) < 1.2 do
+                task.wait()
+            end
+            if (hrp.Position - targetV3).Magnitude <= 7.0 then
+                break
             end
         end
     else
-        -- Fallback: Raycast Ground Glide if off navmesh
-        local startTime = os.clock()
-        local maxDuration = math.clamp((horizDist / (speed * 0.75)) + 2.5, 3.0, 20.0)
-
-        while Hub.Alive and char and hrp and hum and hum.Health > 0 do
-            if os.clock() - startTime > maxDuration then break end
-
-            local cur = hrp.Position
-            local diffHoriz = Vector3.new(targetPos.X - cur.X, 0, targetPos.Z - cur.Z)
-            local hDist = diffHoriz.Magnitude
-            local vDist = math.abs(targetPos.Y - cur.Y)
-
-            if hDist <= 4.0 and vDist <= 6.0 then
-                break
-            end
-
-            local dt = task.wait()
-            local moveStep = math.min(speed * dt, hDist)
-            local moveDir = hDist > 0.1 and diffHoriz.Unit or Vector3.zero
-            local nextHoriz = cur + (moveDir * moveStep)
-
-            local ray = WS:Raycast(nextHoriz + Vector3.new(0, 15, 0), Vector3.new(0, -40, 0), groundRayParams)
-            local targetY = ray and (ray.Position.Y + 3.0) or (cur.Y + (targetPos.Y - cur.Y) * math.clamp(moveStep / math.max(hDist, 1), 0, 1))
-
-            local nextPos = Vector3.new(nextHoriz.X, targetY, nextHoriz.Z)
-            local lookTarget = Vector3.new(targetPos.X, nextPos.Y, targetPos.Z)
-
-            hrp.CFrame = CFrame.new(nextPos, lookTarget)
-            hrp.Velocity = Vector3.zero
-            hrp.AssemblyLinearVelocity = Vector3.zero
+        -- Direct physical MoveTo with timeout
+        hum:MoveTo(targetV3)
+        local t0 = os.clock()
+        while (hrp.Position - targetV3).Magnitude > 6.0 and (os.clock() - t0) < 3.0 do
+            task.wait()
         end
     end
 
-    hrp.Velocity = Vector3.zero
-    hrp.AssemblyLinearVelocity = Vector3.zero
-    hrp.AssemblyAngularVelocity = Vector3.zero
+    if hum and hum.Health > 0 then
+        hum.WalkSpeed = (origSpeed and origSpeed > 0) and origSpeed or 16
+    end
     isTravelling = false
 end
 
@@ -7491,29 +7452,75 @@ local function getActivePlayerQuest()
         if not q:GetAttribute("Completed") then
             local tasks = q:FindFirstChild("Tasks")
             if tasks then
+                local allDone = true
+                local hasUnhidden = false
+                local activeTask = nil
+
                 for _, t in ipairs(tasks:GetChildren()) do
                     local isHidden = t:GetAttribute("Hidden")
-                    local curProg = t:GetAttribute("TaskProgress") or 0
-                    local maxProg = t:GetAttribute("TaskMax") or 1
-                    -- Strictly ignore hidden/locked prerequisite tasks
-                    if not isHidden and curProg < maxProg then
-                        local trackPos = t:GetAttribute("TrackPosition")
-                        return {
-                            QuestName = q:GetAttribute("Quest") or q.Name,
-                            TaskName = t.Name,
-                            TrackPosition = trackPos,
-                            Current = curProg,
-                            Max = maxProg,
-                            ReturnNPC = q:GetAttribute("ReturnNPC"),
-                            Object = t:GetAttribute("Object") or "",
-                            TaskType = t:GetAttribute("TaskType") or ""
-                        }
+                    if not isHidden then
+                        hasUnhidden = true
+                        local curProg = t:GetAttribute("TaskProgress") or 0
+                        local maxProg = t:GetAttribute("TaskMax") or 1
+                        if curProg < maxProg then
+                            allDone = false
+                            activeTask = {
+                                QuestName = q:GetAttribute("Quest") or q.Name,
+                                TaskName = t.Name,
+                                TrackPosition = t:GetAttribute("TrackPosition"),
+                                Current = curProg,
+                                Max = maxProg,
+                                ReturnNPC = q:GetAttribute("ReturnNPC"),
+                                Object = t:GetAttribute("Object") or "",
+                                TaskType = t:GetAttribute("TaskType") or "",
+                                ReadyToTurnIn = false
+                            }
+                            break
+                        end
                     end
+                end
+
+                if activeTask then
+                    return activeTask
+                elseif hasUnhidden and allDone then
+                    return {
+                        QuestName = q:GetAttribute("Quest") or q.Name,
+                        TaskName = "Turn In",
+                        TrackPosition = nil,
+                        Current = 1,
+                        Max = 1,
+                        ReturnNPC = q:GetAttribute("ReturnNPC"),
+                        Object = "",
+                        TaskType = "",
+                        ReadyToTurnIn = true
+                    }
                 end
             end
         end
     end
     return nil
+end
+
+-- Auto Harvest Minigame Critical Solver (Zero-Delay, 100% Perfect Cut)
+local HarvestRingsRemote = Remotes and Remotes:FindFirstChild("HarvestRings")
+if HarvestRingsRemote then
+    HarvestRingsRemote.OnClientEvent:Connect(function(action, data)
+        if not Hub.Alive then return end
+        if action == "Ring" and typeof(data) == "table" and data.Id then
+            task.spawn(function()
+                local travel = data.Travel or 0.8
+                local startTime = data.StartTime or workspace:GetServerTimeNow()
+                local targetTime = startTime + travel
+                while workspace:GetServerTimeNow() < targetTime and Hub.Alive do
+                    task.wait()
+                end
+                local spin = data.Spin or 0
+                local gapCenter = data.GapCenter or 0
+                local angle = (gapCenter + (spin * travel)) % 360
+                HarvestRingsRemote:FireServer("Report", data.Id, angle, workspace:GetServerTimeNow())
+            end)
+        end
+    end)
 end
 
 local function findMatchingMob(mobName)
@@ -7553,6 +7560,20 @@ local function runQuestFarmStep()
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not hrp or not hum or hum.Health <= 0 then return end
 
+        local vim = game:GetService("VirtualInputManager")
+
+        -- 0. Auto-advance dialogue whenever NPC chat window is open
+        local pgui = LocalPlayer:FindFirstChild("PlayerGui")
+        local chat = pgui and pgui:FindFirstChild("Gameplay") and pgui.Gameplay:FindFirstChild("Chat")
+        local chatBox = chat and chat:FindFirstChild("ChatBox")
+        if chat and chat.Visible and chatBox and chatBox.Visible then
+            vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+            task.wait(0.04)
+            vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+            task.wait(0.3)
+            return
+        end
+
         -- A. Verifier si le joueur a deja une quete en cours dans LocalPlayer.Quests
         local activeQuest = getActivePlayerQuest()
         if activeQuest then
@@ -7561,7 +7582,7 @@ local function runQuestFarmStep()
             Hub.QuestState.Kills = activeQuest.Current
 
             -- Auto-handle StarterQuest reward modal if open
-            local sq = LocalPlayer.PlayerGui:FindFirstChild("StarterQuest")
+            local sq = pgui and pgui:FindFirstChild("StarterQuest")
             if sq and sq:FindFirstChild("StarterWeapon") and sq.StarterWeapon.Visible then
                 local blade = sq.StarterWeapon.Options:FindFirstChild("Novice Blade") or sq.StarterWeapon.Options:FindFirstChildWhichIsA("GuiButton")
                 if blade then
@@ -7578,23 +7599,78 @@ local function runQuestFarmStep()
                 task.wait(0.4)
             end
 
-            if activeQuest.TrackPosition then
+            -- 1. Si la quete est prete a etre rendue au NPC
+            if activeQuest.ReadyToTurnIn and activeQuest.ReturnNPC then
+                Hub.QuestState.Phase = "Return -> " .. activeQuest.ReturnNPC
+                local npcPos, npc = getNPCLocation(activeQuest.ReturnNPC)
+                if (hrp.Position - npcPos).Magnitude > 8 then
+                    safeMoveTo(npcPos, Hub.Flags.TravelGlideSpeed or 55)
+                    task.wait(0.2)
+                end
+                interactWithNPC(npc)
+                vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                task.wait(0.04)
+                vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                task.wait(0.5)
+                return
+            end
+
+            -- 2. Si c'est une tache de collecte (Harvest crops/herbs/bamboo)
+            if activeQuest.TaskType == "Collect" or (activeQuest.TrackPosition and activeQuest.TrackPosition.Magnitude < 5) then
+                local objName = (activeQuest.Object and activeQuest.Object ~= "") and activeQuest.Object or "Bamboo"
+                Hub.QuestState.Phase = "Harvest: " .. objName
+
+                local targetNode = nil
+                local minDist = math.huge
+                local crops = WS:FindFirstChild("Map") and WS.Map:FindFirstChild("Harvestable") and WS.Map.Harvestable:FindFirstChild("Crops")
+                if crops then
+                    for _, c in ipairs(crops:GetChildren()) do
+                        if c.Name:lower():find(objName:lower()) then
+                            local p = c:GetPivot().Position
+                            local d = (p - hrp.Position).Magnitude
+                            if d < minDist then
+                                minDist = d
+                                targetNode = c
+                            end
+                        end
+                    end
+                end
+
+                if targetNode then
+                    local nodePos = targetNode:GetPivot().Position
+                    if (hrp.Position - nodePos).Magnitude > 7 then
+                        safeMoveTo(nodePos, Hub.Flags.TravelGlideSpeed or 55)
+                        task.wait(0.2)
+                    end
+                    local prompt = targetNode:FindFirstChildWhichIsA("ProximityPrompt", true)
+                    if prompt then
+                        vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                        task.wait(0.06)
+                        vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                        task.wait(0.6)
+                    end
+                end
+                return
+            end
+
+            -- 3. Si l'objectif a une position de suivi valide
+            if activeQuest.TrackPosition and activeQuest.TrackPosition.Magnitude >= 5 then
                 Hub.QuestState.Phase = "Objective: " .. activeQuest.TaskName
-                local dest = activeQuest.TrackPosition + Vector3.new(0, 2, 0)
+                local dest = activeQuest.TrackPosition
                 local curDist = (hrp.Position - dest).Magnitude
-                if curDist > 10 then
-                    safeMoveTo(dest, Hub.Flags.TravelGlideSpeed or 80)
+                if curDist > 8 then
+                    safeMoveTo(dest, Hub.Flags.TravelGlideSpeed or 55)
                     task.wait(0.2)
                 end
 
-                -- Verification d'interaction ou de prompt sur place (ciblé sur NPCS pour 0 lag)
+                -- Prompt interaction
                 local npcsFolder = WS:FindFirstChild("NPCS") or WS:FindFirstChild("NPCs")
                 if npcsFolder then
                     for _, pp in ipairs(npcsFolder:GetDescendants()) do
                         if pp:IsA("ProximityPrompt") and pp.Enabled then
                             local parentPart = pp.Parent
                             local pPos = parentPart and (parentPart:IsA("BasePart") and parentPart.Position or (parentPart:IsA("Model") and parentPart:GetPivot().Position or nil))
-                            if pPos and (pPos - hrp.Position).Magnitude <= 18 then
+                            if pPos and (pPos - hrp.Position).Magnitude <= 15 then
                                 if type(fireproximityprompt) == "function" then
                                     pcall(fireproximityprompt, pp, 0)
                                 end
@@ -7608,32 +7684,19 @@ local function runQuestFarmStep()
                     end
                 end
 
-                -- Auto-advance NPC Dialogue if Gameplay.Chat is open
-                local pgui = LocalPlayer:FindFirstChild("PlayerGui")
-                local chat = pgui and pgui:FindFirstChild("Gameplay") and pgui.Gameplay:FindFirstChild("Chat")
-                if chat and chat.Visible then
-                    local choiceBtn = chat:FindFirstChild("Button", true)
-                    if choiceBtn and choiceBtn.Visible then
-                        local vim = game:GetService("VirtualInputManager")
-                        local bPos = choiceBtn.AbsolutePosition + (choiceBtn.AbsoluteSize / 2)
-                        pcall(function()
-                            vim:SendMouseButtonEvent(bPos.X, bPos.Y, 0, true, game, 0)
-                            task.wait(0.04)
-                            vim:SendMouseButtonEvent(bPos.X, bPos.Y, 0, false, game, 0)
-                        end)
-                        for _, c in ipairs(getconnections(choiceBtn.Activated)) do c:Fire() end
-                        for _, c in ipairs(getconnections(choiceBtn.MouseButton1Click)) do c:Fire() end
-                    end
-                end
+                -- Dialogue choices
+                vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                task.wait(0.04)
+                vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
 
-                -- Si l'objectif requiert des kills
+                -- 4. Si l'objectif requiert des kills de mobs
                 if activeQuest.Object and activeQuest.Object ~= "" then
                     local mob = findMatchingMob(activeQuest.Object)
                     if mob and mob:FindFirstChild("HumanoidRootPart") then
                         local mHrp = mob.HumanoidRootPart
                         local mHum = mob:FindFirstChildOfClass("Humanoid")
                         local hover = mHrp.Position + Vector3.new(0, Hub.Flags.QuestHoverHeight or 4.5, 0)
-                        safeMoveTo(hover, 75)
+                        safeMoveTo(hover, 55)
                         if Hub.Flags.AutoEquip then equipWeapon(Hub.Flags.FarmWeapon) end
                         hrp.CFrame = CFrame.new(hover, mHrp.Position)
                         local atk = Hub.Flags.QuestAttackType == "Heavy" and "HeavyAttack" or "LightAttack"
@@ -7643,15 +7706,23 @@ local function runQuestFarmStep()
                         task.wait(Hub.Flags.QuestAttackDelay or 0.32)
                     end
                 end
-            elseif activeQuest.ReturnNPC then
+                return
+            end
+
+            -- 5. Fallback return to ReturnNPC
+            if activeQuest.ReturnNPC then
                 Hub.QuestState.Phase = "Return -> " .. activeQuest.ReturnNPC
                 local npcPos, npc = getNPCLocation(activeQuest.ReturnNPC)
-                if (hrp.Position - npcPos).Magnitude > 10 then
-                    safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 80)
+                if (hrp.Position - npcPos).Magnitude > 8 then
+                    safeMoveTo(npcPos, Hub.Flags.TravelGlideSpeed or 55)
                     task.wait(0.2)
                 end
                 interactWithNPC(npc)
+                vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                task.wait(0.04)
+                vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
                 task.wait(0.5)
+                return
             end
             return
         end
@@ -7672,11 +7743,14 @@ local function runQuestFarmStep()
         -- 1. Rejoindre le NPC et accepter la quete
         Hub.QuestState.Phase = "Travel -> " .. targetQuest.NpcName
         local npcPos, npc = getNPCLocation(targetQuest.NpcName, targetQuest.NpcFallbackPos)
-        if (hrp.Position - npcPos).Magnitude > 10 then
-            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 80)
+        if (hrp.Position - npcPos).Magnitude > 8 then
+            safeMoveTo(npcPos, Hub.Flags.TravelGlideSpeed or 55)
             task.wait(0.2)
         end
         interactWithNPC(npc)
+        vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+        task.wait(0.04)
+        vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
         task.wait(0.5)
 
         -- 2. Chasser les mobs
@@ -7691,7 +7765,7 @@ local function runQuestFarmStep()
                 local mHum = mob:FindFirstChildOfClass("Humanoid")
                 local hoverPos = mHrp.Position + Vector3.new(0, Hub.Flags.QuestHoverHeight or 4.5, 0)
                 
-                safeMoveTo(hoverPos, Hub.Flags.TravelTweenSpeed or 75)
+                safeMoveTo(hoverPos, Hub.Flags.TravelGlideSpeed or 55)
                 if Hub.Flags.AutoEquip then equipWeapon(Hub.Flags.FarmWeapon) end
 
                 hrp.CFrame = CFrame.new(hoverPos, mHrp.Position)
@@ -7713,11 +7787,14 @@ local function runQuestFarmStep()
 
         -- 3. Rendre la quete
         Hub.QuestState.Phase = "Return -> " .. targetQuest.NpcName
-        if (hrp.Position - npcPos).Magnitude > 10 then
-            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 80)
+        if (hrp.Position - npcPos).Magnitude > 8 then
+            safeMoveTo(npcPos, Hub.Flags.TravelGlideSpeed or 55)
             task.wait(0.2)
         end
         interactWithNPC(npc)
+        vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+        task.wait(0.04)
+        vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
         task.wait(0.4)
 
         Hub.RunStats.QuestsCompleted = Hub.RunStats.QuestsCompleted + 1
@@ -7738,6 +7815,56 @@ task.spawn(function()
             runQuestFarmStep()
         end
         task.wait(0.4)
+    end
+end)
+
+-- AUTO HARVEST BACKGROUND LOOP
+task.spawn(function()
+    while Hub.Alive do
+        if Hub.Flags.AutoHarvest and not Hub.Flags.AutoQuest then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if not hrp or not hum or hum.Health <= 0 then return end
+
+                local crops = WS:FindFirstChild("Map") and WS.Map:FindFirstChild("Harvestable") and WS.Map.Harvestable:FindFirstChild("Crops")
+                if not crops then return end
+
+                local targetCrop = nil
+                local minDist = math.huge
+                local selected = Hub.Flags.SelectedCrop or "All"
+
+                for _, c in ipairs(crops:GetChildren()) do
+                    local isMatch = (selected == "All") or (c.Name:lower():find(selected:lower()))
+                    if isMatch then
+                        local p = c:GetPivot().Position
+                        local d = (p - hrp.Position).Magnitude
+                        if d < minDist then
+                            minDist = d
+                            targetCrop = c
+                        end
+                    end
+                end
+
+                if targetCrop then
+                    local cPos = targetCrop:GetPivot().Position
+                    if (hrp.Position - cPos).Magnitude > 7 then
+                        safeMoveTo(cPos, Hub.Flags.TravelGlideSpeed or 55)
+                        task.wait(0.2)
+                    end
+                    local prompt = targetCrop:FindFirstChildWhichIsA("ProximityPrompt", true)
+                    if prompt then
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                        task.wait(0.06)
+                        vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                        task.wait(Hub.Flags.HarvestWait or 1.0)
+                    end
+                end
+            end)
+        end
+        task.wait(0.5)
     end
 end)
 

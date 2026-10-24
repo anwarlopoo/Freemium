@@ -15393,6 +15393,37 @@ local function HookQTEModules(handleScript, profileMap)
     end
 end
 
+-- RemoteFunction OnClientInvoke Hooks for Remotes.Fight
+pcall(function()
+    local rep = game:GetService("ReplicatedStorage")
+    local fightRemotes = rep:FindFirstChild("Remotes") and rep.Remotes:FindFirstChild("Fight")
+    if fightRemotes then
+        for _, r in ipairs(fightRemotes:GetChildren()) do
+            if r:IsA("RemoteFunction") and not getgenv()["NW_Hooked_RF_" .. r.Name] then
+                getgenv()["NW_Hooked_RF_" .. r.Name] = true
+                local rName = r.Name
+                local sName = rName:gsub("QTE$", ""):gsub("MiniGame$", "")
+                r.OnClientInvoke = function(...)
+                    local args = {...}
+                    local data = args[1]
+                    if sName == "Dodge" then
+                        if Config.AutoDodge or Config.LegitDodge then
+                            return NW_BuildDodgeResult(data)
+                        end
+                    elseif Config.AutoQTE or (sName == "Thorian" and Config.AutoThorianQTE) then
+                        task.wait(QTEDelay(rName, data))
+                        return NW_BuildQTEResult(rName, data)
+                    end
+                    if type(data) == "table" and data.Nonce then
+                        return { Nonce = data.Nonce, Inputs = {} }
+                    end
+                    return true
+                end
+            end
+        end
+    end
+end)
+
 -- Central QTE Multi-Layer Applier
 local function ApplyAllQTEHooks(forceGC)
     local activeProfile = GetActiveProfile()
@@ -15421,6 +15452,28 @@ local function ApplyAllQTEHooks(forceGC)
                 if fn and type(getupvalues) == "function" then
                     local upvs = getupvalues(fn)
                     local scrName = (debug.info and debug.info(fn, "s")) or ""
+                    local u3 = upvs[1]
+                    local applyAliases = upvs[2]
+
+                    if type(applyAliases) == "function" then
+                        pcall(function()
+                            local aUpvs = getupvalues(applyAliases)
+                            local targetU47 = aUpvs[3]
+                            if type(targetU47) == "table" then
+                                for _, entry in ipairs(targetU47) do
+                                    local canonical = entry[1]
+                                    local origHandler = entry[2]
+                                    if type(origHandler) == "function" and not HookedModules[origHandler] then
+                                        local wrapped = WrapQTEFunction(canonical, origHandler)
+                                        HookedModules[wrapped] = true
+                                        entry[2] = wrapped
+                                    end
+                                end
+                                pcall(applyAliases)
+                            end
+                        end)
+                    end
+
                     for _, up in pairs(upvs) do
                         if type(up) == "table" then
                             local match = false
@@ -15438,41 +15491,6 @@ local function ApplyAllQTEHooks(forceGC)
                             if match then
                                 PatchU3Table(up, activeProfile)
                             end
-                        elseif type(up) == "function" then
-                            pcall(function()
-                                local function crawlU47(targetFn, d)
-                                    d = d or 0
-                                    if d > 4 or type(targetFn) ~= "function" then return nil end
-                                    local innerUpvs = getupvalues(targetFn)
-                                    for _, iup in pairs(innerUpvs) do
-                                        if type(iup) == "table" and #iup >= 10 then
-                                            for _, entry in ipairs(iup) do
-                                                if type(entry) == "table" and type(entry[1]) == "string" and (entry[1]:find("QTE") or entry[1] == "UniqueQuestChoice") and type(entry[2]) == "function" then
-                                                    return iup
-                                                end
-                                            end
-                                        elseif type(iup) == "function" then
-                                            local found = crawlU47(iup, d + 1)
-                                            if found then return found end
-                                        end
-                                    end
-                                    return nil
-                                end
-
-                                local targetU47 = crawlU47(up)
-                                if targetU47 then
-                                    for _, entry in ipairs(targetU47) do
-                                        local canonical = entry[1]
-                                        local origHandler = entry[2]
-                                        if type(origHandler) == "function" and not HookedModules[origHandler] then
-                                            local wrapped = WrapQTEFunction(canonical, origHandler)
-                                            HookedModules[wrapped] = true
-                                            entry[2] = wrapped
-                                        end
-                                    end
-                                    pcall(up)
-                                end
-                            end)
                         end
                     end
                 end

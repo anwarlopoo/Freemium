@@ -7958,7 +7958,7 @@ local function evaluateTrack(model, track, root, dist)
         else
             local len = track.Length or 1.0
             if len > 0.5 then
-                delayTime = round(len * 0.35, 3)
+                delayTime = math.floor((len * 0.35) * 1000 + 0.5) / 1000
             else
                 delayTime = 0.22
             end

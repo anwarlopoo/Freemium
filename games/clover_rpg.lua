@@ -7448,53 +7448,84 @@ end
 local function getActivePlayerQuest()
     local quests = LocalPlayer:FindFirstChild("Quests")
     if not quests then return nil end
+
+    -- Priority 1: Check specific sub-quests (quests with TrackAfter, e.g. Johan, Eira)
+    -- Priority 2: Overarching storyline quests (e.g. Helping)
+    local questList = {}
     for _, q in ipairs(quests:GetChildren()) do
         if not q:GetAttribute("Completed") then
-            local tasks = q:FindFirstChild("Tasks")
-            if tasks then
-                local allDone = true
-                local hasUnhidden = false
-                local activeTask = nil
+            if q:GetAttribute("TrackAfter") then
+                table.insert(questList, 1, q) -- Sub-quests take first priority!
+            else
+                table.insert(questList, q)
+            end
+        end
+    end
 
-                for _, t in ipairs(tasks:GetChildren()) do
-                    local isHidden = t:GetAttribute("Hidden")
-                    if not isHidden then
-                        hasUnhidden = true
-                        local curProg = t:GetAttribute("TaskProgress") or 0
-                        local maxProg = t:GetAttribute("TaskMax") or 1
-                        if curProg < maxProg then
-                            allDone = false
-                            activeTask = {
-                                QuestName = q:GetAttribute("Quest") or q.Name,
-                                TaskName = t.Name,
-                                TrackPosition = t:GetAttribute("TrackPosition"),
-                                Current = curProg,
-                                Max = maxProg,
-                                ReturnNPC = q:GetAttribute("ReturnNPC"),
-                                Object = t:GetAttribute("Object") or "",
-                                TaskType = t:GetAttribute("TaskType") or "",
-                                ReadyToTurnIn = false
-                            }
-                            break
+    for _, q in ipairs(questList) do
+        local tasks = q:FindFirstChild("Tasks")
+        if tasks then
+            local allDone = true
+            local hasUnhidden = false
+            local activeTask = nil
+
+            for _, t in ipairs(tasks:GetChildren()) do
+                local isHidden = t:GetAttribute("Hidden")
+                if not isHidden then
+                    hasUnhidden = true
+                    local curProg = t:GetAttribute("TaskProgress") or 0
+                    local maxProg = t:GetAttribute("TaskMax") or 1
+                    if curProg < maxProg then
+                        allDone = false
+                        local trackPos = t:GetAttribute("TrackPosition")
+                        local objName = t:GetAttribute("Object") or ""
+
+                        -- Dynamic Resolution for zero trackPos or Collect tasks
+                        if (not trackPos or trackPos.Magnitude < 5) and objName ~= "" then
+                            -- Check ShopObjects / Materials
+                            local mats = WS:FindFirstChild("Objects") and WS.Objects:FindFirstChild("ShopObjects") and WS.Objects.ShopObjects:FindFirstChild("Materials")
+                            if mats and mats:FindFirstChild(objName) then
+                                trackPos = mats[objName]:GetPivot().Position
+                            end
+                            -- Check QuestObjects
+                            if not trackPos or trackPos.Magnitude < 5 then
+                                local qObj = WS:FindFirstChild("Objects") and WS.Objects:FindFirstChild(q.Name)
+                                if qObj and qObj:FindFirstChild(t.Name) and qObj[t.Name]:IsA("BasePart") then
+                                    trackPos = qObj[t.Name].Position
+                                end
+                            end
                         end
+
+                        activeTask = {
+                            QuestName = q:GetAttribute("Quest") or q.Name,
+                            TaskName = t.Name,
+                            TrackPosition = trackPos,
+                            Current = curProg,
+                            Max = maxProg,
+                            ReturnNPC = q:GetAttribute("ReturnNPC"),
+                            Object = objName,
+                            TaskType = t:GetAttribute("TaskType") or "",
+                            ReadyToTurnIn = false
+                        }
+                        break
                     end
                 end
+            end
 
-                if activeTask then
-                    return activeTask
-                elseif hasUnhidden and allDone then
-                    return {
-                        QuestName = q:GetAttribute("Quest") or q.Name,
-                        TaskName = "Turn In",
-                        TrackPosition = nil,
-                        Current = 1,
-                        Max = 1,
-                        ReturnNPC = q:GetAttribute("ReturnNPC"),
-                        Object = "",
-                        TaskType = "",
-                        ReadyToTurnIn = true
-                    }
-                end
+            if activeTask then
+                return activeTask
+            elseif hasUnhidden and allDone then
+                return {
+                    QuestName = q:GetAttribute("Quest") or q.Name,
+                    TaskName = "Turn In",
+                    TrackPosition = nil,
+                    Current = 1,
+                    Max = 1,
+                    ReturnNPC = q:GetAttribute("ReturnNPC"),
+                    Object = "",
+                    TaskType = "",
+                    ReadyToTurnIn = true
+                }
             end
         end
     end
@@ -7562,11 +7593,21 @@ local function runQuestFarmStep()
 
         local vim = game:GetService("VirtualInputManager")
 
-        -- 0. Auto-advance dialogue whenever NPC chat window is open
+        -- 0. Auto-advance dialogue whenever NPC chat window is open (fires button Activated + MouseClick + KeyCode.One)
         local pgui = LocalPlayer:FindFirstChild("PlayerGui")
         local chat = pgui and pgui:FindFirstChild("Gameplay") and pgui.Gameplay:FindFirstChild("Chat")
         local chatBox = chat and chat:FindFirstChild("ChatBox")
         if chat and chat.Visible and chatBox and chatBox.Visible then
+            local choices = chatBox:FindFirstChild("Choices")
+            if choices then
+                for _, c in ipairs(choices:GetChildren()) do
+                    local btn = c:FindFirstChild("Button")
+                    if btn and btn.Visible then
+                        for _, conn in ipairs(getconnections(btn.Activated)) do conn:Fire() end
+                        for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do conn:Fire() end
+                    end
+                end
+            end
             vim:SendKeyEvent(true, Enum.KeyCode.One, false, game)
             task.wait(0.04)
             vim:SendKeyEvent(false, Enum.KeyCode.One, false, game)
@@ -7615,40 +7656,65 @@ local function runQuestFarmStep()
                 return
             end
 
-            -- 2. Si c'est une tache de collecte (Harvest crops/herbs/bamboo)
+            -- 2. Si c'est une tache de collecte (Harvest crops/bamboo or Gather Wood/Cloth)
             if activeQuest.TaskType == "Collect" or (activeQuest.TrackPosition and activeQuest.TrackPosition.Magnitude < 5) then
-                local objName = (activeQuest.Object and activeQuest.Object ~= "") and activeQuest.Object or "Bamboo"
-                Hub.QuestState.Phase = "Harvest: " .. objName
+                local objName = (activeQuest.Object and activeQuest.Object ~= "") and activeQuest.Object or "Item"
+                Hub.QuestState.Phase = "Gather: " .. objName
 
-                local targetNode = nil
-                local minDist = math.huge
-                local crops = WS:FindFirstChild("Map") and WS.Map:FindFirstChild("Harvestable") and WS.Map.Harvestable:FindFirstChild("Crops")
-                if crops then
-                    for _, c in ipairs(crops:GetChildren()) do
-                        if c.Name:lower():find(objName:lower()) then
-                            local p = c:GetPivot().Position
-                            local d = (p - hrp.Position).Magnitude
-                            if d < minDist then
-                                minDist = d
-                                targetNode = c
+                local targetPos = (activeQuest.TrackPosition and activeQuest.TrackPosition.Magnitude >= 5) and activeQuest.TrackPosition or nil
+
+                -- Fallback lookup in ShopObjects / Materials or Crops
+                if not targetPos then
+                    local mats = WS:FindFirstChild("Objects") and WS.Objects:FindFirstChild("ShopObjects") and WS.Objects.ShopObjects:FindFirstChild("Materials")
+                    if mats and mats:FindFirstChild(objName) then
+                        targetPos = mats[objName]:GetPivot().Position
+                    end
+                    if not targetPos then
+                        local crops = WS:FindFirstChild("Map") and WS.Map:FindFirstChild("Harvestable") and WS.Map.Harvestable:FindFirstChild("Crops")
+                        if crops then
+                            local bestCrop = nil
+                            local minDist = math.huge
+                            for _, c in ipairs(crops:GetChildren()) do
+                                if c.Name:lower():find(objName:lower()) then
+                                    local p = c:GetPivot().Position
+                                    local d = (p - hrp.Position).Magnitude
+                                    if d < minDist then
+                                        minDist = d
+                                        bestCrop = c
+                                    end
+                                end
                             end
+                            if bestCrop then targetPos = bestCrop:GetPivot().Position end
                         end
                     end
                 end
 
-                if targetNode then
-                    local nodePos = targetNode:GetPivot().Position
-                    if (hrp.Position - nodePos).Magnitude > 7 then
-                        safeMoveTo(nodePos, Hub.Flags.TravelGlideSpeed or 55)
+                if targetPos then
+                    if (hrp.Position - targetPos).Magnitude > 6 then
+                        safeMoveTo(targetPos, Hub.Flags.TravelGlideSpeed or 55)
                         task.wait(0.2)
                     end
-                    local prompt = targetNode:FindFirstChildWhichIsA("ProximityPrompt", true)
-                    if prompt then
-                        vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                        task.wait(0.06)
-                        vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                        task.wait(0.6)
+
+                    -- Look for prompt around target position
+                    local prompt = nil
+                    for _, p in ipairs(WS:GetDescendants()) do
+                        if p:IsA("ProximityPrompt") and p.Enabled then
+                            local pPos = p.Parent:IsA("BasePart") and p.Parent.Position or (p.Parent:IsA("Model") and p.Parent:GetPivot().Position or nil)
+                            if pPos and (pPos - hrp.Position).Magnitude <= 10 then
+                                prompt = p
+                                break
+                            end
+                        end
                     end
+
+                    if prompt then
+                        if fireproximityprompt then pcall(fireproximityprompt, prompt, 0) end
+                    end
+
+                    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                    task.wait(0.06)
+                    vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                    task.wait(0.8)
                 end
                 return
             end

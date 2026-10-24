@@ -7460,9 +7460,11 @@ local function getActivePlayerQuest()
             local tasks = q:FindFirstChild("Tasks")
             if tasks then
                 for _, t in ipairs(tasks:GetChildren()) do
+                    local isHidden = t:GetAttribute("Hidden")
                     local curProg = t:GetAttribute("TaskProgress") or 0
                     local maxProg = t:GetAttribute("TaskMax") or 1
-                    if curProg < maxProg then
+                    -- Strictly ignore hidden/locked prerequisite tasks
+                    if not isHidden and curProg < maxProg then
                         local trackPos = t:GetAttribute("TrackPosition")
                         return {
                             QuestName = q:GetAttribute("Quest") or q.Name,
@@ -7553,15 +7555,42 @@ local function runQuestFarmStep()
                     task.wait(0.2)
                 end
 
-                -- Verification d'interaction ou de prompt sur place
-                for _, obj in ipairs(WS:GetDescendants()) do
-                    if obj:IsA("ProximityPrompt") then
-                        local part = obj.Parent
-                        if part and part:IsA("BasePart") and (part.Position - hrp.Position).Magnitude <= 20 then
-                            if type(fireproximityprompt) == "function" then
-                                pcall(fireproximityprompt, obj)
+                -- Verification d'interaction ou de prompt sur place (ciblé sur NPCS pour 0 lag)
+                local npcsFolder = WS:FindFirstChild("NPCS") or WS:FindFirstChild("NPCs")
+                if npcsFolder then
+                    for _, pp in ipairs(npcsFolder:GetDescendants()) do
+                        if pp:IsA("ProximityPrompt") and pp.Enabled then
+                            local parentPart = pp.Parent
+                            local pPos = parentPart and (parentPart:IsA("BasePart") and parentPart.Position or (parentPart:IsA("Model") and parentPart:GetPivot().Position or nil))
+                            if pPos and (pPos - hrp.Position).Magnitude <= 18 then
+                                if type(fireproximityprompt) == "function" then
+                                    pcall(fireproximityprompt, pp, 0)
+                                end
+                                pcall(function()
+                                    pp:InputHoldBegin()
+                                    task.wait(0.05)
+                                    pp:InputHoldEnd()
+                                end)
                             end
                         end
+                    end
+                end
+
+                -- Auto-advance NPC Dialogue if Gameplay.Chat is open
+                local pgui = LocalPlayer:FindFirstChild("PlayerGui")
+                local chat = pgui and pgui:FindFirstChild("Gameplay") and pgui.Gameplay:FindFirstChild("Chat")
+                if chat and chat.Visible then
+                    local choiceBtn = chat:FindFirstChild("Button", true)
+                    if choiceBtn and choiceBtn.Visible then
+                        local vim = game:GetService("VirtualInputManager")
+                        local bPos = choiceBtn.AbsolutePosition + (choiceBtn.AbsoluteSize / 2)
+                        pcall(function()
+                            vim:SendMouseButtonEvent(bPos.X, bPos.Y, 0, true, game, 0)
+                            task.wait(0.04)
+                            vim:SendMouseButtonEvent(bPos.X, bPos.Y, 0, false, game, 0)
+                        end)
+                        for _, c in ipairs(getconnections(choiceBtn.Activated)) do c:Fire() end
+                        for _, c in ipairs(getconnections(choiceBtn.MouseButton1Click)) do c:Fire() end
                     end
                 end
 

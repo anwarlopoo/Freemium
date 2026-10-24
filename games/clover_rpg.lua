@@ -7859,19 +7859,65 @@ local function performParry(holdDuration)
     end)
 end
 
-local function performDodge()
+local function performDodge(enemyHrp)
     local now = os.clock()
-    if (now - lastDodgeTime) < 0.75 then return end
+    if (now - lastDodgeTime) < 0.65 then return end
     lastDodgeTime = now
 
     task.spawn(function()
         pcall(function()
+            local char = LocalPlayer.Character
+            local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+            -- Physical evasion: Move out of the attacker's forward attack hitbox cone
+            if myHrp and hum then
+                local evadeDir = Vector3.new(0, 0, 0)
+                if enemyHrp and enemyHrp.Parent then
+                    local diff = myHrp.Position - enemyHrp.Position
+                    diff = Vector3.new(diff.X, 0, diff.Z)
+                    if diff.Magnitude > 0.1 then
+                        -- Escape backwards and laterally perpendicular to the attack line
+                        local enemyLook = enemyHrp.CFrame.LookVector
+                        local crossRight = Vector3.new(-diff.Z, 0, diff.X).Unit
+                        -- Determine whether player is more to the left or right of enemy face
+                        local dotRight = diff.Unit:Dot(Vector3.new(-enemyLook.Z, 0, enemyLook.X))
+                        local lateralSign = dotRight >= 0 and 1 or -1
+                        evadeDir = (diff.Unit * 0.55 + (crossRight * lateralSign) * 0.85).Unit
+                    else
+                        evadeDir = -myHrp.CFrame.LookVector
+                    end
+                else
+                    evadeDir = -myHrp.CFrame.LookVector
+                end
+
+                hum:Move(evadeDir, false)
+            end
+
+            -- 1. Send official Roll packet to server (ByteNetMax)
             Packets.Combat.packets.RollInput.send({
                 Action = "Roll",
                 typeOf = ""
             })
+
+            -- 2. Trigger game's client Roll bindable if present
+            local binds = LocalPlayer:FindFirstChild("Binds") or (char and char:FindFirstChild("Binds"))
+            if binds and binds:FindFirstChild("Roll") then
+                pcall(function() binds.Roll:Fire(Enum.UserInputState.Begin) end)
+            end
+
+            -- 3. Virtual Keypress on Roll key (KeyCode.Q / physical A on French AZERTY)
+            local vim = game:GetService("VirtualInputManager")
+            if vim then
+                pcall(function()
+                    vim:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                    task.wait(0.04)
+                    vim:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                end)
+            end
         end)
     end)
+end
 end
 
 local function evaluateTrack(model, track, root, dist)
@@ -7929,17 +7975,19 @@ local function evaluateTrack(model, track, root, dist)
     if remaining <= 0.085 and remaining >= -0.065 then
         activeAttackQueues[queueKey] = os.clock()
         if isHeavy then
-            performDodge()
+            performDodge(root)
         else
             performParry(0.22)
         end
         return
     end
 
-    -- Hit is coming in the near future (between 85ms and 650ms) -> Schedule exact arrival
-    if remaining > 0.085 and remaining <= 0.65 then
+    -- Hit is coming in the near future (between 85ms and 750ms) -> Schedule exact arrival
+    if remaining > 0.085 and remaining <= 0.75 then
         activeAttackQueues[queueKey] = os.clock()
-        task.delay(remaining - 0.02, function()
+        -- For heavy attacks, initiate dodge ~0.14s before impact so i-frames are active at impact!
+        local triggerDelay = isHeavy and math.max(0, remaining - 0.14) or math.max(0, remaining - 0.02)
+        task.delay(triggerDelay, function()
             if not Hub.Alive or not Hub.Flags.AutoParry then return end
             local char = LocalPlayer.Character
             local myHrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -7947,7 +7995,7 @@ local function evaluateTrack(model, track, root, dist)
             if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 3 then return end
 
             if isHeavy then
-                performDodge()
+                performDodge(root)
             else
                 performParry(0.22)
             end
@@ -8001,10 +8049,10 @@ local function monitorAttacker(model)
         if desc:IsA("Highlight") then
             local color = desc.FillColor
             if color.R > 0.7 and color.G < 0.35 and color.B < 0.35 then
-                task.spawn(performDodge)
+                task.spawn(function() performDodge(root) end)
             end
         elseif desc.Name == "Unblockable" or desc.Name == "HeavyHighlight" then
-            task.spawn(performDodge)
+            task.spawn(function() performDodge(root) end)
         end
     end)
     table.insert(Hub.Connections, descConn)
@@ -8047,7 +8095,7 @@ local function hookSpellRemotes()
 
         if dist <= (Hub.Flags.AutoParryRange or 25) + 5 then
             if mName:find("ultimate") or mName:find("stomp") or mName:find("howl") or mName:find("collapse") or mName:find("dive") or mName:find("comet") then
-                task.spawn(performDodge)
+                task.spawn(function() performDodge(root) end)
             else
                 task.spawn(function() performParry(0.22) end)
             end

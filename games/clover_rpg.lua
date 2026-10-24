@@ -7590,258 +7590,249 @@ end)
 -- ---------------------------------------------------------------------
 -- Comprehensive Attack & Spell Timings (M1 + Skills + Magic)
 local AttackConfig = {
-    -- === WEAPON M1s & COMBAT (Exact Millisecond Timings) ===
-    -- Rapier
-    ["rbxassetid://123565976636065"] = { Name = "Rapier1", Delay = 0.26, Length = 0.750, Heavy = false },
-    ["rbxassetid://88525660121099"]   = { Name = "Rapier2", Delay = 0.24, Length = 0.700, Heavy = false },
-    ["rbxassetid://75817196379763"]   = { Name = "Rapier3", Delay = 0.26, Length = 0.750, Heavy = false },
-    ["rbxassetid://10694823147"]      = { Name = "HeavyRapier", Delay = 0.52, Length = 1.200, Heavy = true },
-    -- Katana
-    ["rbxassetid://14527230703"]      = { Name = "Katana1", Delay = 0.38, Length = 1.167, Heavy = false },
-    ["rbxassetid://14527234407"]      = { Name = "Katana2", Delay = 0.32, Length = 0.933, Heavy = false },
-    ["rbxassetid://112932641545194"]  = { Name = "Katana3", Delay = 0.36, Length = 1.040, Heavy = false },
-    ["rbxassetid://14452988294"]      = { Name = "HeavyKatana", Delay = 0.50, Length = 1.120, Heavy = true },
-    ["rbxassetid://10017557380"]      = { Name = "RunningKatana", Delay = 0.22, Length = 0.583, Heavy = false },
-    -- Sword / Blade
-    ["rbxassetid://89849437438829"]   = { Name = "Sword1", Delay = 0.30, Length = 0.917, Heavy = false },
-    ["rbxassetid://89652204450491"]   = { Name = "Sword2", Delay = 0.30, Length = 0.900, Heavy = false },
-    ["rbxassetid://74594683886829"]   = { Name = "Sword3", Delay = 0.30, Length = 0.900, Heavy = false },
-    ["rbxassetid://75088128678260"]   = { Name = "HeavySword", Delay = 0.52, Length = 1.133, Heavy = true },
-    -- Dagger
-    ["rbxassetid://70936328766912"]   = { Name = "Dagger1", Delay = 0.24, Length = 0.733, Heavy = false },
-    ["rbxassetid://120283215167024"]  = { Name = "Dagger2", Delay = 0.20, Length = 0.567, Heavy = false },
-    ["rbxassetid://94189509684810"]   = { Name = "Dagger3", Delay = 0.22, Length = 0.600, Heavy = false },
-    ["rbxassetid://9557400534"]       = { Name = "HeavyDagger", Delay = 0.50, Length = 1.133, Heavy = true },
-    ["rbxassetid://11262591531"]      = { Name = "DaggerSpin", Delay = 0.18, Length = 0.500, Heavy = false },
-    ["rbxassetid://136129024555254"]  = { Name = "RunningDagger", Delay = 0.20, Length = 0.617, Heavy = false },
-    -- Spear & Trident
-    ["rbxassetid://86722279259826"]   = { Name = "Spear1", Delay = 0.32, Length = 0.950, Heavy = false },
-    ["rbxassetid://107811934597910"]  = { Name = "Spear2", Delay = 0.30, Length = 0.900, Heavy = false },
-    ["rbxassetid://122307357536158"]  = { Name = "Spear3", Delay = 0.30, Length = 0.900, Heavy = false },
-    ["rbxassetid://10017994824"]      = { Name = "HeavySpear", Delay = 0.38, Length = 0.717, Heavy = true },
-    ["rbxassetid://14850217335"]      = { Name = "HeavyTrident", Delay = 0.42, Length = 1.050, Heavy = true },
-    -- Greatsword & Greataxe
-    ["rbxassetid://11100915060"]      = { Name = "HeavyGreatsword", Delay = 0.45, Length = 0.717, Heavy = true },
-    ["rbxassetid://11100897909"]      = { Name = "Greataxe1_3", Delay = 0.28, Length = 0.700, Heavy = false },
-    ["rbxassetid://11100902766"]      = { Name = "Greataxe2", Delay = 0.28, Length = 0.700, Heavy = false },
-    ["rbxassetid://17564283859"]      = { Name = "HeavyGreataxe", Delay = 0.48, Length = 1.100, Heavy = true },
-    -- Fist & Brawler
-    ["rbxassetid://123693468061117"]  = { Name = "Punch1", Delay = 0.18, Length = 0.517, Heavy = false },
-    ["rbxassetid://111510911006717"]  = { Name = "Punch2", Delay = 0.20, Length = 0.617, Heavy = false },
-    ["rbxassetid://85570415456598"]   = { Name = "Punch3", Delay = 0.18, Length = 0.483, Heavy = false },
-    ["rbxassetid://8594363819"]       = { Name = "HeavyPunch", Delay = 0.40, Length = 0.767, Heavy = true },
-    -- Scythe
-    ["rbxassetid://104165983064642"]  = { Name = "Scythe1", Delay = 0.30, Length = 0.950, Heavy = false },
-    ["rbxassetid://70574481445445"]   = { Name = "Scythe2", Delay = 0.30, Length = 0.900, Heavy = false },
-    ["rbxassetid://115704466488110"]  = { Name = "Scythe3", Delay = 0.32, Length = 0.950, Heavy = false },
-    ["rbxassetid://76395852273763"]   = { Name = "HeavyScythe", Delay = 0.48, Length = 1.150, Heavy = true },
-    -- Skills & Crits (Weapon / Magic)
-    ["rbxassetid://13990394139"]      = { Name = "PiercingFlurry", Delay = 0.30, Length = 1.920, Heavy = true },
-    ["rbxassetid://13990348548"]      = { Name = "VerticalStrike", Delay = 0.42, Length = 1.160, Heavy = true },
-    ["rbxassetid://13990295202"]      = { Name = "VaultBreaker", Delay = 0.45, Length = 1.320, Heavy = true },
-    ["rbxassetid://13990268150"]      = { Name = "RelentlessRush", Delay = 0.40, Length = 1.440, Heavy = true },
-    ["rbxassetid://13990437059"]      = { Name = "Cyclone", Delay = 0.42, Length = 1.833, Heavy = true },
-    ["rbxassetid://14056852710"]      = { Name = "Flourish", Delay = 0.35, Length = 1.200, Heavy = false },
-    ["rbxassetid://131567006787701"]  = { Name = "RendingSlash", Delay = 0.40, Length = 0.933, Heavy = true },
-    ["rbxassetid://9666453960"]       = { Name = "SlashesOfLight", Delay = 0.14, Length = 0.383, Heavy = false },
-    ["rbxassetid://8533862303"]       = { Name = "FallingLance", Delay = 0.45, Length = 1.167, Heavy = true },
-    ["rbxassetid://114221502866879"]  = { Name = "Conviction", Delay = 0.40, Length = 0.950, Heavy = true },
-    ["rbxassetid://9557400534"]       = { Name = "BlindingRush", Delay = 0.38, Length = 1.133, Heavy = true },
-    ["rbxassetid://82645141726816"]   = { Name = "ChargedStrike", Delay = 0.45, Length = 1.083, Heavy = true },
-    ["rbxassetid://97749185835376"]   = { Name = "Rampage", Delay = 0.50, Length = 2.583, Heavy = true },
-    -- Creature Attacks (Wolf, Dire Wolf, Boar, Golem)
-    ["rbxassetid://124572427631698"]  = { Name = "Wolf_BitePounce", Delay = 0.65, Length = 1.733, Heavy = false },
-    ["rbxassetid://73807165586659"]   = { Name = "Wolf_TailSweep", Delay = 0.60, Length = 1.667, Heavy = false },
-    ["rbxassetid://125957249913572"]  = { Name = "Wolf1", Delay = 0.50, Length = 1.233, Heavy = false },
-    ["rbxassetid://73629219095110"]   = { Name = "Wolf2", Delay = 0.52, Length = 1.300, Heavy = false },
-    ["rbxassetid://78815029207104"]   = { Name = "DireWolf_Claw", Delay = 0.70, Length = 2.233, Heavy = false },
-    ["rbxassetid://114021786029196"]  = { Name = "DireWolf_BiteTwist", Delay = 0.65, Length = 2.200, Heavy = false },
-    ["rbxassetid://115129415528730"]  = { Name = "DireWolf_WhipKick", Delay = 0.60, Length = 4.133, Heavy = false },
-    ["rbxassetid://89888765605896"]   = { Name = "DireWolf_Howl", Delay = 0.75, Length = 3.600, Heavy = true },
-    ["rbxassetid://18133497814"]      = { Name = "GrovePounce", Delay = 0.65, Length = 1.733, Heavy = false },
-    ["rbxassetid://18133501787"]      = { Name = "GroveTailSwipe", Delay = 0.60, Length = 1.667, Heavy = false },
-    ["rbxassetid://14158890923"]      = { Name = "Golem1", Delay = 0.68, Length = 1.800, Heavy = true },
-    ["rbxassetid://14158953103"]      = { Name = "Golem2", Delay = 0.70, Length = 1.900, Heavy = true },
-    ["rbxassetid://89849437438829"] = { Name = "Sword1", Delay = 0.14, Length = 0.917, Heavy = false },
-    ["rbxassetid://71375698527524"] = { Name = "LizardSoldier1", Delay = 0.34, Length = 0.9, Heavy = false },
-    ["rbxassetid://125957249913572"] = { Name = "Wolf1", Delay = 0.42, Length = 1.233, Heavy = false },
-    ["rbxassetid://107811934597910"] = { Name = "Spear2", Delay = 0.34, Length = 0.9, Heavy = false },
-    ["rbxassetid://10017557380"] = { Name = "RunningKatana", Delay = 0.175, Length = 0.583, Heavy = false },
-    ["rbxassetid://89652204450491"] = { Name = "Sword2", Delay = 0.1, Length = 0.9, Heavy = false },
-    ["rbxassetid://10250846568"] = { Name = "Misdirect", Delay = 0.085, Length = 0.283, Heavy = false },
-    ["rbxassetid://132013056786173"] = { Name = "HollowseerBite", Delay = 0.35, Length = 3.717, Heavy = false },
-    ["rbxassetid://120283215167024"] = { Name = "Dagger2", Delay = 0.24, Length = 0.567, Heavy = false },
-    ["rbxassetid://90147459897801"] = { Name = "CrawlerCritical", Delay = 0.125, Length = 0.917, Heavy = false },
-    ["rbxassetid://11100897909"] = { Name = "Greataxe1", Delay = 0.2, Length = 0.7, Heavy = false },
-    ["rbxassetid://11169772012"] = { Name = "GreatswordSprint", Delay = 0.28, Length = 0.7, Heavy = false },
-    ["rbxassetid://18334923698"] = { Name = "Spirit2", Delay = 0.22, Length = 0.733, Heavy = false },
-    ["rbxassetid://99787918237880"] = { Name = "Knockback", Delay = 0.18, Length = 0.6, Heavy = false },
-    ["rbxassetid://14527234407"] = { Name = "Katana2", Delay = 0.28, Length = 0.933, Heavy = false },
-    ["rbxassetid://18133501787"] = { Name = "GroveTailSwipe", Delay = 0.35, Length = 1.9, Heavy = false },
-    ["rbxassetid://112932641545194"] = { Name = "Katana3", Delay = 0.52, Length = 1.04, Heavy = false },
-    ["rbxassetid://115413726601821"] = { Name = "LizardSoldier2", Delay = 0.35, Length = 0.933, Heavy = false },
-    ["rbxassetid://89652204450491"] = { Name = "Greatsword2", Delay = 0.17, Length = 0.9, Heavy = false },
-    ["rbxassetid://11100902766"] = { Name = "Greataxe2", Delay = 0.17, Length = 0.66, Heavy = false },
-    ["rbxassetid://137057617868950"] = { Name = "BlightSwipes", Delay = 0.35, Length = 2.483, Heavy = false },
-    ["rbxassetid://9557400534"] = { Name = "HeavyDagger", Delay = 0.41, Length = 1.133, Heavy = true },
-    ["rbxassetid://10017557380"] = { Name = "Trident3", Delay = 0.175, Length = 0.583, Heavy = false },
-    ["rbxassetid://87606723288055"] = { Name = "LizardSoldier4", Delay = 0.38, Length = 1.033, Heavy = false },
-    ["rbxassetid://11262591531"] = { Name = "DaggerSpin", Delay = 0.22, Length = 0.5, Heavy = false },
-    ["rbxassetid://112272302102744"] = { Name = "CrawlerLeft", Delay = 0.15, Length = 0.3, Heavy = false },
-    ["rbxassetid://17861869512"] = { Name = "OgreSwipe2", Delay = 0.2, Length = 1.08, Heavy = false },
-    ["rbxassetid://75576032954820"] = { Name = "CrawlerRight", Delay = 0.15, Length = 0.65, Heavy = false },
-    ["rbxassetid://17564283859"] = { Name = "HeavyGreataxe", Delay = 0.166, Length = 0.32, Heavy = true },
-    ["rbxassetid://120129566668137"] = { Name = "LizardBoss3", Delay = 0.42, Length = 1.333, Heavy = false },
-    ["rbxassetid://11169772012"] = { Name = "GreataxeSprint", Delay = 0.28, Length = 0.7, Heavy = false },
-    ["rbxassetid://96581414677240"] = { Name = "ScytheSprint", Delay = 0.05, Length = 0.8, Heavy = false },
-    ["rbxassetid://11892996649"] = { Name = "Zombie1", Delay = 0.15, Length = 0.767, Heavy = false },
-    ["rbxassetid://75817196379763"] = { Name = "Rapier3", Delay = 0.1, Length = 0.75, Heavy = false },
-    ["rbxassetid://18334915919"] = { Name = "Spirit1", Delay = 0.22, Length = 0.783, Heavy = false },
-    ["rbxassetid://73629219095110"] = { Name = "Wolf2", Delay = 0.42, Length = 1.3, Heavy = false },
-    ["rbxassetid://18133497814"] = { Name = "GrovePounce", Delay = 0.35, Length = 2.167, Heavy = false },
-    ["rbxassetid://17861866763"] = { Name = "OgreSwipe1", Delay = 0.625, Length = 1.04, Heavy = false },
-    ["rbxassetid://10017543126"] = { Name = "Trident2", Delay = 0.125, Length = 0.417, Heavy = false },
-    ["rbxassetid://10017994824"] = { Name = "HeavySpear", Delay = 0.285, Length = 0.717, Heavy = true },
-    ["rbxassetid://13822736997"] = { Name = "Slam", Delay = 0.1, Length = 1.283, Heavy = true },
-    ["rbxassetid://86722279259826"] = { Name = "Spear1", Delay = 0.17, Length = 0.95, Heavy = false },
-    ["rbxassetid://76395852273763"] = { Name = "HeavyScythe", Delay = 0.305, Length = 1.017, Heavy = true },
-    ["rbxassetid://11100915060"] = { Name = "HeavyGreatsword", Delay = 0.285, Length = 0.717, Heavy = true },
-    ["rbxassetid://103140391021149"] = { Name = "LizardBoss1", Delay = 0.37, Length = 1.0, Heavy = false },
-    ["rbxassetid://73042737238490"] = { Name = "LizardBossStomp", Delay = 0.42, Length = 1.833, Heavy = true },
-    ["rbxassetid://11893004134"] = { Name = "ZombieKnockback", Delay = 0.125, Length = 0.883, Heavy = false },
-    ["rbxassetid://10017535748"] = { Name = "Trident1", Delay = 0.1, Length = 0.5, Heavy = false },
-    ["rbxassetid://14527230703"] = { Name = "Katana1", Delay = 0.215, Length = 1.167, Heavy = false },
-    ["rbxassetid://10694823147"] = { Name = "HeavyRapier", Delay = 0.1, Length = 1.2, Heavy = true },
-    ["rbxassetid://136129024555254"] = { Name = "RunningDagger", Delay = 0.255, Length = 0.617, Heavy = false },
-    ["rbxassetid://10017557380"] = { Name = "RunningSword", Delay = 0.245, Length = 0.583, Heavy = false },
-    ["rbxassetid://11893001175"] = { Name = "Zombie2", Delay = 0.15, Length = 0.717, Heavy = false },
-    ["rbxassetid://123565976636065"] = { Name = "Rapier1", Delay = 0.1, Length = 0.75, Heavy = false },
-    ["rbxassetid://70574481445445"] = { Name = "Scythe2", Delay = 0.217, Length = 0.767, Heavy = false },
-    ["rbxassetid://74594683886829"] = { Name = "Sword3", Delay = 0.14, Length = 0.9, Heavy = false },
-    ["rbxassetid://9920890274"] = { Name = "Strike", Delay = 0.37, Length = 1.0, Heavy = false },
-    ["rbxassetid://12808226586"] = { Name = "Staff1", Delay = 0.1, Length = 0.6, Heavy = false },
-    ["rbxassetid://70936328766912"] = { Name = "Dagger1", Delay = 0.295, Length = 0.733, Heavy = false },
-    ["rbxassetid://12955527930"] = { Name = "HeavyStaff", Delay = 0.35, Length = 1.633, Heavy = true },
-    ["rbxassetid://11893004134"] = { Name = "Spirit3", Delay = 0.195, Length = 0.883, Heavy = false },
-    ["rbxassetid://10230852540"] = { Name = "SprintKick", Delay = 0.08, Length = 0.85, Heavy = false },
-    ["rbxassetid://14452988294"] = { Name = "HeavyKatana", Delay = 0.336, Length = 1.12, Heavy = true },
-    ["rbxassetid://94189509684810"] = { Name = "Dagger3", Delay = 0.295, Length = 0.6, Heavy = false },
-    ["rbxassetid://8594363819"] = { Name = "Heavy", Delay = 0.23, Length = 0.767, Heavy = true },
-    ["rbxassetid://12808233350"] = { Name = "Staff2", Delay = 0.11, Length = 0.367, Heavy = false },
-    ["rbxassetid://89849437438829"] = { Name = "Greatsword3", Delay = 0.2, Length = 0.917, Heavy = false },
-    ["rbxassetid://115704466488110"] = { Name = "Scythe3", Delay = 0.167, Length = 0.75, Heavy = false },
-    ["rbxassetid://106981115410840"] = { Name = "MushmiteHeadbutt", Delay = 0.35, Length = 2.533, Heavy = true },
-    ["rbxassetid://104165983064642"] = { Name = "Scythe1", Delay = 0.267, Length = 0.767, Heavy = false },
-    ["rbxassetid://125482975672454"] = { Name = "BlightSlashRight", Delay = 0.245, Length = 0.817, Heavy = false },
-    ["rbxassetid://85570415456598"] = { Name = "Punch3", Delay = 0.215, Length = 0.483, Heavy = false },
-    ["rbxassetid://14850217335"] = { Name = "HeavyTrident", Delay = 0.35, Length = 3.578, Heavy = true },
-    ["rbxassetid://12671888495"] = { Name = "Skills/BurstPistol", Delay = 0.313, Length = 1.117, Heavy = true },
-    ["rbxassetid://12687752087"] = { Name = "Skills/FireStomp", Delay = 0.233, Length = 0.833, Heavy = true },
-    ["rbxassetid://12709977831"] = { Name = "Skills/ScorchingBarrage", Delay = 0.401, Length = 1.433, Heavy = false },
-    ["rbxassetid://84889290807745"] = { Name = "Skills/GaleRupture", Delay = 0.271, Length = 0.967, Heavy = true },
-    ["rbxassetid://13990394139"] = { Name = "Skills/PiercingFlurry", Delay = 0.42, Length = 1.92, Heavy = false },
-    ["rbxassetid://13990348548"] = { Name = "Skills/VerticalStrike", Delay = 0.395, Length = 1.16, Heavy = false },
-    ["rbxassetid://13990295202"] = { Name = "Skills/VaultBreaker", Delay = 0.37, Length = 1.32, Heavy = false },
-    ["rbxassetid://13990268150"] = { Name = "Skills/RelentlessRush", Delay = 0.403, Length = 1.44, Heavy = false },
-    ["rbxassetid://13990437059"] = { Name = "Skills/Cyclone", Delay = 0.42, Length = 1.833, Heavy = false },
-    ["rbxassetid://14056852710"] = { Name = "Skills/Flourish", Delay = 0.336, Length = 1.2, Heavy = false },
-    ["rbxassetid://14438202242"] = { Name = "Skills/Tornado", Delay = 0.392, Length = 1.4, Heavy = false },
-    ["rbxassetid://14450307160"] = { Name = "Skills/TempestPalm", Delay = 0.252, Length = 0.9, Heavy = false },
-    ["rbxassetid://14479235322"] = { Name = "Skills/TempestBlade", Delay = 0.345, Length = 1.233, Heavy = false },
-    ["rbxassetid://14865075808"] = { Name = "Skills/ArrowVolley", Delay = 0.42, Length = 2.24, Heavy = false },
-    ["rbxassetid://16456073067"] = { Name = "Skills/VoltSurge", Delay = 0.385, Length = 1.375, Heavy = false },
-    ["rbxassetid://15671883283"] = { Name = "Skills/Snap", Delay = 0.18, Length = 0.625, Heavy = false },
-    ["rbxassetid://9666453960"] = { Name = "Skills/SlashesOfLight", Delay = 0.18, Length = 0.383, Heavy = false },
-    ["rbxassetid://9093819642"] = { Name = "Skills/LightningBarrage", Delay = 0.18, Length = 0.3, Heavy = false },
-    ["rbxassetid://97806594512867"] = { Name = "Skills/Updraft", Delay = 0.35, Length = 1.25, Heavy = false },
-    ["rbxassetid://76343258849163"] = { Name = "Skills/KickUp", Delay = 0.182, Length = 0.65, Heavy = false },
-    ["rbxassetid://120859667959635"] = { Name = "Skills/PalmThrustNormal", Delay = 0.308, Length = 1.1, Heavy = false },
-    ["rbxassetid://121366593881808"] = { Name = "Skills/EnGarde", Delay = 0.42, Length = 1.667, Heavy = false },
-    ["rbxassetid://84025524847215"] = { Name = "Skills/MeteorKick", Delay = 0.355, Length = 1.267, Heavy = false },
-    ["rbxassetid://131567006787701"] = { Name = "Skills/RendingSlash", Delay = 0.261, Length = 0.933, Heavy = false },
-    ["rbxassetid://114221502866879"] = { Name = "Skills/Conviction", Delay = 0.266, Length = 0.95, Heavy = false },
-    ["rbxassetid://12948865998"] = { Name = "Skills/DarkHaste", Delay = 0.42, Length = 1.567, Heavy = false },
-    ["rbxassetid://126637760994593"] = { Name = "Skills/Dash", Delay = 0.243, Length = 0.867, Heavy = false },
-    ["rbxassetid://124258860936525"] = { Name = "Skills/Dive", Delay = 0.275, Length = 0.983, Heavy = true },
-    ["rbxassetid://8533862303"] = { Name = "Skills/Annihilation", Delay = 0.327, Length = 1.167, Heavy = false },
-    ["rbxassetid://9239589545"] = { Name = "Skills/ThunderStrike", Delay = 0.303, Length = 0.833, Heavy = false },
-    ["rbxassetid://9239619290"] = { Name = "Skills/ElectroBeam", Delay = 0.252, Length = 0.9, Heavy = false },
-    ["rbxassetid://9239657975"] = { Name = "Skills/DragonImpact", Delay = 0.327, Length = 1.167, Heavy = false },
-    ["rbxassetid://76118361445272"] = { Name = "Skills/Howling Slash", Delay = 0.18, Length = 0.583, Heavy = true },
-    ["rbxassetid://76052397198343"] = { Name = "Skills/WindUltimate", Delay = 0.42, Length = 1.767, Heavy = true },
-    ["rbxassetid://80361376431169"] = { Name = "Skills/LightningUltimate", Delay = 0.42, Length = 1.583, Heavy = true },
-    ["rbxassetid://89295643927067"] = { Name = "Skills/LightUltimate", Delay = 0.42, Length = 2.467, Heavy = true },
-    ["rbxassetid://108546548680913"] = { Name = "Skills/FlameUltimate", Delay = 0.387, Length = 1.383, Heavy = true },
-    ["rbxassetid://127378047230118"] = { Name = "Skills/ShadowUltimate", Delay = 0.42, Length = 2.367, Heavy = true },
-    ["rbxassetid://104174247581463"] = { Name = "Skills/VitalPulse", Delay = 0.42, Length = 2.5, Heavy = false },
-    ["rbxassetid://82645141726816"] = { Name = "Skills/ChargedStrike", Delay = 0.373, Length = 1.083, Heavy = false },
-    ["rbxassetid://97749185835376"] = { Name = "Skills/Rampage", Delay = 0.42, Length = 2.583, Heavy = false },
-    ["rbxassetid://72107940559330"] = { Name = "Skills/TimeUltimate", Delay = 0.308, Length = 1.1, Heavy = true },
-    ["rbxassetid://128758616651183"] = { Name = "Magic/Beast/HowlingSlash_2", Delay = 0.42, Length = 2.0, Heavy = true },
-    ["rbxassetid://90754805440489"] = { Name = "Magic/Beast/HowlingSlash_3", Delay = 0.18, Length = 0.45, Heavy = true },
-    ["rbxassetid://84838159867664"] = { Name = "Magic/Beast/Primal Roar", Delay = 0.42, Length = 2.3, Heavy = true },
-    ["rbxassetid://79716963838022"] = { Name = "Magic/Beast/Hunting_1", Delay = 0.18, Length = 0.6, Heavy = false },
-    ["rbxassetid://75657651020068"] = { Name = "Magic/Beast/Hunting_2", Delay = 0.285, Length = 1.017, Heavy = false },
-    ["rbxassetid://129235717372722"] = { Name = "Magic/Beast/Hunting_3", Delay = 0.182, Length = 0.65, Heavy = false },
-    ["rbxassetid://124290080499906"] = { Name = "Magic/Beast/Apex Claw", Delay = 0.257, Length = 0.917, Heavy = false },
-    ["rbxassetid://140664544166823"] = { Name = "Magic/Beast/Vicious Assault", Delay = 0.285, Length = 1.017, Heavy = false },
-    ["rbxassetid://98493629825862"] = { Name = "Magic/Beast/Wild Cleave", Delay = 0.35, Length = 1.25, Heavy = false },
-    ["rbxassetid://136194022789035"] = { Name = "Magic/Beast/Feral Impact", Delay = 0.42, Length = 1.8, Heavy = false },
-    ["rbxassetid://138181002289743"] = { Name = "Magic/Beast/Beast_Bite", Delay = 0.289, Length = 1.033, Heavy = false },
-    ["rbxassetid://105282574681472"] = { Name = "Magic/Beast/Mode", Delay = 0.285, Length = 1.017, Heavy = false },
-    ["rbxassetid://139459759062251"] = { Name = "Magic/Beast/SavageMaul", Delay = 0.28, Length = 1.0, Heavy = false },
-    ["rbxassetid://110379408310451"] = { Name = "Magic/Beast/Claw_2", Delay = 0.215, Length = 0.767, Heavy = false },
-    ["rbxassetid://94670063494025"] = { Name = "Magic/Beast/Claw_1", Delay = 0.215, Length = 0.767, Heavy = false },
-    ["rbxassetid://76031936349604"] = { Name = "Magic/Beast/Claw_3", Delay = 0.224, Length = 0.8, Heavy = false },
-    ["rbxassetid://125522337287824"] = { Name = "Magic/Dagon/Astral Authority", Delay = 0.42, Length = 3.6, Heavy = false },
-    ["rbxassetid://123558455209353"] = { Name = "Magic/Dagon/Gravity Field", Delay = 0.42, Length = 2.333, Heavy = false },
-    ["rbxassetid://128485011343430"] = { Name = "Magic/Dagon/Void Collapse", Delay = 0.42, Length = 1.767, Heavy = false },
-    ["rbxassetid://96005486124578"] = { Name = "Magic/Dagon/Rift Cleaver", Delay = 0.42, Length = 2.433, Heavy = false },
-    ["rbxassetid://112476682123008"] = { Name = "Magic/Dagon/Gravity_Field_Slam", Delay = 0.315, Length = 1.125, Heavy = true },
-    ["rbxassetid://123595676754633"] = { Name = "Magic/Dagon/Void Slash Victim", Delay = 0.42, Length = 3.867, Heavy = false },
-    ["rbxassetid://111114983270881"] = { Name = "Magic/Dagon/GravStep1", Delay = 0.271, Length = 0.967, Heavy = false },
-    ["rbxassetid://125920644150482"] = { Name = "Magic/Dagon/Singularity Reckon", Delay = 0.42, Length = 3.033, Heavy = true },
-    ["rbxassetid://78707415805986"] = { Name = "Crit/Elkstrider", Delay = 0.373, Length = 1.333, Heavy = false },
-    ["rbxassetid://113524095169996"] = { Name = "Crit/VenomFang", Delay = 0.42, Length = 2.167, Heavy = false },
-    ["rbxassetid://117064630778013"] = { Name = "Crit/PrimevalBattleaxe", Delay = 0.42, Length = 2.7, Heavy = false },
-    ["rbxassetid://127837901620547"] = { Name = "Crit/Cinderblade", Delay = 0.252, Length = 0.9, Heavy = false },
-    ["rbxassetid://125318199927195"] = { Name = "Crit/Elderthorne", Delay = 0.42, Length = 2.05, Heavy = false },
-    ["rbxassetid://75098914817505"] = { Name = "Crit/Wolfcrest", Delay = 0.49, Length = 2.2, Heavy = false },
-    ["rbxassetid://8314692364"] = { Name = "Combat/HammerDown", Delay = 0.18, Length = 0.5, Heavy = false },
-    ["rbxassetid://9757167816"] = { Name = "Combat/AerialKickUp", Delay = 0.252, Length = 0.9, Heavy = false },
-    ["rbxassetid://9757223208"] = { Name = "Combat/AerialKickDown", Delay = 0.252, Length = 0.9, Heavy = false },
-    ["rbxassetid://11254946683"] = { Name = "Combat/ChokeGrab", Delay = 0.42, Length = 1.567, Heavy = false },
-    ["rbxassetid://11469887779"] = { Name = "Combat/GrabLunge", Delay = 0.42, Length = 2.4, Heavy = false },
-    ["rbxassetid://14450433743"] = { Name = "Combat/UpwardPalm", Delay = 0.289, Length = 1.033, Heavy = false },
-    ["rbxassetid://138780595177276"] = { Name = "NPCS/BlightClawAnim", Delay = 0.75, Length = 2.767, Heavy = false },
-    ["rbxassetid://76370649113417"] = { Name = "NPCS/BlightEyeAnim", Delay = 0.75, Length = 4.05, Heavy = false },
-    ["rbxassetid://114135137062549"] = { Name = "NPCS/MushRushAnim", Delay = 0.75, Length = 3.767, Heavy = false },
-    ["rbxassetid://122498520268119"] = { Name = "NPCS/RootAttackAnim", Delay = 0.75, Length = 2.067, Heavy = false },
-    ["rbxassetid://9922542154"] = { Name = "NPCS/AlkeRoar", Delay = 0.75, Length = 4.8, Heavy = false },
-    ["rbxassetid://115129415528730"] = { Name = "NPCS/DireWolf/Whip Kick", Delay = 0.85, Length = 4.133, Heavy = false },
-    ["rbxassetid://78815029207104"] = { Name = "NPCS/DireWolf/Clawed Attack", Delay = 0.72, Length = 2.233, Heavy = false },
-    ["rbxassetid://89888765605896"] = { Name = "NPCS/DireWolf/Terror Howl", Delay = 0.75, Length = 3.6, Heavy = true },
-    ["rbxassetid://114021786029196"] = { Name = "NPCS/DireWolf/Bite Twist", Delay = 0.75, Length = 2.2, Heavy = false },
-    ["rbxassetid://124572427631698"] = { Name = "NPCS/Wolf/Bite Pounce", Delay = 0.65, Length = 1.733, Heavy = false },
-    ["rbxassetid://73807165586659"] = { Name = "NPCS/Wolf/Tail Sweep", Delay = 0.6, Length = 1.667, Heavy = false },
-    ["rbxassetid://16356100194"] = { Name = "NPCS/AlkeBoss/StandIdle", Delay = 0.75, Length = 6.625, Heavy = false },
-    ["rbxassetid://16361980707"] = { Name = "NPCS/AlkeBoss/Walk", Delay = 0.367, Length = 0.917, Heavy = false },
-    ["rbxassetid://16992820686"] = { Name = "NPCS/AlkeBoss/Jump", Delay = 0.733, Length = 1.833, Heavy = false },
-    ["rbxassetid://16380529517"] = { Name = "NPCS/AlkeBoss/Slam", Delay = 0.75, Length = 3.333, Heavy = true },
-    ["rbxassetid://16386284918"] = { Name = "NPCS/AlkeBoss/Screech", Delay = 0.75, Length = 3.333, Heavy = true },
-    ["rbxassetid://16787058938"] = { Name = "NPCS/AlkeBoss/Staggered", Delay = 0.75, Length = 2.083, Heavy = true },
-    ["rbxassetid://16790816582"] = { Name = "NPCS/AlkeBoss/Bomb", Delay = 0.75, Length = 3.917, Heavy = true },
-    ["rbxassetid://16926676358"] = { Name = "NPCS/AlkeBoss/RageScreech", Delay = 0.75, Length = 3.292, Heavy = true },
-    ["rbxassetid://16933879612"] = { Name = "NPCS/AlkeBoss/Rupture", Delay = 0.75, Length = 2.917, Heavy = true },
-    ["rbxassetid://16786767788"] = { Name = "NPCS/AlkeBoss/Consecutive", Delay = 0.75, Length = 3.208, Heavy = false },
-    ["rbxassetid://16889541896"] = { Name = "NPCS/AlkeBoss/Double", Delay = 0.75, Length = 3.583, Heavy = false },
-    ["rbxassetid://17049621435"] = { Name = "NPCS/AlkeBoss/LeftStrike", Delay = 0.75, Length = 2.292, Heavy = false },
-    ["rbxassetid://17049581150"] = { Name = "NPCS/AlkeBoss/RightStrike", Delay = 0.75, Length = 2.208, Heavy = false },
+    ["rbxassetid://8314692364"] = { Name = "Combat.HammerDown", Delay = 0.2, Length = 0.5, Heavy = false },
+    ["rbxassetid://8594363819"] = { Name = "Combat.HeavyPunch", Delay = 0.38, Length = 0.766, Heavy = true },
+    ["rbxassetid://9757167816"] = { Name = "Combat.AerialKickUp", Delay = 0.315, Length = 0.899, Heavy = false },
+    ["rbxassetid://9757223208"] = { Name = "Combat.AerialKickDown", Delay = 0.315, Length = 0.899, Heavy = false },
+    ["rbxassetid://11254946683"] = { Name = "Combat.ChokeGrab", Delay = 0.65, Length = 1.566, Heavy = true },
+    ["rbxassetid://11469887779"] = { Name = "Combat.GrabLunge", Delay = 0.65, Length = 2.4, Heavy = true },
+    ["rbxassetid://14450433743"] = { Name = "Combat.UpwardPalm", Delay = 0.362, Length = 1.033, Heavy = false },
+    ["rbxassetid://12671888495"] = { Name = "Skills.BurstPistol", Delay = 0.502, Length = 1.116, Heavy = true },
+    ["rbxassetid://12687752087"] = { Name = "Skills.FireStomp", Delay = 0.38, Length = 0.833, Heavy = true },
+    ["rbxassetid://12709977831"] = { Name = "Skills.ScorchingBarrage", Delay = 0.45, Length = 1.433, Heavy = false },
+    ["rbxassetid://84889290807745"] = { Name = "Skills.GaleRupture", Delay = 0.435, Length = 0.966, Heavy = true },
+    ["rbxassetid://13990394139"] = { Name = "Skills.PiercingFlurry", Delay = 0.45, Length = 1.919, Heavy = false },
+    ["rbxassetid://13990348548"] = { Name = "Skills.VerticalStrike", Delay = 0.406, Length = 1.159, Heavy = false },
+    ["rbxassetid://13990295202"] = { Name = "Skills.VaultBreaker", Delay = 0.45, Length = 1.32, Heavy = false },
+    ["rbxassetid://13990268150"] = { Name = "Skills.RelentlessRush", Delay = 0.45, Length = 1.44, Heavy = false },
+    ["rbxassetid://13990437059"] = { Name = "Skills.Cyclone", Delay = 0.45, Length = 1.833, Heavy = false },
+    ["rbxassetid://14056852710"] = { Name = "Skills.Flourish", Delay = 0.42, Length = 1.2, Heavy = false },
+    ["rbxassetid://14452988294"] = { Name = "Skills.BladeThrust", Delay = 0.392, Length = 1.12, Heavy = false },
+    ["rbxassetid://14438202242"] = { Name = "Skills.Tornado", Delay = 0.45, Length = 1.399, Heavy = false },
+    ["rbxassetid://14450307160"] = { Name = "Skills.TempestPalm", Delay = 0.315, Length = 0.899, Heavy = false },
+    ["rbxassetid://14479235322"] = { Name = "Skills.TempestBlade", Delay = 0.432, Length = 1.233, Heavy = false },
+    ["rbxassetid://14865075808"] = { Name = "Skills.ArrowVolley", Delay = 0.45, Length = 2.24, Heavy = false },
+    ["rbxassetid://16456073067"] = { Name = "Skills.VoltSurge", Delay = 0.45, Length = 1.375, Heavy = false },
+    ["rbxassetid://15671883283"] = { Name = "Skills.Snap", Delay = 0.219, Length = 0.625, Heavy = false },
+    ["rbxassetid://9666453960"] = { Name = "Skills.SlashesOfLight", Delay = 0.14, Length = 0.383, Heavy = false },
+    ["rbxassetid://9093819642"] = { Name = "Skills.LightningBarrage", Delay = 0.2, Length = 0.3, Heavy = false },
+    ["rbxassetid://9557400534"] = { Name = "Skills.RushingTempest", Delay = 0.397, Length = 1.133, Heavy = false },
+    ["rbxassetid://97806594512867"] = { Name = "Skills.Updraft", Delay = 0.438, Length = 1.25, Heavy = false },
+    ["rbxassetid://76343258849163"] = { Name = "Skills.KickUp", Delay = 0.227, Length = 0.649, Heavy = false },
+    ["rbxassetid://120859667959635"] = { Name = "Skills.PalmThrustNormal", Delay = 0.385, Length = 1.1, Heavy = false },
+    ["rbxassetid://121366593881808"] = { Name = "Skills.EnGarde", Delay = 0.45, Length = 1.666, Heavy = false },
+    ["rbxassetid://84025524847215"] = { Name = "Skills.MeteorKick", Delay = 0.443, Length = 1.266, Heavy = false },
+    ["rbxassetid://131567006787701"] = { Name = "Skills.RendingSlash", Delay = 0.327, Length = 0.933, Heavy = false },
+    ["rbxassetid://114221502866879"] = { Name = "Skills.Conviction", Delay = 0.427, Length = 0.949, Heavy = true },
+    ["rbxassetid://12948865998"] = { Name = "Skills.DarkHaste", Delay = 0.45, Length = 1.566, Heavy = false },
+    ["rbxassetid://126637760994593"] = { Name = "Skills.Dash", Delay = 0.303, Length = 0.866, Heavy = false },
+    ["rbxassetid://124258860936525"] = { Name = "Skills.Dive", Delay = 0.442, Length = 0.983, Heavy = true },
+    ["rbxassetid://8533862303"] = { Name = "Skills.Annihilation", Delay = 0.525, Length = 1.166, Heavy = true },
+    ["rbxassetid://9239589545"] = { Name = "Skills.ThunderStrike", Delay = 0.292, Length = 0.833, Heavy = false },
+    ["rbxassetid://9239619290"] = { Name = "Skills.ElectroBeam", Delay = 0.315, Length = 0.899, Heavy = false },
+    ["rbxassetid://9239657975"] = { Name = "Skills.DragonImpact", Delay = 0.408, Length = 1.166, Heavy = false },
+    ["rbxassetid://9557400534"] = { Name = "Skills.BlindingRush", Delay = 0.51, Length = 1.133, Heavy = true },
+    ["rbxassetid://8533862303"] = { Name = "Skills.FallingLance", Delay = 0.525, Length = 1.166, Heavy = true },
+    ["rbxassetid://76118361445272"] = { Name = "Skills.Howling Slash", Delay = 0.38, Length = 0.583, Heavy = true },
+    ["rbxassetid://76052397198343"] = { Name = "Skills.WindUltimate", Delay = 0.65, Length = 1.766, Heavy = true },
+    ["rbxassetid://80361376431169"] = { Name = "Skills.LightningUltimate", Delay = 0.65, Length = 1.583, Heavy = true },
+    ["rbxassetid://89295643927067"] = { Name = "Skills.LightUltimate", Delay = 0.65, Length = 2.466, Heavy = true },
+    ["rbxassetid://108546548680913"] = { Name = "Skills.FlameUltimate", Delay = 0.622, Length = 1.383, Heavy = true },
+    ["rbxassetid://127378047230118"] = { Name = "Skills.ShadowUltimate", Delay = 0.65, Length = 2.366, Heavy = true },
+    ["rbxassetid://104174247581463"] = { Name = "Skills.VitalPulse", Delay = 0.45, Length = 2.5, Heavy = false },
+    ["rbxassetid://82645141726816"] = { Name = "Skills.ChargedStrike", Delay = 0.487, Length = 1.083, Heavy = true },
+    ["rbxassetid://97749185835376"] = { Name = "Skills.Rampage", Delay = 0.65, Length = 2.583, Heavy = true },
+    ["rbxassetid://72107940559330"] = { Name = "Skills.TimeUltimate", Delay = 0.495, Length = 1.1, Heavy = true },
+    ["rbxassetid://8495698342"] = { Name = "Misc.LeftDodge", Delay = 0.2, Length = 0.349, Heavy = false },
+    ["rbxassetid://8495708006"] = { Name = "Misc.RightDodge", Delay = 0.2, Length = 0.349, Heavy = false },
+    ["rbxassetid://8502285198"] = { Name = "Misc.BackDodge", Delay = 0.2, Length = 0.349, Heavy = false },
+    ["rbxassetid://14417052527"] = { Name = "Misc.Parry", Delay = 0.2, Length = 0.166, Heavy = false },
+    ["rbxassetid://93087728991591"] = { Name = "Misc.RollCancelRight", Delay = 0.2, Length = 0.316, Heavy = false },
+    ["rbxassetid://13355016261"] = { Name = "Misc.ParryLeft", Delay = 0.2, Length = 0.5, Heavy = false },
+    ["rbxassetid://13355019718"] = { Name = "Misc.ParryRight", Delay = 0.2, Length = 0.5, Heavy = false },
+    ["rbxassetid://13535003664"] = { Name = "Misc.Mining", Delay = 0.408, Length = 1.166, Heavy = false },
+    ["rbxassetid://81475769598014"] = { Name = "Misc.Throw", Delay = 0.28, Length = 0.8, Heavy = false },
+    ["rbxassetid://113938257124230"] = { Name = "Misc.Harvesting", Delay = 0.344, Length = 0.983, Heavy = false },
+    ["rbxassetid://132555387434309"] = { Name = "Misc.RollCancelLeft", Delay = 0.2, Length = 0.316, Heavy = false },
+    ["rbxassetid://8530055602"] = { Name = "Carried", Delay = 0.45, Length = 1.5, Heavy = false },
+    ["rbxassetid://13980557806"] = { Name = "Executions.BoarExecute", Delay = 0.65, Length = 2.079, Heavy = true },
+    ["rbxassetid://8530061235"] = { Name = "Executions.Blunt.CombatExecuting", Delay = 0.65, Length = 5.316, Heavy = true },
+    ["rbxassetid://138081761812078"] = { Name = "Executions.Blade.DaggerExecuting", Delay = 0.65, Length = 2.033, Heavy = true },
+    ["rbxassetid://18723574275"] = { Name = "Executions.Blade.GreatswordExecuting", Delay = 0.65, Length = 2.4, Heavy = true },
+    ["rbxassetid://19000703266"] = { Name = "Executions.Blade.KatanaExecuting", Delay = 0.65, Length = 2.9, Heavy = true },
+    ["rbxassetid://10696603770"] = { Name = "Executions.Blade.RapierExecuting", Delay = 0.65, Length = 5.333, Heavy = true },
+    ["rbxassetid://10067329531"] = { Name = "Executions.Blade.SpearExecuting", Delay = 0.65, Length = 5.316, Heavy = true },
+    ["rbxassetid://10696603770"] = { Name = "Executions.Blade.SwordExecuting", Delay = 0.65, Length = 5.333, Heavy = true },
+    ["rbxassetid://10067329531"] = { Name = "Executions.Blade.TridentExecuting", Delay = 0.65, Length = 5.316, Heavy = true },
+    ["rbxassetid://18723574275"] = { Name = "Executions.Blade.GreataxeExecuting", Delay = 0.65, Length = 2.4, Heavy = true },
+    ["rbxassetid://73042737238490"] = { Name = "Executions.LizardBossExecute", Delay = 0.65, Length = 1.833, Heavy = true },
+    ["rbxassetid://73042737238490"] = { Name = "Executions.MushknightExecute", Delay = 0.65, Length = 1.833, Heavy = true },
+    ["rbxassetid://78707415805986"] = { Name = "Crit.Elkstrider", Delay = 0.45, Length = 1.333, Heavy = false },
+    ["rbxassetid://113524095169996"] = { Name = "Crit.VenomFang", Delay = 0.45, Length = 2.166, Heavy = false },
+    ["rbxassetid://117064630778013"] = { Name = "Crit.PrimevalBattleaxe", Delay = 0.45, Length = 2.7, Heavy = false },
+    ["rbxassetid://127837901620547"] = { Name = "Crit.Cinderblade", Delay = 0.315, Length = 0.899, Heavy = false },
+    ["rbxassetid://17564283859"] = { Name = "Crit.HeavyGreataxe", Delay = 0.38, Length = 0.319, Heavy = true },
+    ["rbxassetid://14850217335"] = { Name = "Crit.HeavyTrident", Delay = 0.65, Length = 3.577, Heavy = true },
+    ["rbxassetid://125318199927195"] = { Name = "Crit.Elderthorne", Delay = 0.45, Length = 2.049, Heavy = false },
+    ["rbxassetid://75098914817505"] = { Name = "Crit.Wolfcrest", Delay = 0.65, Length = 2.2, Heavy = false },
+    ["rbxassetid://85853530330509"] = { Name = "Aerials.Sword", Delay = 0.28, Length = 0.616, Heavy = false },
+    ["rbxassetid://106122835616423"] = { Name = "Aerials.Greatsword", Delay = 0.38, Length = 0.616, Heavy = true },
+    ["rbxassetid://81129151966619"] = { Name = "Aerials.Combat", Delay = 0.2, Length = 0.55, Heavy = false },
+    ["rbxassetid://131449711194289"] = { Name = "Aerials.Scythe", Delay = 0.38, Length = 0.616, Heavy = true },
+    ["rbxassetid://16434619660"] = { Name = "Aerials.Slam", Delay = 0.412, Length = 0.916, Heavy = true },
+    ["rbxassetid://138780595177276"] = { Name = "NPCS.BlightClawAnim", Delay = 0.45, Length = 2.766, Heavy = false },
+    ["rbxassetid://76370649113417"] = { Name = "NPCS.BlightEyeAnim", Delay = 0.45, Length = 4.05, Heavy = false },
+    ["rbxassetid://114135137062549"] = { Name = "NPCS.MushRushAnim", Delay = 0.45, Length = 3.766, Heavy = false },
+    ["rbxassetid://122498520268119"] = { Name = "NPCS.RootAttackAnim", Delay = 0.45, Length = 2.066, Heavy = false },
+    ["rbxassetid://9922542154"] = { Name = "NPCS.AlkeRoar", Delay = 0.65, Length = 4.8, Heavy = true },
+    ["rbxassetid://115129415528730"] = { Name = "NPCS.DireWolf.Whip Kick", Delay = 0.65, Length = 4.133, Heavy = false },
+    ["rbxassetid://78815029207104"] = { Name = "NPCS.DireWolf.Clawed Attack", Delay = 0.7, Length = 2.233, Heavy = false },
+    ["rbxassetid://89888765605896"] = { Name = "NPCS.DireWolf.Terror Howl", Delay = 0.75, Length = 3.599, Heavy = true },
+    ["rbxassetid://114021786029196"] = { Name = "NPCS.DireWolf.Bite Twist", Delay = 0.65, Length = 2.2, Heavy = false },
+    ["rbxassetid://124572427631698"] = { Name = "NPCS.Wolf.Bite Pounce", Delay = 0.65, Length = 1.733, Heavy = false },
+    ["rbxassetid://73807165586659"] = { Name = "NPCS.Wolf.Tail Sweep", Delay = 0.6, Length = 1.666, Heavy = false },
+    ["rbxassetid://16992820686"] = { Name = "NPCS.AlkeBoss.Jump", Delay = 0.65, Length = 1.833, Heavy = true },
+    ["rbxassetid://16380529517"] = { Name = "NPCS.AlkeBoss.Slam", Delay = 0.65, Length = 3.333, Heavy = true },
+    ["rbxassetid://16386284918"] = { Name = "NPCS.AlkeBoss.Screech", Delay = 0.65, Length = 3.333, Heavy = true },
+    ["rbxassetid://16787058938"] = { Name = "NPCS.AlkeBoss.Staggered", Delay = 0.65, Length = 2.083, Heavy = true },
+    ["rbxassetid://16790816582"] = { Name = "NPCS.AlkeBoss.Bomb", Delay = 0.65, Length = 3.916, Heavy = true },
+    ["rbxassetid://16926676358"] = { Name = "NPCS.AlkeBoss.RageScreech", Delay = 0.65, Length = 3.291, Heavy = true },
+    ["rbxassetid://16933879612"] = { Name = "NPCS.AlkeBoss.Rupture", Delay = 0.65, Length = 2.916, Heavy = true },
+    ["rbxassetid://16786767788"] = { Name = "NPCS.AlkeBoss.Consecutive", Delay = 0.65, Length = 3.208, Heavy = true },
+    ["rbxassetid://16889541896"] = { Name = "NPCS.AlkeBoss.Double", Delay = 0.65, Length = 3.583, Heavy = true },
+    ["rbxassetid://17049621435"] = { Name = "NPCS.AlkeBoss.LeftStrike", Delay = 0.65, Length = 2.291, Heavy = true },
+    ["rbxassetid://17049581150"] = { Name = "NPCS.AlkeBoss.RightStrike", Delay = 0.65, Length = 2.208, Heavy = true },
+    ["rbxassetid://75695780896011"] = { Name = "Uppercuts.Uppercut", Delay = 0.309, Length = 0.883, Heavy = false },
+    ["rbxassetid://76118361445272"] = { Name = "Magic.Beast.HowlingSlash_1", Delay = 0.38, Length = 0.583, Heavy = true },
+    ["rbxassetid://128758616651183"] = { Name = "Magic.Beast.HowlingSlash_2", Delay = 0.65, Length = 2.0, Heavy = true },
+    ["rbxassetid://90754805440489"] = { Name = "Magic.Beast.HowlingSlash_3", Delay = 0.38, Length = 0.449, Heavy = true },
+    ["rbxassetid://84838159867664"] = { Name = "Magic.Beast.Primal Roar", Delay = 0.65, Length = 2.299, Heavy = true },
+    ["rbxassetid://79716963838022"] = { Name = "Magic.Beast.Hunting_1", Delay = 0.21, Length = 0.6, Heavy = false },
+    ["rbxassetid://75657651020068"] = { Name = "Magic.Beast.Hunting_2", Delay = 0.356, Length = 1.016, Heavy = false },
+    ["rbxassetid://129235717372722"] = { Name = "Magic.Beast.Hunting_3", Delay = 0.227, Length = 0.649, Heavy = false },
+    ["rbxassetid://124290080499906"] = { Name = "Magic.Beast.Apex Claw", Delay = 0.321, Length = 0.916, Heavy = false },
+    ["rbxassetid://140664544166823"] = { Name = "Magic.Beast.Vicious Assault", Delay = 0.356, Length = 1.016, Heavy = false },
+    ["rbxassetid://98493629825862"] = { Name = "Magic.Beast.Wild Cleave", Delay = 0.438, Length = 1.25, Heavy = false },
+    ["rbxassetid://136194022789035"] = { Name = "Magic.Beast.Feral Impact", Delay = 0.45, Length = 1.799, Heavy = false },
+    ["rbxassetid://138181002289743"] = { Name = "Magic.Beast.Beast_Bite", Delay = 0.362, Length = 1.033, Heavy = false },
+    ["rbxassetid://105282574681472"] = { Name = "Magic.Beast.Mode", Delay = 0.356, Length = 1.016, Heavy = false },
+    ["rbxassetid://139459759062251"] = { Name = "Magic.Beast.SavageMaul", Delay = 0.35, Length = 1.0, Heavy = false },
+    ["rbxassetid://110379408310451"] = { Name = "Magic.Beast.Claw_2", Delay = 0.268, Length = 0.766, Heavy = false },
+    ["rbxassetid://94670063494025"] = { Name = "Magic.Beast.Claw_1", Delay = 0.268, Length = 0.766, Heavy = false },
+    ["rbxassetid://76031936349604"] = { Name = "Magic.Beast.Claw_3", Delay = 0.28, Length = 0.8, Heavy = false },
+    ["rbxassetid://125522337287824"] = { Name = "Magic.Dagon.Astral Authority", Delay = 0.65, Length = 3.599, Heavy = true },
+    ["rbxassetid://123558455209353"] = { Name = "Magic.Dagon.Gravity Field", Delay = 0.65, Length = 2.333, Heavy = true },
+    ["rbxassetid://128485011343430"] = { Name = "Magic.Dagon.Void Collapse", Delay = 0.65, Length = 1.766, Heavy = true },
+    ["rbxassetid://96005486124578"] = { Name = "Magic.Dagon.Rift Cleaver", Delay = 0.65, Length = 2.433, Heavy = true },
+    ["rbxassetid://112476682123008"] = { Name = "Magic.Dagon.Gravity_Field_Slam", Delay = 0.506, Length = 1.125, Heavy = true },
+    ["rbxassetid://10230852540"] = { Name = "Magic.Dagon.GravStep2", Delay = 0.383, Length = 0.85, Heavy = true },
+    ["rbxassetid://123595676754633"] = { Name = "Magic.Dagon.Void Slash Victim", Delay = 0.65, Length = 3.866, Heavy = true },
+    ["rbxassetid://111114983270881"] = { Name = "Magic.Dagon.GravStep1", Delay = 0.435, Length = 0.966, Heavy = true },
+    ["rbxassetid://125920644150482"] = { Name = "Magic.Dagon.Singularity Reckon", Delay = 0.65, Length = 3.033, Heavy = true },
+    ["rbxassetid://13822732009"] = { Name = "Server.Swing 2", Delay = 0.239, Length = 0.683, Heavy = false },
+    ["rbxassetid://13756521296"] = { Name = "Server.Attack 3", Delay = 0.45, Length = 2.133, Heavy = false },
+    ["rbxassetid://13756358680"] = { Name = "Server.Attack 1", Delay = 0.45, Length = 1.366, Heavy = false },
+    ["rbxassetid://13756407921"] = { Name = "Server.Attack 2", Delay = 0.45, Length = 1.466, Heavy = false },
+    ["rbxassetid://12808226586"] = { Name = "Server.Staff1", Delay = 0.21, Length = 0.6, Heavy = false },
+    ["rbxassetid://10017557380"] = { Name = "Server.Staff3", Delay = 0.204, Length = 0.583, Heavy = false },
+    ["rbxassetid://12808233350"] = { Name = "Server.Staff2", Delay = 0.2, Length = 0.366, Heavy = false },
+    ["rbxassetid://12955527930"] = { Name = "Server.HeavyStaff", Delay = 0.65, Length = 1.633, Heavy = true },
+    ["rbxassetid://74594683886829"] = { Name = "Server.Sword3", Delay = 0.297, Length = 0.899, Heavy = false },
+    ["rbxassetid://89849437438829"] = { Name = "Server.Sword1", Delay = 0.302, Length = 0.916, Heavy = false },
+    ["rbxassetid://11893001175"] = { Name = "Server.Zombie2", Delay = 0.251, Length = 0.716, Heavy = false },
+    ["rbxassetid://70936328766912"] = { Name = "Server.Dagger1", Delay = 0.24, Length = 0.733, Heavy = false },
+    ["rbxassetid://111510911006717"] = { Name = "Server.Punch2", Delay = 0.22, Length = 0.616, Heavy = false },
+    ["rbxassetid://123693468061117"] = { Name = "Server.Punch1", Delay = 0.186, Length = 0.516, Heavy = false },
+    ["rbxassetid://8594363819"] = { Name = "Server.Heavy", Delay = 0.38, Length = 0.766, Heavy = true },
+    ["rbxassetid://9920890274"] = { Name = "Server.Strike", Delay = 0.35, Length = 1.0, Heavy = false },
+    ["rbxassetid://11169772012"] = { Name = "Server.GreatswordSprint", Delay = 0.38, Length = 0.699, Heavy = true },
+    ["rbxassetid://89652204450491"] = { Name = "Server.Greatsword2", Delay = 0.405, Length = 0.899, Heavy = true },
+    ["rbxassetid://89849437438829"] = { Name = "Server.Greatsword3", Delay = 0.412, Length = 0.916, Heavy = true },
+    ["rbxassetid://89849437438829"] = { Name = "Server.Greatsword1", Delay = 0.412, Length = 0.916, Heavy = true },
+    ["rbxassetid://123565976636065"] = { Name = "Server.Rapier1", Delay = 0.262, Length = 0.75, Heavy = false },
+    ["rbxassetid://10694823147"] = { Name = "Server.HeavyRapier", Delay = 0.54, Length = 1.2, Heavy = true },
+    ["rbxassetid://86722279259826"] = { Name = "Server.Spear1", Delay = 0.323, Length = 0.949, Heavy = false },
+    ["rbxassetid://122307357536158"] = { Name = "Server.Spear3", Delay = 0.306, Length = 0.899, Heavy = false },
+    ["rbxassetid://10017994824"] = { Name = "Server.HeavySpear", Delay = 0.38, Length = 0.716, Heavy = true },
+    ["rbxassetid://107811934597910"] = { Name = "Server.Spear2", Delay = 0.306, Length = 0.899, Heavy = false },
+    ["rbxassetid://89652204450491"] = { Name = "Server.Sword2", Delay = 0.297, Length = 0.899, Heavy = false },
+    ["rbxassetid://75088128678260"] = { Name = "Server.HeavySword", Delay = 0.51, Length = 1.133, Heavy = true },
+    ["rbxassetid://11892996649"] = { Name = "Server.Zombie1", Delay = 0.268, Length = 0.766, Heavy = false },
+    ["rbxassetid://88525660121099"] = { Name = "Server.Rapier2", Delay = 0.245, Length = 0.699, Heavy = false },
+    ["rbxassetid://11262591531"] = { Name = "Server.DaggerSpin", Delay = 0.18, Length = 0.5, Heavy = false },
+    ["rbxassetid://13822728105"] = { Name = "Server.Swing 1", Delay = 0.362, Length = 1.033, Heavy = false },
+    ["rbxassetid://120283215167024"] = { Name = "Server.Dagger2", Delay = 0.198, Length = 0.566, Heavy = false },
+    ["rbxassetid://115704466488110"] = { Name = "Server.Scythe3", Delay = 0.38, Length = 0.75, Heavy = true },
+    ["rbxassetid://10230852540"] = { Name = "Server.SprintKick", Delay = 0.297, Length = 0.85, Heavy = false },
+    ["rbxassetid://104165983064642"] = { Name = "Server.Scythe1", Delay = 0.38, Length = 0.766, Heavy = true },
+    ["rbxassetid://13822736997"] = { Name = "Server.Slam", Delay = 0.577, Length = 1.283, Heavy = true },
+    ["rbxassetid://103140391021149"] = { Name = "Server.LizardBoss1", Delay = 0.35, Length = 1.0, Heavy = false },
+    ["rbxassetid://96581414677240"] = { Name = "Server.ScytheSprint", Delay = 0.38, Length = 0.8, Heavy = true },
+    ["rbxassetid://85570415456598"] = { Name = "Server.Punch3", Delay = 0.174, Length = 0.483, Heavy = false },
+    ["rbxassetid://110876955202970"] = { Name = "Server.LizardBoss2", Delay = 0.362, Length = 1.033, Heavy = false },
+    ["rbxassetid://71375698527524"] = { Name = "Server.LizardSoldier1", Delay = 0.315, Length = 0.899, Heavy = false },
+    ["rbxassetid://10250846568"] = { Name = "Server.Misdirect", Delay = 0.1, Length = 0.283, Heavy = false },
+    ["rbxassetid://115413726601821"] = { Name = "Server.LizardSoldier2", Delay = 0.327, Length = 0.933, Heavy = false },
+    ["rbxassetid://100328615092856"] = { Name = "Server.LizardSoldier3", Delay = 0.327, Length = 0.933, Heavy = false },
+    ["rbxassetid://11893004134"] = { Name = "Server.ZombieKnockback", Delay = 0.309, Length = 0.883, Heavy = false },
+    ["rbxassetid://87606723288055"] = { Name = "Server.LizardSoldier4", Delay = 0.362, Length = 1.033, Heavy = false },
+    ["rbxassetid://9920882854"] = { Name = "Server.Left Swipe", Delay = 0.432, Length = 1.233, Heavy = false },
+    ["rbxassetid://120129566668137"] = { Name = "Server.LizardBoss3", Delay = 0.45, Length = 1.333, Heavy = false },
+    ["rbxassetid://125482975672454"] = { Name = "Server.BlightSlashRight", Delay = 0.286, Length = 0.816, Heavy = false },
+    ["rbxassetid://137057617868950"] = { Name = "Server.BlightSwipes", Delay = 0.45, Length = 2.483, Heavy = false },
+    ["rbxassetid://94189509684810"] = { Name = "Server.Dagger3", Delay = 0.21, Length = 0.6, Heavy = false },
+    ["rbxassetid://71734496574082"] = { Name = "Server.MushknightGrab", Delay = 0.65, Length = 1.966, Heavy = true },
+    ["rbxassetid://106981115410840"] = { Name = "Server.MushmiteHeadbutt", Delay = 0.65, Length = 2.533, Heavy = true },
+    ["rbxassetid://73629219095110"] = { Name = "Server.Wolf2", Delay = 0.52, Length = 1.299, Heavy = false },
+    ["rbxassetid://125957249913572"] = { Name = "Server.Wolf1", Delay = 0.493, Length = 1.233, Heavy = false },
+    ["rbxassetid://85982255640312"] = { Name = "Server.BlightSlashLeft", Delay = 0.45, Length = 1.666, Heavy = false },
+    ["rbxassetid://9557400534"] = { Name = "Server.HeavyDagger", Delay = 0.51, Length = 1.133, Heavy = true },
+    ["rbxassetid://70574481445445"] = { Name = "Server.Scythe2", Delay = 0.38, Length = 0.766, Heavy = true },
+    ["rbxassetid://99787918237880"] = { Name = "Server.Knockback", Delay = 0.21, Length = 0.6, Heavy = false },
+    ["rbxassetid://76395852273763"] = { Name = "Server.HeavyScythe", Delay = 0.457, Length = 1.016, Heavy = true },
+    ["rbxassetid://132013056786173"] = { Name = "Server.HollowseerBite", Delay = 0.45, Length = 3.716, Heavy = false },
+    ["rbxassetid://18192998083"] = { Name = "Server.ElkStomp2", Delay = 0.65, Length = 3.458, Heavy = true },
+    ["rbxassetid://14158953103"] = { Name = "Server.Golem 2", Delay = 0.28, Length = 0.8, Heavy = false },
+    ["rbxassetid://14527234407"] = { Name = "Server.Katana2", Delay = 0.317, Length = 0.933, Heavy = false },
+    ["rbxassetid://112932641545194"] = { Name = "Server.Katana3", Delay = 0.353, Length = 1.039, Heavy = false },
+    ["rbxassetid://13822736997"] = { Name = "Server.Mace Slam", Delay = 0.577, Length = 1.283, Heavy = true },
+    ["rbxassetid://13960433818"] = { Name = "Server.Mace Swing 2", Delay = 0.266, Length = 0.759, Heavy = false },
+    ["rbxassetid://14158890923"] = { Name = "Server.Golem 1", Delay = 0.322, Length = 0.92, Heavy = false },
+    ["rbxassetid://13960430722"] = { Name = "Server.Mace Swing 1", Delay = 0.406, Length = 1.159, Heavy = false },
+    ["rbxassetid://14850217335"] = { Name = "Server.HeavyTrident", Delay = 0.65, Length = 3.577, Heavy = true },
+    ["rbxassetid://10017557380"] = { Name = "Server.Trident3", Delay = 0.204, Length = 0.583, Heavy = false },
+    ["rbxassetid://18133501787"] = { Name = "Server.GroveTailSwipe", Delay = 0.45, Length = 1.899, Heavy = false },
+    ["rbxassetid://18133497814"] = { Name = "Server.GrovePounce", Delay = 0.45, Length = 2.166, Heavy = false },
+    ["rbxassetid://14527230703"] = { Name = "Server.Katana1", Delay = 0.38, Length = 1.166, Heavy = false },
+    ["rbxassetid://14452988294"] = { Name = "Server.HeavyKatana", Delay = 0.504, Length = 1.12, Heavy = true },
+    ["rbxassetid://10017535748"] = { Name = "Server.Trident1", Delay = 0.2, Length = 0.5, Heavy = false },
+    ["rbxassetid://10017543126"] = { Name = "Server.Trident2", Delay = 0.2, Length = 0.416, Heavy = false },
+    ["rbxassetid://17861866763"] = { Name = "Server.OgreSwipe1", Delay = 0.364, Length = 1.039, Heavy = false },
+    ["rbxassetid://11100897909"] = { Name = "Server.Greataxe3", Delay = 0.38, Length = 0.699, Heavy = true },
+    ["rbxassetid://18334915919"] = { Name = "Server.Spirit1", Delay = 0.274, Length = 0.783, Heavy = false },
+    ["rbxassetid://75817196379763"] = { Name = "Server.Rapier3", Delay = 0.262, Length = 0.75, Heavy = false },
+    ["rbxassetid://17861869512"] = { Name = "Server.OgreSwipe2", Delay = 0.378, Length = 1.08, Heavy = false },
+    ["rbxassetid://17564283859"] = { Name = "Server.HeavyGreataxe", Delay = 0.38, Length = 0.319, Heavy = true },
+    ["rbxassetid://11100902766"] = { Name = "Server.Greataxe2", Delay = 0.38, Length = 0.66, Heavy = true },
+    ["rbxassetid://11169772012"] = { Name = "Server.GreataxeSprint", Delay = 0.38, Length = 0.699, Heavy = true },
+    ["rbxassetid://11100897909"] = { Name = "Server.Greataxe1", Delay = 0.38, Length = 0.699, Heavy = true },
+    ["rbxassetid://112272302102744"] = { Name = "Server.CrawlerLeft", Delay = 0.2, Length = 0.3, Heavy = false },
+    ["rbxassetid://90147459897801"] = { Name = "Server.CrawlerCritical", Delay = 0.321, Length = 0.916, Heavy = false },
+    ["rbxassetid://11100915060"] = { Name = "Server.HeavyGreatsword", Delay = 0.38, Length = 0.716, Heavy = true },
+    ["rbxassetid://73042737238490"] = { Name = "Server.LizardBossStomp", Delay = 0.65, Length = 1.833, Heavy = true },
+    ["rbxassetid://9920866928"] = { Name = "Server.Right Swipe", Delay = 0.432, Length = 1.233, Heavy = false },
+    ["rbxassetid://75576032954820"] = { Name = "Server.CrawlerRight", Delay = 0.227, Length = 0.649, Heavy = false },
+    ["rbxassetid://11893004134"] = { Name = "Server.Spirit3", Delay = 0.309, Length = 0.883, Heavy = false },
+    ["rbxassetid://18334923698"] = { Name = "Server.Spirit2", Delay = 0.257, Length = 0.733, Heavy = false },
+    ["rbxassetid://18320514554"] = { Name = "Server.ElkStomp1", Delay = 0.65, Length = 3.458, Heavy = true },
+    ["rbxassetid://112682800928139"] = { Name = "Server.Brute Swing 1", Delay = 0.373, Length = 1.066, Heavy = false },
+    ["rbxassetid://72354029824787"] = { Name = "Server.Brute Swing 2", Delay = 0.367, Length = 1.049, Heavy = false },
+    ["rbxassetid://80495839788581"] = { Name = "Server.Brute Slam", Delay = 0.435, Length = 0.966, Heavy = true },
 }
-
-local lastParryTime = 0
 local parryInProgress = false
+local lastParryTime = 0
 local lastDodgeTime = 0
+local activeAttackQueues = {}
 
 local function performParry(holdDuration)
     if parryInProgress then return end
@@ -7870,7 +7861,7 @@ end
 
 local function performDodge()
     local now = os.clock()
-    if (now - lastDodgeTime) < 0.8 then return end
+    if (now - lastDodgeTime) < 0.75 then return end
     lastDodgeTime = now
 
     task.spawn(function()
@@ -7883,96 +7874,87 @@ local function performDodge()
     end)
 end
 
--- Process incoming attack / spell animation track
-local activeAttackQueues = {}
-
-local function handleIncomingAttack(model, track)
+local function evaluateTrack(model, track, root, dist)
     if not Hub.Alive or not Hub.Flags.AutoParry then return end
-    local char = LocalPlayer.Character
-    local myHrp = char and char:FindFirstChild("HumanoidRootPart")
-    local myHum = char and char:FindFirstChildOfClass("Humanoid")
-    if not myHrp or not myHum or myHum.Health <= 0 then return end
-
-    local root = model:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-
-    local dist = (root.Position - myHrp.Position).Magnitude
-    local maxRange = Hub.Flags.AutoParryRange or 25
-    if dist > maxRange then return end
+    if not track.IsPlaying then return end
 
     local animObj = track.Animation
     local animId = animObj and animObj.AnimationId or ""
     local animName = track.Name:lower()
 
-    -- Exclude non-combat movement (idle, walk, run, strafe)
     if animName:find("idle") or animName:find("walk") or animName:find("run")
        or animName:find("strafe") or animName:find("emote") or animName:find("down")
        or animName:find("swim") or animName:find("sit") or animName:find("fall") then
         return
     end
 
-    -- Specific exclude for known non-attack animations
-    if animId == "rbxassetid://105273448305185" or animId == "rbxassetid://124023674688709"
-       or animId == "rbxassetid://126657595467301" or animId == "rbxassetid://103048719190843"
-       or animId == "rbxassetid://18910040255" or animId == "rbxassetid://9839955546" then
-        return
-    end
-
     local cfg = AttackConfig[animId]
     local isHeavy = false
-    local delayTime = 0.50 -- Default timing for unindexed creature swings (never instant!)
+    local delayTime = 0.35
 
     if cfg then
         isHeavy = cfg.Heavy
-        delayTime = cfg.Delay or 0.50
+        delayTime = cfg.Delay or 0.35
     else
-        -- Fallback detection when track.Name is generic or an unindexed spell
-        local lower = animName
-        if lower:find("heavy") or lower:find("slam") or lower:find("smash")
-           or lower:find("howl") or lower:find("headbutt") or lower:find("stomp")
-           or lower:find("roar") or lower:find("rupture") or lower:find("crush")
-           or lower:find("dive") or lower:find("comet") or lower:find("ultimate") then
+        if animName:find("heavy") or animName:find("slam") or animName:find("smash")
+           or animName:find("howl") or animName:find("headbutt") or animName:find("stomp")
+           or animName:find("roar") or animName:find("rupture") or animName:find("crush")
+           or animName:find("dive") or animName:find("comet") or animName:find("ultimate") then
             isHeavy = true
-            delayTime = 0.55
+            delayTime = 0.50
+        elseif animName:find("misdirect") then
+            delayTime = 0.10
+            isHeavy = false
         else
-            -- If length is known, delay to ~40% of the animation before parrying
-            local len = track.Length or 1.2
+            local len = track.Length or 1.0
             if len > 0.5 then
-                delayTime = round(len * 0.40, 3)
+                delayTime = round(len * 0.35, 3)
             else
-                delayTime = 0.35
+                delayTime = 0.22
             end
         end
     end
 
-    -- Deduplicate track processing per entity
-    local queueKey = tostring((model:GetFullName() or tostring(model))) .. "_" .. tostring(animId)
-    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.5 then
+    local curPos = track.TimePosition or 0
+    local speed = math.max(track.Speed or 1, 0.1)
+    local remaining = (delayTime - curPos) / speed
+
+    -- Deduplication key tied to animation cycle (resets every 0.35s)
+    local queueKey = tostring(model:GetFullName()) .. "_" .. tostring(animId) .. "_" .. tostring(math.floor(curPos * 2.5))
+    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.35 then
         return
     end
-    activeAttackQueues[queueKey] = os.clock()
 
-    task.spawn(function()
-        local curPos = track.TimePosition or 0
-        local speed = math.max(track.Speed or 1, 0.1)
-        local remaining = math.max(0, (delayTime - curPos) / speed)
-
-        if remaining > 0 then
-            task.wait(remaining)
-        end
-
-        if not Hub.Alive or not myHrp or not root then return end
-        if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 3 then return end
-
+    -- Hit is connecting RIGHT NOW (within 85ms) -> Trigger instantly!
+    if remaining <= 0.085 and remaining >= -0.065 then
+        activeAttackQueues[queueKey] = os.clock()
         if isHeavy then
             performDodge()
         else
-            performParry(0.20)
+            performParry(0.22)
         end
-    end)
+        return
+    end
+
+    -- Hit is coming in the near future (between 85ms and 650ms) -> Schedule exact arrival
+    if remaining > 0.085 and remaining <= 0.65 then
+        activeAttackQueues[queueKey] = os.clock()
+        task.delay(remaining - 0.02, function()
+            if not Hub.Alive or not Hub.Flags.AutoParry then return end
+            local char = LocalPlayer.Character
+            local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not myHrp or not root or not root.Parent then return end
+            if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 3 then return end
+
+            if isHeavy then
+                performDodge()
+            else
+                performParry(0.22)
+            end
+        end)
+    end
 end
 
--- Monitor entity animations and visual telltales
 local function monitorAttacker(model)
     if not model or not model:IsA("Model") then return end
     if model == LocalPlayer.Character then return end
@@ -7981,7 +7963,14 @@ local function monitorAttacker(model)
     if not hum then return end
 
     local function onAnim(track)
-        handleIncomingAttack(model, track)
+        local root = model:FindFirstChild("HumanoidRootPart")
+        local char = LocalPlayer.Character
+        local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not root or not myHrp then return end
+        local dist = (root.Position - myHrp.Position).Magnitude
+        if dist <= (Hub.Flags.AutoParryRange or 25) + 6 then
+            evaluateTrack(model, track, root, dist)
+        end
     end
 
     local conn = hum.AnimationPlayed:Connect(onAnim)
@@ -8007,7 +7996,7 @@ local function monitorAttacker(model)
         local myHrp = char and char:FindFirstChild("HumanoidRootPart")
         local root = model:FindFirstChild("HumanoidRootPart")
         if not myHrp or not root then return end
-        if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) then return end
+        if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 3 then return end
 
         if desc:IsA("Highlight") then
             local color = desc.FillColor
@@ -8021,7 +8010,6 @@ local function monitorAttacker(model)
     table.insert(Hub.Connections, descConn)
 end
 
--- Hook Magic, NPC & Weapon Network Remotes (Intercepts Spells cast without standard local animation)
 local function hookSpellRemotes()
     local remotes = RS:FindFirstChild("Remotes")
     if not remotes then return end
@@ -8059,29 +8047,30 @@ local function hookSpellRemotes()
 
         if dist <= (Hub.Flags.AutoParryRange or 25) + 5 then
             if mName:find("ultimate") or mName:find("stomp") or mName:find("howl") or mName:find("collapse") or mName:find("dive") or mName:find("comet") then
-                performDodge()
+                task.spawn(performDodge)
             else
-                performParry(0.24)
+                task.spawn(function() performParry(0.22) end)
             end
         end
     end
 
-    if remotes:FindFirstChild("Magic") and remotes.Magic:FindFirstChild("Client") then
-        local c1 = remotes.Magic.Client.OnClientEvent:Connect(onSpellDispatched)
+    local magicClient = remotes:FindFirstChild("Magic") and remotes.Magic:FindFirstChild("Client")
+    if magicClient and magicClient:IsA("RemoteEvent") then
+        local c1 = magicClient.OnClientEvent:Connect(onSpellDispatched)
         table.insert(Hub.Connections, c1)
     end
-    if remotes:FindFirstChild("Client") and remotes.Client:FindFirstChild("NPCVFX") then
-        local c2 = remotes.Client.NPCVFX.OnClientEvent:Connect(onSpellDispatched)
+    local npcVfx = remotes:FindFirstChild("Client") and remotes.Client:FindFirstChild("NPCVFX")
+    if npcVfx and npcVfx:IsA("RemoteEvent") then
+        local c2 = npcVfx.OnClientEvent:Connect(onSpellDispatched)
         table.insert(Hub.Connections, c2)
     end
-    if remotes:FindFirstChild("Weapon") and remotes.Weapon:FindFirstChild("Client") then
-        local c3 = remotes.Weapon.Client.OnClientEvent:Connect(onSpellDispatched)
+    local weaponClient = remotes:FindFirstChild("Weapon") and remotes.Weapon:FindFirstChild("Client")
+    if weaponClient and weaponClient:IsA("RemoteEvent") then
+        local c3 = weaponClient.OnClientEvent:Connect(onSpellDispatched)
         table.insert(Hub.Connections, c3)
     end
 end
-hookSpellRemotes()
 
--- Initialize Parry Watchers
 local function initParryWatchers()
     hookSpellRemotes()
 
@@ -8096,7 +8085,7 @@ local function initParryWatchers()
     if fightable then
         for _, m in ipairs(fightable:GetChildren()) do register(m) end
         local c1 = fightable.ChildAdded:Connect(function(m)
-            task.wait(0.1)
+            task.wait(0.05)
             register(m)
         end)
         table.insert(Hub.Connections, c1)
@@ -8106,7 +8095,7 @@ local function initParryWatchers()
     if npcs then
         for _, m in ipairs(npcs:GetChildren()) do register(m) end
         local cNpcs = npcs.ChildAdded:Connect(function(m)
-            task.wait(0.1)
+            task.wait(0.05)
             register(m)
         end)
         table.insert(Hub.Connections, cNpcs)
@@ -8116,28 +8105,48 @@ local function initParryWatchers()
     if pChars then
         for _, p in ipairs(pChars:GetChildren()) do register(p) end
         local c2 = pChars.ChildAdded:Connect(function(p)
-            task.wait(0.1)
+            task.wait(0.05)
             register(p)
         end)
         table.insert(Hub.Connections, c2)
     end
 
-    -- Sweep any combat model entering within 45 studs
-    local sweepConn = RunService.Heartbeat:Connect(function()
+    -- Continuous Active Track Scanner (Parries first hits, charging mobs, and feints)
+    local scanConn = RunService.Heartbeat:Connect(function()
         if not Hub.Alive or not Hub.Flags.AutoParry then return end
         local char = LocalPlayer.Character
         local myHrp = char and char:FindFirstChild("HumanoidRootPart")
         if not myHrp then return end
 
-        for _, m in ipairs(workspace:GetChildren()) do
-            if m:IsA("Model") and m ~= char and not monitored[m] and m:FindFirstChildOfClass("Humanoid") and m:FindFirstChild("HumanoidRootPart") then
-                if (m.HumanoidRootPart.Position - myHrp.Position).Magnitude < 45 then
-                    register(m)
+        local maxRange = Hub.Flags.AutoParryRange or 25
+        local function checkFolder(folder)
+            if not folder then return end
+            for _, m in ipairs(folder:GetChildren()) do
+                if m:IsA("Model") and m ~= char then
+                    local root = m:FindFirstChild("HumanoidRootPart")
+                    local hum = m:FindFirstChildOfClass("Humanoid")
+                    if root and hum and hum.Health > 0 then
+                        local dist = (root.Position - myHrp.Position).Magnitude
+                        if dist <= maxRange then
+                            register(m)
+                            local animator = hum:FindFirstChildOfClass("Animator")
+                            if animator then
+                                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                                    evaluateTrack(m, track, root, dist)
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
+
+        checkFolder(fightable)
+        checkFolder(npcs)
+        checkFolder(pChars)
+        checkFolder(workspace)
     end)
-    table.insert(Hub.Connections, sweepConn)
+    table.insert(Hub.Connections, scanConn)
 end
 initParryWatchers()
 

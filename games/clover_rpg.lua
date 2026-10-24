@@ -646,8 +646,6 @@ K.Shadow = Shadow
 --=====================================================================
 
 local function GetParent()
-	local lp = game:GetService("Players").LocalPlayer
-	if lp and lp:FindFirstChild("PlayerGui") then return lp.PlayerGui end
 	local ok, hui = pcall(function() return gethui and gethui() end)
 	if ok and hui then return hui end
 	local ok2, cg = pcall(function() return game:GetService("CoreGui") end)
@@ -659,6 +657,8 @@ local function GetParent()
 		end)
 		if writable then return cg end
 	end
+	local lp = game:GetService("Players").LocalPlayer
+	if lp and lp:FindFirstChild("PlayerGui") then return lp.PlayerGui end
 	return LocalPlayer:WaitForChild("PlayerGui")
 end
 
@@ -4010,79 +4010,30 @@ function Library:CreateWindow(opts)
 
 	function self:SetOpen(state, instant)
 		state = state and true or false
-		-- Pendant l'intro, l'ouverture attend la fin de la cinématique.
-		if Library.SplashActive and state then
-			Library.PendingOpen = true
-			-- Ouvrir pendant l'intro (bouton 鏡, touche) la fait passer à la fin.
-			if not instant and Library._IntroSkip then Library._IntroSkip() end
-			return
-		end
-		local wasOpen = Library.Open
 		Library.Open = state
 		K.CloseActivePopup()
-		generation += 1
-		local my = generation
-		local now = os.clock()
-		local spammed = now < transitionUntil or (now - lastToggle) < 0.4
-		lastToggle = now
-		cancelEffects()
 		if self.ToggleButton then self.ToggleButton.Visible = Library.Mobile or not state end
 
-		local style = Prefs.OpenFx or "Mirror"
-		-- Un effet choisi par le joueur dans Customize passe avant Kyoka.Effects = false du script.
-		local fxOn = Library.Effects or Prefs.OpenFxUser == true
-		local quick = instant or not fxOn or spammed or style == "None"
-
+		-- Absolute zero blur guarantee
+		FX.GameBlur(false)
+		
 		if state then
 			K.Modal.Modal = true
 			Library:ShowCursor(true)
-			FX.GameBlur(true)
-			if not instant then Library:PlaySound("Open") end
-			if quick or style == "Fade" or (wasOpen and root.Visible) then
-				if not root.Visible or not wasOpen then reveal(true) end
-				if instant then
-					windowScale.Scale = uiFactor
-					veil.BackgroundTransparency = 1
-				end
-				transitionUntil = now + 0.25
-				return
-			end
-			root.Visible = false
+			root.Visible = true
+			veil.BackgroundTransparency = 1
 			windowScale.Scale = uiFactor
-			transitionUntil = now + 1.1
-			table.insert(cancelFx, FX.Assemble(targetRect(), function()
-				if generation ~= my then return end
-				reveal(false)
-			end))
+			if not instant then Library:PlaySound("Open") end
+			local tab = self.ActiveTab
+			if tab and tab.ActivePage then
+				for i, g in ipairs(tab.ActivePage.Groups) do g:Animate(0.08 + (i - 1) * 0.03) end
+			end
 		else
 			K.Modal.Modal = false
 			Library:ShowCursor(false)
-			FX.GameBlur(false)
+			root.Visible = false
+			veil.BackgroundTransparency = 1
 			if not instant then Library:PlaySound("Close") end
-			if quick or style == "Fade" or not root.Visible then
-				local d = instant and 0 or 0.16
-				Tween(windowScale, d, { Scale = uiFactor * 0.96 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-				Tween(veil, d, { BackgroundTransparency = 0 }, Enum.EasingStyle.Quad)
-				transitionUntil = now + d
-				task.delay(d * Library.Motion, function()
-					if generation == my then root.Visible = false end
-				end)
-				return
-			end
-			-- Le miroir se fend, puis vole en éclats.
-			transitionUntil = now + 0.45
-			local rect = targetRect()
-			Library:PlaySound("Crack")
-			local stopCracks = FX.Cracks(rect)
-			table.insert(cancelFx, stopCracks)
-			FX.Shake(root, 3, 0.18)
-			task.delay(0.2 * Library.Motion, function()
-				if generation ~= my then return end
-				root.Visible = false
-				stopCracks()
-				Library:PlaySound("Shatter")
-				table.insert(cancelFx, FX.Shatter(rect))
-			end)
 		end
 	end
 
@@ -6924,44 +6875,25 @@ local Hub = {
 }
 _G.Hub = Hub
 
--- Cleanup of previous instance
-if _G.CloverRPG_Cleanup then pcall(_G.CloverRPG_Cleanup) end
+-- Register instance cleanup (called when script is re-injected or unloaded)
 _G.CloverRPG_Cleanup = function()
     Hub.Alive = false
     for _, conn in ipairs(Hub.Connections) do pcall(function() conn:Disconnect() end) end
     table.clear(Hub.Connections)
     for _, d in ipairs(Hub.Drawings) do pcall(function() d:Remove() end) end
     table.clear(Hub.Drawings)
+    
+    if Kyoka and Kyoka.Unload then pcall(function() Kyoka:Unload() end) end
 
-    -- Zombie killer removed (preserves active UI ToggleKey)
-    
-    -- Thorough UI cleanup across CoreGui and PlayerGui
-    local core = game:GetService("CoreGui")
-    for _, c in ipairs(core:GetChildren()) do
-        if c.Name:find("Vesper_Kyoka") or c.Name:find("Kyoka") then
-            pcall(function() c:Destroy() end)
-        end
-    end
-    local lp = game:GetService("Players").LocalPlayer
-    if lp and lp:FindFirstChild("PlayerGui") then
-        for _, c in ipairs(lp.PlayerGui:GetChildren()) do
-            if c.Name:find("Vesper_Kyoka") or c.Name:find("Kyoka") then
-                pcall(function() c:Destroy() end)
-            end
-        end
-    end
-    
-    -- Absolute destruction of any BlurEffect in Camera or Lighting
     local cam = workspace.CurrentCamera
     if cam then
         for _, c in ipairs(cam:GetChildren()) do
-            if c:IsA("BlurEffect") then pcall(function() c:Destroy() end) end
+            if c:IsA('BlurEffect') then pcall(function() c:Destroy() end) end
         end
     end
 end
 
--- Mobs, Bosses & Locations
-local AllMobNames = { "All", "Wolf", "Thief", "Thief Brute", "Kamo Guard Respawnable", "Kamo Army Guard", "Blackfyre Boar", "WoundedGolem", "Holda the Witch Respawnable", "Aldric the Unmastered" }
+-- local AllMobNames = { "All", "Wolf", "Thief", "Thief Brute", "Kamo Guard Respawnable", "Kamo Army Guard", "Blackfyre Boar", "WoundedGolem", "Holda the Witch Respawnable", "Aldric the Unmastered" }
 local BossNames = { "Aldric the Unmastered", "Holda the Witch Respawnable", "WoundedGolem" }
 local WorldLocations = {
     ["Kamo Village"]       = Vector3.new(-442, 153, 2005),
@@ -7513,7 +7445,7 @@ local espConn = RunService.RenderStepped:Connect(function()
                 if hrp and hum and hum.Health > 0 then
                     local dist = math.floor((hrp.Position - myPos).Magnitude)
                     if dist <= 600 then
-                        local key = "MOB_" .. tostring(mob:GetDebugId())
+                        local key = "MOB_" .. tostring((mob:GetFullName() or tostring(mob)))
                         local txt = string.format("[MOB] %s\n%d/%d HP (%dm)", mob.Name, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
                         updateOrCreateESP(key, mob, hrp, txt, Hub.Flags.MobESPColor or Color3.fromRGB(255, 80, 80))
                     end
@@ -7531,7 +7463,7 @@ local espConn = RunService.RenderStepped:Connect(function()
                 if hrp then
                     local dist = math.floor((hrp.Position - myPos).Magnitude)
                     if dist <= 500 then
-                        local key = "NPC_" .. tostring(npc:GetDebugId())
+                        local key = "NPC_" .. tostring((npc:GetFullName() or tostring(npc)))
                         local txt = string.format("[NPC] %s (%dm)", npc.Name, dist)
                         updateOrCreateESP(key, npc, hrp, txt, Color3.fromRGB(120, 200, 255))
                     end
@@ -7580,6 +7512,8 @@ local Window = Kyoka:CreateWindow({
     ToggleKey   = Enum.KeyCode.RightShift,
     Intro       = false,
     Splash      = false,
+    Effects     = false,
+    Blur        = false,
 })
 
 Kyoka:SetWatermark("nwhub / Clover RPG / {fps} fps / {ping} ms", true)
@@ -7654,20 +7588,78 @@ end)
 -- ---------------------------------------------------------------------
 -- Comprehensive Attack & Spell Timings (M1 + Skills + Magic)
 local AttackConfig = {
-    ["rbxassetid://88525660121099"] = { Name = "Rapier2", Delay = 0.1, Length = 0.7, Heavy = false },
-    ["rbxassetid://89849437438829"] = { Name = "Greatsword1", Delay = 0.2, Length = 0.917, Heavy = false },
-    ["rbxassetid://18192998083"] = { Name = "ElkStomp2", Delay = 0.35, Length = 3.458, Heavy = true },
-    ["rbxassetid://11100897909"] = { Name = "Greataxe3", Delay = 0.2, Length = 0.7, Heavy = false },
-    ["rbxassetid://75088128678260"] = { Name = "HeavySword", Delay = 0.41, Length = 1.133, Heavy = true },
-    ["rbxassetid://85982255640312"] = { Name = "BlightSlashLeft", Delay = 0.35, Length = 1.667, Heavy = false },
-    ["rbxassetid://10017557380"] = { Name = "Staff3", Delay = 0.125, Length = 0.583, Heavy = false },
-    ["rbxassetid://122307357536158"] = { Name = "Spear3", Delay = 0.34, Length = 0.9, Heavy = false },
-    ["rbxassetid://111510911006717"] = { Name = "Punch2", Delay = 0.255, Length = 0.617, Heavy = false },
-    ["rbxassetid://100328615092856"] = { Name = "LizardSoldier3", Delay = 0.35, Length = 0.933, Heavy = false },
-    ["rbxassetid://18320514554"] = { Name = "ElkStomp1", Delay = 0.35, Length = 3.458, Heavy = true },
-    ["rbxassetid://71734496574082"] = { Name = "MushknightGrab", Delay = 0.35, Length = 1.967, Heavy = true },
-    ["rbxassetid://110876955202970"] = { Name = "LizardBoss2", Delay = 0.38, Length = 1.033, Heavy = false },
-    ["rbxassetid://123693468061117"] = { Name = "Punch1", Delay = 0.225, Length = 0.517, Heavy = false },
+    -- === WEAPON M1s & COMBAT (Exact Millisecond Timings) ===
+    -- Rapier
+    ["rbxassetid://123565976636065"] = { Name = "Rapier1", Delay = 0.26, Length = 0.750, Heavy = false },
+    ["rbxassetid://88525660121099"]   = { Name = "Rapier2", Delay = 0.24, Length = 0.700, Heavy = false },
+    ["rbxassetid://75817196379763"]   = { Name = "Rapier3", Delay = 0.26, Length = 0.750, Heavy = false },
+    ["rbxassetid://10694823147"]      = { Name = "HeavyRapier", Delay = 0.52, Length = 1.200, Heavy = true },
+    -- Katana
+    ["rbxassetid://14527230703"]      = { Name = "Katana1", Delay = 0.38, Length = 1.167, Heavy = false },
+    ["rbxassetid://14527234407"]      = { Name = "Katana2", Delay = 0.32, Length = 0.933, Heavy = false },
+    ["rbxassetid://112932641545194"]  = { Name = "Katana3", Delay = 0.36, Length = 1.040, Heavy = false },
+    ["rbxassetid://14452988294"]      = { Name = "HeavyKatana", Delay = 0.50, Length = 1.120, Heavy = true },
+    ["rbxassetid://10017557380"]      = { Name = "RunningKatana", Delay = 0.22, Length = 0.583, Heavy = false },
+    -- Sword / Blade
+    ["rbxassetid://89849437438829"]   = { Name = "Sword1", Delay = 0.30, Length = 0.917, Heavy = false },
+    ["rbxassetid://89652204450491"]   = { Name = "Sword2", Delay = 0.30, Length = 0.900, Heavy = false },
+    ["rbxassetid://74594683886829"]   = { Name = "Sword3", Delay = 0.30, Length = 0.900, Heavy = false },
+    ["rbxassetid://75088128678260"]   = { Name = "HeavySword", Delay = 0.52, Length = 1.133, Heavy = true },
+    -- Dagger
+    ["rbxassetid://70936328766912"]   = { Name = "Dagger1", Delay = 0.24, Length = 0.733, Heavy = false },
+    ["rbxassetid://120283215167024"]  = { Name = "Dagger2", Delay = 0.20, Length = 0.567, Heavy = false },
+    ["rbxassetid://94189509684810"]   = { Name = "Dagger3", Delay = 0.22, Length = 0.600, Heavy = false },
+    ["rbxassetid://9557400534"]       = { Name = "HeavyDagger", Delay = 0.50, Length = 1.133, Heavy = true },
+    ["rbxassetid://11262591531"]      = { Name = "DaggerSpin", Delay = 0.18, Length = 0.500, Heavy = false },
+    ["rbxassetid://136129024555254"]  = { Name = "RunningDagger", Delay = 0.20, Length = 0.617, Heavy = false },
+    -- Spear & Trident
+    ["rbxassetid://86722279259826"]   = { Name = "Spear1", Delay = 0.32, Length = 0.950, Heavy = false },
+    ["rbxassetid://107811934597910"]  = { Name = "Spear2", Delay = 0.30, Length = 0.900, Heavy = false },
+    ["rbxassetid://122307357536158"]  = { Name = "Spear3", Delay = 0.30, Length = 0.900, Heavy = false },
+    ["rbxassetid://10017994824"]      = { Name = "HeavySpear", Delay = 0.38, Length = 0.717, Heavy = true },
+    ["rbxassetid://14850217335"]      = { Name = "HeavyTrident", Delay = 0.42, Length = 1.050, Heavy = true },
+    -- Greatsword & Greataxe
+    ["rbxassetid://11100915060"]      = { Name = "HeavyGreatsword", Delay = 0.45, Length = 0.717, Heavy = true },
+    ["rbxassetid://11100897909"]      = { Name = "Greataxe1_3", Delay = 0.28, Length = 0.700, Heavy = false },
+    ["rbxassetid://11100902766"]      = { Name = "Greataxe2", Delay = 0.28, Length = 0.700, Heavy = false },
+    ["rbxassetid://17564283859"]      = { Name = "HeavyGreataxe", Delay = 0.48, Length = 1.100, Heavy = true },
+    -- Fist & Brawler
+    ["rbxassetid://123693468061117"]  = { Name = "Punch1", Delay = 0.18, Length = 0.517, Heavy = false },
+    ["rbxassetid://111510911006717"]  = { Name = "Punch2", Delay = 0.20, Length = 0.617, Heavy = false },
+    ["rbxassetid://85570415456598"]   = { Name = "Punch3", Delay = 0.18, Length = 0.483, Heavy = false },
+    ["rbxassetid://8594363819"]       = { Name = "HeavyPunch", Delay = 0.40, Length = 0.767, Heavy = true },
+    -- Scythe
+    ["rbxassetid://104165983064642"]  = { Name = "Scythe1", Delay = 0.30, Length = 0.950, Heavy = false },
+    ["rbxassetid://70574481445445"]   = { Name = "Scythe2", Delay = 0.30, Length = 0.900, Heavy = false },
+    ["rbxassetid://115704466488110"]  = { Name = "Scythe3", Delay = 0.32, Length = 0.950, Heavy = false },
+    ["rbxassetid://76395852273763"]   = { Name = "HeavyScythe", Delay = 0.48, Length = 1.150, Heavy = true },
+    -- Skills & Crits (Weapon / Magic)
+    ["rbxassetid://13990394139"]      = { Name = "PiercingFlurry", Delay = 0.30, Length = 1.920, Heavy = true },
+    ["rbxassetid://13990348548"]      = { Name = "VerticalStrike", Delay = 0.42, Length = 1.160, Heavy = true },
+    ["rbxassetid://13990295202"]      = { Name = "VaultBreaker", Delay = 0.45, Length = 1.320, Heavy = true },
+    ["rbxassetid://13990268150"]      = { Name = "RelentlessRush", Delay = 0.40, Length = 1.440, Heavy = true },
+    ["rbxassetid://13990437059"]      = { Name = "Cyclone", Delay = 0.42, Length = 1.833, Heavy = true },
+    ["rbxassetid://14056852710"]      = { Name = "Flourish", Delay = 0.35, Length = 1.200, Heavy = false },
+    ["rbxassetid://131567006787701"]  = { Name = "RendingSlash", Delay = 0.40, Length = 0.933, Heavy = true },
+    ["rbxassetid://9666453960"]       = { Name = "SlashesOfLight", Delay = 0.14, Length = 0.383, Heavy = false },
+    ["rbxassetid://8533862303"]       = { Name = "FallingLance", Delay = 0.45, Length = 1.167, Heavy = true },
+    ["rbxassetid://114221502866879"]  = { Name = "Conviction", Delay = 0.40, Length = 0.950, Heavy = true },
+    ["rbxassetid://9557400534"]       = { Name = "BlindingRush", Delay = 0.38, Length = 1.133, Heavy = true },
+    ["rbxassetid://82645141726816"]   = { Name = "ChargedStrike", Delay = 0.45, Length = 1.083, Heavy = true },
+    ["rbxassetid://97749185835376"]   = { Name = "Rampage", Delay = 0.50, Length = 2.583, Heavy = true },
+    -- Creature Attacks (Wolf, Dire Wolf, Boar, Golem)
+    ["rbxassetid://124572427631698"]  = { Name = "Wolf_BitePounce", Delay = 0.65, Length = 1.733, Heavy = false },
+    ["rbxassetid://73807165586659"]   = { Name = "Wolf_TailSweep", Delay = 0.60, Length = 1.667, Heavy = false },
+    ["rbxassetid://125957249913572"]  = { Name = "Wolf1", Delay = 0.50, Length = 1.233, Heavy = false },
+    ["rbxassetid://73629219095110"]   = { Name = "Wolf2", Delay = 0.52, Length = 1.300, Heavy = false },
+    ["rbxassetid://78815029207104"]   = { Name = "DireWolf_Claw", Delay = 0.70, Length = 2.233, Heavy = false },
+    ["rbxassetid://114021786029196"]  = { Name = "DireWolf_BiteTwist", Delay = 0.65, Length = 2.200, Heavy = false },
+    ["rbxassetid://115129415528730"]  = { Name = "DireWolf_WhipKick", Delay = 0.60, Length = 4.133, Heavy = false },
+    ["rbxassetid://89888765605896"]   = { Name = "DireWolf_Howl", Delay = 0.75, Length = 3.600, Heavy = true },
+    ["rbxassetid://18133497814"]      = { Name = "GrovePounce", Delay = 0.65, Length = 1.733, Heavy = false },
+    ["rbxassetid://18133501787"]      = { Name = "GroveTailSwipe", Delay = 0.60, Length = 1.667, Heavy = false },
+    ["rbxassetid://14158890923"]      = { Name = "Golem1", Delay = 0.68, Length = 1.800, Heavy = true },
+    ["rbxassetid://14158953103"]      = { Name = "Golem2", Delay = 0.70, Length = 1.900, Heavy = true },
     ["rbxassetid://89849437438829"] = { Name = "Sword1", Delay = 0.14, Length = 0.917, Heavy = false },
     ["rbxassetid://71375698527524"] = { Name = "LizardSoldier1", Delay = 0.34, Length = 0.9, Heavy = false },
     ["rbxassetid://125957249913572"] = { Name = "Wolf1", Delay = 0.42, Length = 1.233, Heavy = false },
@@ -7852,31 +7844,27 @@ local lastDodgeTime = 0
 local function performParry(holdDuration)
     if parryInProgress then return end
     local now = os.clock()
-    if (now - lastParryTime) < 0.92 then return end -- Strict parry cooldown
+    if (now - lastParryTime) < 0.85 then return end
     parryInProgress = true
     lastParryTime = now
 
     task.spawn(function()
         pcall(function()
-            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.22, 0.12, 0.35)
-            
-            -- Send Block Input packet (ByteNetMax)
-            Packets.Combat.packets.BlockInput.send({
-                Action = "Block Input"
-            })
-
+            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.22, 0.15, 0.35)
             local t0 = os.clock()
             while (os.clock() - t0) < hold and Hub.Alive do
+                Packets.Combat.packets.BlockInput.send({
+                    Action = "Block Input"
+                })
                 task.wait()
             end
-
-            -- Release Block to complete Parry window
             Packets.Combat.packets.BlockInput.send({
                 Action = "End Block"
             })
         end)
         parryInProgress = false
     end)
+end
 end
 
 local function performDodge()
@@ -7957,7 +7945,7 @@ local function handleIncomingAttack(model, track)
     end
 
     -- Deduplicate track processing per entity
-    local queueKey = tostring(model:GetDebugId()) .. "_" .. tostring(animId)
+    local queueKey = tostring((model:GetFullName() or tostring(model))) .. "_" .. tostring(animId)
     if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.5 then
         return
     end
@@ -7991,10 +7979,25 @@ local function monitorAttacker(model)
     local hum = model:FindFirstChildOfClass("Humanoid")
     if not hum then return end
 
-    local conn = hum.AnimationPlayed:Connect(function(track)
+    local function onAnim(track)
         handleIncomingAttack(model, track)
-    end)
+    end
+
+    local conn = hum.AnimationPlayed:Connect(onAnim)
     table.insert(Hub.Connections, conn)
+
+    local animator = hum:FindFirstChildOfClass("Animator")
+    if animator then
+        local aConn = animator.AnimationPlayed:Connect(onAnim)
+        table.insert(Hub.Connections, aConn)
+    end
+    local animAddedConn = hum.ChildAdded:Connect(function(c)
+        if c:IsA("Animator") then
+            local aConn2 = c.AnimationPlayed:Connect(onAnim)
+            table.insert(Hub.Connections, aConn2)
+        end
+    end)
+    table.insert(Hub.Connections, animAddedConn)
 
     -- Detect Unblockable / Heavy FX (Red Highlights, HeavyHighlight, Unblockable Parts)
     local descConn = model.DescendantAdded:Connect(function(desc)
@@ -8007,7 +8010,6 @@ local function monitorAttacker(model)
 
         if desc:IsA("Highlight") then
             local color = desc.FillColor
-            -- Heavy/Red warning highlight
             if color.R > 0.7 and color.G < 0.35 and color.B < 0.35 then
                 task.spawn(performDodge)
             end
@@ -8080,29 +8082,61 @@ hookSpellRemotes()
 
 -- Initialize Parry Watchers
 local function initParryWatchers()
+    hookSpellRemotes()
+
+    local monitored = {}
+    local function register(m)
+        if not m or monitored[m] then return end
+        monitored[m] = true
+        monitorAttacker(m)
+    end
+
     local fightable = WS:FindFirstChild("FightableNPCS")
     if fightable then
-        for _, m in ipairs(fightable:GetChildren()) do
-            monitorAttacker(m)
-        end
+        for _, m in ipairs(fightable:GetChildren()) do register(m) end
         local c1 = fightable.ChildAdded:Connect(function(m)
             task.wait(0.1)
-            monitorAttacker(m)
+            register(m)
         end)
         table.insert(Hub.Connections, c1)
     end
 
+    local npcs = WS:FindFirstChild("NPCS")
+    if npcs then
+        for _, m in ipairs(npcs:GetChildren()) do register(m) end
+        local cNpcs = npcs.ChildAdded:Connect(function(m)
+            task.wait(0.1)
+            register(m)
+        end)
+        table.insert(Hub.Connections, cNpcs)
+    end
+
     local pChars = WS:FindFirstChild("pCharacters")
     if pChars then
-        for _, p in ipairs(pChars:GetChildren()) do
-            monitorAttacker(p)
-        end
+        for _, p in ipairs(pChars:GetChildren()) do register(p) end
         local c2 = pChars.ChildAdded:Connect(function(p)
             task.wait(0.1)
-            monitorAttacker(p)
+            register(p)
         end)
         table.insert(Hub.Connections, c2)
     end
+
+    -- Sweep any combat model entering within 45 studs
+    local sweepConn = RunService.Heartbeat:Connect(function()
+        if not Hub.Alive or not Hub.Flags.AutoParry then return end
+        local char = LocalPlayer.Character
+        local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not myHrp then return end
+
+        for _, m in ipairs(workspace:GetChildren()) do
+            if m:IsA("Model") and m ~= char and not monitored[m] and m:FindFirstChildOfClass("Humanoid") and m:FindFirstChild("HumanoidRootPart") then
+                if (m.HumanoidRootPart.Position - myHrp.Position).Magnitude < 45 then
+                    register(m)
+                end
+            end
+        end
+    end)
+    table.insert(Hub.Connections, sweepConn)
 end
 initParryWatchers()
 
@@ -8440,6 +8474,12 @@ Kyoka:Notify({
     Content = "All 73 suite features loaded successfully!",
     Type = "success"
 })
+
+task.defer(function()
+    if Window and Window.SetOpen then
+        Window:SetOpen(true, true)
+    end
+end)
 
 return Hub
 

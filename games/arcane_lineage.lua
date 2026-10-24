@@ -14772,23 +14772,75 @@ local function QTEDelay(name, data)
     return 0.65 + math.random() * 0.15
 end
 
+function NW_BuildWinningResult(canonical, data)
+    local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
+    local cName = tostring(canonical or ""):gsub("^New", ""):gsub("QTE$", "")
+
+    if cName == "Dodge" then
+        local rep = game:GetService("ReplicatedStorage")
+        local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
+        local Dodge = qteRules and qteRules:FindFirstChild("Dodge") and require(qteRules.Dodge)
+
+        local sweep = 0.7
+        local pos = 0.5
+        pcall(function()
+            local layout = (data and data.Layout) or (Dodge and type(data) == "table" and Dodge.Layout(data.Seed, data))
+            if layout then
+                sweep = layout.Sweep or sweep
+                pos = layout.Position or pos
+            end
+        end)
+        local idealStop = sweep * ((math.clamp(pos, 0.05, 0.95) - 0.01) / 0.95)
+
+        if nonce then
+            return {
+                Nonce = nonce,
+                Inputs = {
+                    Stop = idealStop
+                }
+            }
+        end
+        return { true, true }
+    elseif cName == "Yarthul" then
+        -- 0 hits evasion: player moves soul to MinX (0.05) where meteors (MinX 0.15) never hit
+        if nonce then
+            return {
+                Nonce = nonce,
+                Inputs = {
+                    Events = {
+                        { Step = 1, Code = "L" },
+                        { Step = 50, Code = "l" }
+                    }
+                }
+            }
+        end
+        return { true, 0 }
+    else
+        return NW_BuildQTEResult(canonical, data)
+    end
+end
+
 function NW_BuildDodgeResult(data)
     local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
     local rep = game:GetService("ReplicatedStorage")
     local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
     local Dodge = qteRules and qteRules:FindFirstChild("Dodge") and require(qteRules.Dodge)
 
-    local idealStop = 0.35
+    local sweep = 0.7
+    local pos = 0.5
     pcall(function()
         local layout = (data and data.Layout) or (Dodge and type(data) == "table" and Dodge.Layout(data.Seed, data))
         if layout then
-            local sweep = layout.Sweep or 0.8
-            local pos = layout.Glint or layout.Position or 0.5
-            idealStop = sweep * math.clamp(pos, 0.15, 0.85)
+            sweep = layout.Sweep or sweep
+            pos = layout.Position or pos
         end
     end)
 
-    task.wait(idealStop)
+    local idealStop = sweep * ((math.clamp(pos, 0.05, 0.95) - 0.01) / 0.95)
+
+    if Config.LegitDodge then
+        task.wait(math.min(idealStop, 0.2))
+    end
 
     pcall(function()
         local pg = LocalPlayer:FindFirstChild("PlayerGui")
@@ -15069,24 +15121,14 @@ function NW_BuildQTEResult(qteName, data)
         end
         return true
     elseif sName == "Yarthul" then
-        local Yarthul = qteRules:FindFirstChild("Yarthul") and require(qteRules.Yarthul)
-        local events = {}
-        pcall(function()
-            local layout = (data and data.Layout) or (Yarthul and Yarthul.Layout(data and data.Seed, data or {}))
-            if layout and Yarthul.NewSim then
-                local sim = Yarthul.NewSim(layout)
-                while sim.Step < layout.EndStep do
-                    sim:Apply("L")
-                    table.insert(events, { Step = sim.Step + 1, Code = "L" })
-                    sim:Advance()
-                end
-            end
-        end)
         if nonce then
             return {
                 Nonce = nonce,
                 Inputs = {
-                    Events = events
+                    Events = {
+                        { Step = 1, Code = "L" },
+                        { Step = 50, Code = "l" }
+                    }
                 }
             }
         end
@@ -15194,6 +15236,9 @@ local function SuppressQTEGui(combatGui)
     end
 
     local function hideFrame(frame)
+        local isDefensive = (frame:FindFirstChild("Stop") and frame:FindFirstChild("Inset")) or frame.Name:find("Dodge") or frame.Name:find("Yarthul")
+        if isDefensive and not (Config.AutoDodge or Config.LegitDodge) then return end
+        if not isDefensive and not Config.AutoQTE then return end
         pcall(function()
             frame.Visible = false
             frame.Position = UDim2.new(50, 0, 50, 0)
@@ -15232,7 +15277,7 @@ end
 -- Wrapper constructor for any QTE function or module
 local function WrapQTEFunction(canonical, origFn)
     if type(origFn) ~= "function" then return origFn end
-    local isDodge = canonical:find("Dodge") ~= nil
+    local isDodge = canonical:find("Dodge") ~= nil or canonical:find("Yarthul") ~= nil
     return function(data)
         pcall(function()
             local pg = LocalPlayer:FindFirstChild("PlayerGui")
@@ -15242,11 +15287,14 @@ local function WrapQTEFunction(canonical, origFn)
 
         if isDodge then
             if Config.AutoDodge or Config.LegitDodge then
-                return NW_BuildDodgeResult(data)
+                if Config.LegitDodge and canonical:find("Dodge") then
+                    task.wait(0.15)
+                end
+                return NW_BuildWinningResult(canonical, data)
             end
         elseif Config.AutoQTE or (canonical:find("Thorian") and Config.AutoThorianQTE) then
             task.wait(QTEDelay(canonical, data))
-            return NW_BuildQTEResult(canonical, data)
+            return NW_BuildWinningResult(canonical, data)
         end
         return origFn(data)
     end
@@ -15347,7 +15395,7 @@ local function HookQTEModules(handleScript, profileMap)
                     local origRun = mod.Run
 
                     mod.Run = function(data)
-                        local isDodge = (canonical and canonical:find("Dodge") ~= nil)
+                        local isDodge = (canonical and (canonical:find("Dodge") ~= nil or canonical:find("Yarthul") ~= nil))
                         if not isDodge and type(data) == "table" and (data.BlockWindow ~= nil or data.DodgeWindow ~= nil or data.Speed ~= nil) then
                             isDodge = true
                         end
@@ -15360,7 +15408,7 @@ local function HookQTEModules(handleScript, profileMap)
                                     local dq = pgc and pgc:FindFirstChild("DodgeQTE", true)
                                     if dq then dq.Visible = false end
                                 end)
-                                return NW_BuildDodgeResult(data)
+                                return NW_BuildWinningResult(canonical or "DodgeQTE", data)
                             end
                         elseif Config.AutoQTE or (canonical and canonical:find("Thorian") and Config.AutoThorianQTE) then
                             pcall(function()
@@ -15370,7 +15418,7 @@ local function HookQTEModules(handleScript, profileMap)
                             end)
                             local key = canonical or child.Name
                             task.wait(QTEDelay(key, data))
-                            local res = NW_BuildQTEResult(key, data)
+                            local res = NW_BuildWinningResult(key, data)
                             pcall(function()
                                 local pg = LocalPlayer:FindFirstChild("PlayerGui")
                                 local pgc = pg and pg:FindFirstChild("Combat")
@@ -15466,12 +15514,25 @@ local function ApplyAllQTEHooks(forceGC)
                                     if type(origHandler) == "function" and not HookedModules[origHandler] then
                                         local wrapped = WrapQTEFunction(canonical, origHandler)
                                         HookedModules[wrapped] = true
+                                        HookedModules[origHandler] = true
                                         entry[2] = wrapped
                                     end
                                 end
                                 pcall(applyAliases)
                             end
                         end)
+                    end
+
+                    if type(u3) == "table" then
+                        for alias, handler in pairs(u3) do
+                            if type(handler) == "function" and not HookedModules[handler] then
+                                local canonical = NW_ResolveCanonical(alias) or "DodgeQTE"
+                                local wrapped = WrapQTEFunction(canonical, handler)
+                                HookedModules[wrapped] = true
+                                HookedModules[handler] = true
+                                rawset(u3, alias, wrapped)
+                            end
+                        end
                     end
 
                     for _, up in pairs(upvs) do
@@ -15554,10 +15615,20 @@ pcall(function()
                     local v32 = args[1]
                     local p30 = args[2]
 
-                    if (Config.AutoQTE or Config.AutoDodge) and type(p30) == "string" then
+                    -- If v32 is already a valid winning result, pass through directly
+                    local alreadyWinning = false
+                    if type(v32) == "table" then
+                        if v32[1] == true or v32.Nonce ~= nil or (v32.Inputs and (v32.Inputs.Stop ~= nil or v32.Inputs.Events ~= nil)) then
+                            alreadyWinning = true
+                        end
+                    elseif v32 == true then
+                        alreadyWinning = true
+                    end
+
+                    if not alreadyWinning and (Config.AutoQTE or Config.AutoDodge) and type(p30) == "string" then
                         local canonical = NW_ResolveCanonical(p30)
                         if canonical then
-                            local isDodge = canonical:find("Dodge") ~= nil
+                            local isDodge = canonical:find("Dodge") ~= nil or canonical:find("Yarthul") ~= nil
                             if (isDodge and (Config.AutoDodge or Config.LegitDodge)) or (not isDodge and Config.AutoQTE) then
                                 local serverData = (getgenv().NW_LastQTEData and getgenv().NW_LastQTEData[p30]) or {}
                                 local nonce = (type(v32) == "table" and (v32.Nonce or v32.nonce)) or (type(serverData) == "table" and (serverData.Nonce or serverData.nonce))
@@ -15565,7 +15636,8 @@ pcall(function()
                                     serverData.Nonce = nonce
                                 end
 
-                                local winningResult = isDodge and NW_BuildDodgeResult(serverData) or NW_BuildQTEResult(canonical, serverData)
+                                -- NW_BuildWinningResult is non-yielding and safe inside __namecall!
+                                local winningResult = NW_BuildWinningResult(canonical, serverData)
                                 if winningResult ~= nil then
                                     return oldNc(self, winningResult, p30)
                                 end

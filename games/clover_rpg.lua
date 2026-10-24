@@ -7188,34 +7188,18 @@ for _, q in ipairs(CloverQuests) do
     table.insert(QuestDropdownNames, q.Name)
 end
 
--- 100% AUTHENTIC FAST GROUND GLIDE (Zero Rollback, Zero Pause, Hugs Terrain)
+-- 100% OBSTACLE-AVOIDANCE PATHFINDING GLIDE (Zero Rollback, Avoids Walls & Houses)
 local isTravelling = false
 local groundRayParams = RaycastParams.new()
+local PathfindingService = game:GetService("PathfindingService")
+local cloverPathfinder = PathfindingService:CreatePath({
+    AgentRadius = 2.5,
+    AgentHeight = 5.0,
+    AgentCanJump = true,
+    WaypointSpacing = 6
+})
 
--- Continuous Stepped Noclip: ensures no collision exists right before physics simulation
--- Permanent Fall Damage Immunity Hook
-pcall(function()
-    local char = LocalPlayer.Character
-    if char then char:SetAttribute("DisableFallDamage", true) end
-    LocalPlayer.CharacterAdded:Connect(function(c)
-        task.wait(0.2)
-        c:SetAttribute("DisableFallDamage", true)
-    end)
-    local gmt = getrawmetatable(game)
-    if gmt and setreadonly then
-        setreadonly(gmt, false)
-        local oldNamecall = gmt.__namecall
-        gmt.__namecall = newcclosure(function(self, ...)
-            local method = getnamecallmethod()
-            if (method == "FireServer" or method == "fireServer") and tostring(self) == "Event" and self.Parent and tostring(self.Parent) == "FallDamage" then
-                return nil
-            end
-            return oldNamecall(self, ...)
-        end)
-        setreadonly(gmt, true)
-    end
-end)
-
+-- Continuous Stepped Noclip: prevents micro-snags on foliage/doors
 local noclipConn = RunService.Stepped:Connect(function()
     if not Hub.Alive then return end
     if Hub.Flags.Noclip or Hub.Flags.AutoFarm or Hub.Flags.AutoQuest or Hub.Flags.BossFarm or Hub.Flags.Fly or isTravelling then
@@ -7251,50 +7235,74 @@ local function safeMoveTo(targetPos, speed)
     groundRayParams.FilterDescendantsInstances = { char }
     groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 
-    local method = Hub.Flags.TravelMethod or "Ground Glide"
-
-    if method == "Instant TP" then
-        hrp.Velocity = Vector3.zero
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.AssemblyAngularVelocity = Vector3.zero
-        hrp.CFrame = CFrame.new(targetPos)
-        task.wait(0.04)
-        isTravelling = false
-        return
-    end
-
-    -- Fast Ground Glide (smoothly hugs terrain, walks through fences/walls with Noclip, zero rollback)
-    local startTime = os.clock()
-    local maxDuration = math.clamp((horizDist / (speed * 0.75)) + 2.5, 3.0, 20.0)
-
-    while Hub.Alive and char and hrp and hum and hum.Health > 0 do
-        if os.clock() - startTime > maxDuration then break end
-
-        local cur = hrp.Position
-        local diffHoriz = Vector3.new(targetPos.X - cur.X, 0, targetPos.Z - cur.Z)
-        local hDist = diffHoriz.Magnitude
-        local vDist = math.abs(targetPos.Y - cur.Y)
-
-        if hDist <= 4.0 and vDist <= 6.0 then
-            break
+    -- Calculate intelligent path avoiding all buildings, fences, walls and roofs
+    local waypoints = nil
+    pcall(function()
+        cloverPathfinder:ComputeAsync(hrp.Position, targetPos)
+        if cloverPathfinder.Status == Enum.PathStatus.Success then
+            waypoints = cloverPathfinder:GetWaypoints()
         end
+    end)
 
-        local dt = task.wait()
-        local moveStep = math.min(speed * dt, hDist)
-        local moveDir = hDist > 0.1 and diffHoriz.Unit or Vector3.zero
-        local nextHoriz = cur + (moveDir * moveStep)
+    if waypoints and #waypoints > 1 then
+        -- Follow pathfinding waypoints around obstacles
+        local currentWpIndex = 1
+        local startTime = os.clock()
+        local maxDuration = math.clamp((#waypoints * 6) / (speed * 0.7) + 3.0, 4.0, 30.0)
 
-        -- Raycast down from 15 studs above to find ground elevation
-        local ray = WS:Raycast(nextHoriz + Vector3.new(0, 15, 0), Vector3.new(0, -40, 0), groundRayParams)
-        local targetY = ray and (ray.Position.Y + 3.0) or (cur.Y + (targetPos.Y - cur.Y) * math.clamp(moveStep / math.max(hDist, 1), 0, 1))
+        while Hub.Alive and char and hrp and hum and hum.Health > 0 and currentWpIndex <= #waypoints do
+            if os.clock() - startTime > maxDuration then break end
 
-        local nextPos = Vector3.new(nextHoriz.X, targetY, nextHoriz.Z)
-        local lookTarget = Vector3.new(targetPos.X, nextPos.Y, targetPos.Z)
+            local wp = waypoints[currentWpIndex]
+            local wpPos = wp.Position + Vector3.new(0, 2.5, 0)
+            local cur = hrp.Position
+            local diff = (wpPos - cur)
+            local dist = diff.Magnitude
 
-        hrp.CFrame = CFrame.new(nextPos, lookTarget)
-        hrp.Velocity = Vector3.zero
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.AssemblyAngularVelocity = Vector3.zero
+            if dist < 4.0 then
+                currentWpIndex = currentWpIndex + 1
+            else
+                local dt = task.wait()
+                local moveStep = math.min(speed * dt, dist)
+                local nextPos = cur + (diff.Unit * moveStep)
+
+                hrp.CFrame = CFrame.new(nextPos, nextPos + diff.Unit)
+                hrp.Velocity = Vector3.zero
+                hrp.AssemblyLinearVelocity = Vector3.zero
+            end
+        end
+    else
+        -- Fallback: Raycast Ground Glide if off navmesh
+        local startTime = os.clock()
+        local maxDuration = math.clamp((horizDist / (speed * 0.75)) + 2.5, 3.0, 20.0)
+
+        while Hub.Alive and char and hrp and hum and hum.Health > 0 do
+            if os.clock() - startTime > maxDuration then break end
+
+            local cur = hrp.Position
+            local diffHoriz = Vector3.new(targetPos.X - cur.X, 0, targetPos.Z - cur.Z)
+            local hDist = diffHoriz.Magnitude
+            local vDist = math.abs(targetPos.Y - cur.Y)
+
+            if hDist <= 4.0 and vDist <= 6.0 then
+                break
+            end
+
+            local dt = task.wait()
+            local moveStep = math.min(speed * dt, hDist)
+            local moveDir = hDist > 0.1 and diffHoriz.Unit or Vector3.zero
+            local nextHoriz = cur + (moveDir * moveStep)
+
+            local ray = WS:Raycast(nextHoriz + Vector3.new(0, 15, 0), Vector3.new(0, -40, 0), groundRayParams)
+            local targetY = ray and (ray.Position.Y + 3.0) or (cur.Y + (targetPos.Y - cur.Y) * math.clamp(moveStep / math.max(hDist, 1), 0, 1))
+
+            local nextPos = Vector3.new(nextHoriz.X, targetY, nextHoriz.Z)
+            local lookTarget = Vector3.new(targetPos.X, nextPos.Y, targetPos.Z)
+
+            hrp.CFrame = CFrame.new(nextPos, lookTarget)
+            hrp.Velocity = Vector3.zero
+            hrp.AssemblyLinearVelocity = Vector3.zero
+        end
     end
 
     hrp.Velocity = Vector3.zero

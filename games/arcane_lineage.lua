@@ -14643,1970 +14643,906 @@ end
 
 
 ------------------------------------------------------------------------
-
 -- FEATURE 1 & 2: AUTO DODGE & AUTO QTE (ALL WEAPONS, SPELLS, THORIAN, YARTHUL)
-
--- WITH COMPLETE UI SUPPRESSION + REALISTIC TIMING (ANTI-FAIL)
-
+-- UNIVERSAL MULTI-LAYER ENGINE (UPVALUE HOOK + METAMETHOD GUARDIAN + STEALTH SUPPRESSION)
 ------------------------------------------------------------------------
 
-local QTE_GUI_NAMES = {
+getgenv().NW_LastQTEData = getgenv().NW_LastQTEData or {}
+getgenv().NW_CachedProfile = getgenv().NW_CachedProfile or {}
+getgenv().NW_ReverseProfile = getgenv().NW_ReverseProfile or {}
+getgenv().NWHubConfig = Config
 
-    "AxeQTE", "DodgeQTE", "FistQTE", "HammerQTE", "MochiiMagicQTE",
+local CachedActiveProfile = nil
+local function GetActiveProfile()
+    if CachedActiveProfile then return CachedActiveProfile end
+    pcall(function()
+        local infoFolder = Remotes:FindFirstChild("Information")
+        local uiProf = infoFolder and infoFolder:FindFirstChild("UIProfile")
+        if uiProf and uiProf:IsA("RemoteFunction") then
+            local ok, res = pcall(uiProf.InvokeServer, uiProf)
+            if ok and type(res) == "table" then
+                CachedActiveProfile = res
+                for canonical, alias in pairs(res) do
+                    getgenv().NW_ReverseProfile[alias] = canonical
+                    getgenv().NW_CachedProfile[canonical] = alias
+                end
+            end
+        end
+    end)
+    return CachedActiveProfile
+end
 
-    "SpearQTE", "SwordQTE", "NewThorianQTE", "DaggerQTE",
-
-    "QuestChoiceQTE", "MagicQTE", "LockpickQTE", "YarthulQTE"
-
-}
-
-
-
--- Dur├⌐e r├⌐aliste du mini-jeu par type de QTE (secondes).
-
--- Pr├⌐fix├⌐ 'QTE_' pour immuniser totalement la table contre toute introspection GC
+local function NW_ResolveCanonical(alias)
+    if not alias then return nil end
+    local rev = getgenv().NW_ReverseProfile
+    if rev and rev[alias] then return rev[alias] end
+    local prof = GetActiveProfile()
+    if prof then
+        for canonical, a in pairs(prof) do
+            if a == alias then
+                getgenv().NW_ReverseProfile[alias] = canonical
+                return canonical
+            end
+        end
+    end
+    if alias:find("Dodge") then return "DodgeQTE" end
+    if alias:find("Sword") then return "SwordQTE" end
+    if alias:find("Magic") then return "MagicQTE" end
+    if alias:find("Fist") then return "FistQTE" end
+    if alias:find("Spear") then return "SpearQTE" end
+    if alias:find("Dagger") then return "DaggerQTE" end
+    if alias:find("Axe") then return "AxeQTE" end
+    if alias:find("Hammer") then return "HammerQTE" end
+    if alias:find("Thorian") then return "ThorianQTE" end
+    if alias:find("Yarthul") then return "YarthulQTE" end
+    if alias:find("Duraelis") then return "DuraelisQTE" end
+    if alias:find("Lockpick") then return "LockpickQTE" end
+    return nil
+end
 
 local function QTEDelay(name, data)
-
     local sName = tostring(name):gsub("^New", ""):gsub("QTE$", "")
-
     local rep = game:GetService("ReplicatedStorage")
-
     local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
-
-
 
     if sName == "Dodge" then
-
         if type(data) == "table" then
-
             local spd = tonumber(data.Speed)
-
             local pos = tonumber(data.Position) or 0.5
-
             if spd and spd > 0 then
-
                 local travel = 0.34 + (pos / 0.95) * (spd * 0.7)
-
-                return math.clamp(travel + (math.random() * 0.04 - 0.02), 0.30, 1.80)
-
+                return math.clamp(travel + (math.random() * 0.04 - 0.02), 0.35, 1.80)
             end
-
             local dur = tonumber(data.Duration) or tonumber(data.Time) or tonumber(data.Window)
-
             if dur and dur > 0 then
-
-                return math.clamp(dur * 0.45 + math.random() * 0.06, 0.25, 1.20)
-
+                return math.clamp(dur * 0.45 + math.random() * 0.06, 0.35, 1.20)
             end
-
         end
-
-        return 0.42 + math.random() * 0.12
-
+        return 0.48 + math.random() * 0.12
     elseif sName == "Sword" then
-
         local Sword = qteRules and qteRules:FindFirstChild("Sword") and require(qteRules.Sword)
-
-        local dur = 2.0
-
-        pcall(function()
-
-            if Sword and type(data) == "table" then
-
-                local layout = Sword.Layout(data.Seed, data)
-
-                if layout and layout.Durations and #layout.Durations > 0 then
-
-                    local total = 0
-
-                    for _, d in ipairs(layout.Durations) do total = total + d end
-
-                    dur = total * 0.45 + 0.30
-
-                end
-
-            end
-
-        end)
-
-        return dur + math.random() * 0.08
-
-    elseif sName == "Fist" then
-
-        local amount = 5
-
-        local Fist = qteRules and qteRules:FindFirstChild("Fist") and require(qteRules.Fist)
-
-        pcall(function()
-
-            if Fist and type(data) == "table" then
-
-                local layout = Fist.Layout(data.Seed, data)
-
-                if layout and layout.Amount then amount = layout.Amount end
-
-            else
-
-                amount = math.clamp(tonumber(data and data.Amount) or 5, 5, 13)
-
-            end
-
-        end)
-
-        return 0.35 + (amount - 1) * 0.18 + 0.40 + math.random() * 0.08
-
-    elseif sName == "Axe" then
-
-        local dur = 2.4
-
-        local Axe = qteRules and qteRules:FindFirstChild("Axe") and require(qteRules.Axe)
-
-        pcall(function()
-
-            if Axe and type(data) == "table" then
-
-                local layout = Axe.Layout(data.Seed, data)
-
-                if layout and layout.Duration then dur = layout.Duration + 0.45 end
-
-            end
-
-        end)
-
-        return dur + math.random() * 0.06
-
-    elseif sName == "Dagger" then
-
         local dur = 1.4
-
+        pcall(function()
+            local layout = (data and data.Layout) or (Sword and type(data) == "table" and Sword.Layout(data.Seed, data))
+            if layout and layout.Durations and #layout.Durations > 0 then
+                local total = 0
+                for _, d in ipairs(layout.Durations) do total = total + d end
+                dur = total * 0.45 + 0.25
+            end
+        end)
+        return math.clamp(dur + math.random() * 0.06, 0.6, 2.2)
+    elseif sName == "Fist" then
+        local amount = 5
+        local Fist = qteRules and qteRules:FindFirstChild("Fist") and require(qteRules.Fist)
+        pcall(function()
+            local layout = (data and data.Layout) or (Fist and type(data) == "table" and Fist.Layout(data.Seed, data))
+            if layout and layout.Amount then amount = layout.Amount end
+        end)
+        return math.clamp(0.35 + (amount - 1) * 0.16 + 0.30 + math.random() * 0.06, 0.65, 2.5)
+    elseif sName == "Axe" then
+        local dur = 1.8
+        local Axe = qteRules and qteRules:FindFirstChild("Axe") and require(qteRules.Axe)
+        pcall(function()
+            local layout = (data and data.Layout) or (Axe and type(data) == "table" and Axe.Layout(data.Seed, data))
+            if layout and layout.Duration then dur = layout.Duration * 0.65 + 0.25 end
+        end)
+        return math.clamp(dur + math.random() * 0.06, 0.8, 2.4)
+    elseif sName == "Dagger" then
+        local dur = 1.2
         local Dagger = qteRules and qteRules:FindFirstChild("Dagger") and require(qteRules.Dagger)
-
         pcall(function()
-
-            if Dagger and type(data) == "table" then
-
-                local layout = Dagger.Layout(data.Seed, data)
-
-                if layout and layout.TimeLimit then
-
-                    dur = math.clamp(layout.TimeLimit * 0.40 + 0.30, 0.8, 2.2)
-
-                end
-
+            local layout = (data and data.Layout) or (Dagger and type(data) == "table" and Dagger.Layout(data.Seed, data))
+            if layout and layout.TimeLimit then
+                dur = math.clamp(layout.TimeLimit * 0.38 + 0.25, 0.7, 1.8)
             end
-
         end)
-
-        return dur + math.random() * 0.08
-
+        return dur + math.random() * 0.06
     elseif sName == "Hammer" then
-
-        local dur = 5.2
-
-        local Hammer = qteRules and qteRules:FindFirstChild("Hammer") and require(qteRules.Hammer)
-
-        pcall(function()
-
-            if Hammer and type(data) == "table" then
-
-                local layout = Hammer.Layout(data.Seed, data)
-
-                if layout and layout.MaxStep then
-
-                    dur = (layout.MaxStep * Hammer.STEP) * 0.85 + 0.40
-
-                end
-
-            end
-
-        end)
-
-        return dur + math.random() * 0.10
-
+        return 1.4 + math.random() * 0.1
     elseif sName == "Spear" then
-
-        local dur = 3.5
-
-        local Spear = qteRules and qteRules:FindFirstChild("Spear") and require(qteRules.Spear)
-
+        local count = 5
         pcall(function()
-
-            if Spear and type(data) == "table" then
-
-                local layout = Spear.Layout(data.Seed, data)
-
-                if layout and layout.Deadline then dur = layout.Deadline + 0.35 end
-
-            end
-
+            local layout = data and data.Layout
+            if layout and layout.Count then count = layout.Count end
         end)
-
-        return dur + math.random() * 0.08
-
+        return math.clamp(0.40 + (count - 1) * 0.35, 0.8, 2.6)
     elseif sName == "Magic" then
-
-        local amount = 3
-
-        local Magic = qteRules and qteRules:FindFirstChild("Magic") and require(qteRules.Magic)
-
-        pcall(function()
-
-            if Magic and type(data) == "table" then
-
-                local layout = Magic.Layout(data.Seed, data)
-
-                if layout and layout.Amount then amount = layout.Amount end
-
-            end
-
-        end)
-
-        return 0.50 + amount * 0.22 + 0.40 + math.random() * 0.08
-
-    elseif sName == "Thorian" then
-
-        local dur = 4.2
-
-        local Thorian = qteRules and qteRules:FindFirstChild("Thorian") and require(qteRules.Thorian)
-
-        pcall(function()
-
-            if Thorian and type(data) == "table" then
-
-                local layout = Thorian.Layout(data.Seed, data)
-
-                if layout and layout.ScoreTarget then
-
-                    dur = 0.50 + layout.ScoreTarget * 0.35 + 0.50
-
-                end
-
-            end
-
-        end)
-
-        return dur + math.random() * 0.10
-
-    elseif sName == "Yarthul" then
-
-        local dur = 11.45
-
-        local Yarthul = qteRules and qteRules:FindFirstChild("Yarthul") and require(qteRules.Yarthul)
-
-        pcall(function()
-
-            if Yarthul and type(data) == "table" then
-
-                local layout = Yarthul.Layout(data.Seed, data)
-
-                if layout and layout.Duration then dur = layout.Duration + 0.45 end
-
-            end
-
-        end)
-
-        return dur + math.random() * 0.08
-
-    elseif sName == "Duraelis" then
-
-        return 8.5 + math.random() * 0.30
-
-    elseif sName == "Lockpick" then
-
-        return 1.8 + math.random() * 0.25
-
-    elseif sName == "WG_Gospel" then
-
-        return 1.5 + math.random() * 0.25
-
-    elseif sName == "UniqueQuestChoice" then
-
-        return 0.8 + math.random() * 0.20
-
+        return 0.75 + math.random() * 0.12
     end
-
-
-
-    return 2.2 + math.random() * 0.3
-
+    return 0.65 + math.random() * 0.15
 end
-
-
-
--- Le jeu valide le Nonce renvoye (anti-spoof) : un resultat dodge doit etre
-
--- { Nonce = nonce, Inputs = { Stop = idealStop } }, ou tableau { true, true }
-
--- On resout dynamiquement le temps Stop parfait via QTERules.Dodge pour garantir 100% Parry & Block.
-
--- Timing legit de NewDodgeQTE : 0.04s (pop-in) + 0.30s (pre-tween) + idealStop + 0.50s (outro) = 0.84s + idealStop.
 
 function NW_BuildDodgeResult(data)
-
     local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
-
     local rep = game:GetService("ReplicatedStorage")
-
     local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
-
     local Dodge = qteRules and qteRules:FindFirstChild("Dodge") and require(qteRules.Dodge)
 
+    local idealStop = 0.5
+    local totalWait = 0.5
+    pcall(function()
+        local layout = (data and data.Layout) or (Dodge and type(data) == "table" and Dodge.Layout(data.Seed, data))
+        if layout then
+            idealStop = math.clamp((layout.Position or 0.5) + (layout.Glint or 0.5) * 0.015, 0.1, 0.95)
+            local spd = tonumber(type(data) == "table" and data.Speed) or 1.5
+            totalWait = 0.34 + (idealStop / 0.95) * (spd * 0.65)
+        end
+    end)
 
-
-    local layout = type(data) == "table" and data.Layout
-
-    if not layout and Dodge and type(data) == "table" then
-
-        pcall(function()
-
-            local copyData = table.clone(data)
-
-            copyData.BlockWindow = tonumber(copyData.BlockWindow) or 1
-
-            copyData.DodgeWindow = tonumber(copyData.DodgeWindow) or 1
-
-            copyData.Speed = tonumber(copyData.Speed) or 1
-
-            local seed = copyData.Seed or math.random(1000, 99999)
-
-            layout = Dodge.Layout(seed, copyData)
-
-        end)
-
-    end
-
-
-
-    local sweep = (layout and layout.Sweep) or ((tonumber(data and data.Speed) or 1) * 0.7)
-
-    local pos = (layout and layout.Position) or 0.5
-
-    local idealStop = (pos - 0.01) / 0.95 * sweep
-
-
-
-    -- Centrage mathematique parfait de la fenetre double-true (Parry + Dodge)
-
-    if Dodge and layout then
-
-        pcall(function()
-
-            local minT, maxT = nil, nil
-
-            local step = math.max(0.0005, sweep / 400)
-
-            for t = 0.005, sweep, step do
-
-                local r = Dodge.Result(layout, t)
-
-                if r[1] == true and r[2] == true then
-
-                    if not minT then minT = t end
-
-                    maxT = t
-
-                end
-
-            end
-
-            if minT and maxT then
-
-                idealStop = (minT + maxT) / 2
-
-            end
-
-        end)
-
-    end
-
-
-
-    local cfg = getgenv().NWHubConfig or {}
-
-    if cfg.LegitDodge then
-
-        idealStop = idealStop + (math.random(-4, 4) / 1000)
-
-    end
-
-
-
-    -- Timing reel du client legit (anti-rejection serveur)
-
-    local totalWait = 0.34 + idealStop + 0.50 + (math.random(-10, 10) / 1000)
-
-    task.wait(math.max(0.5, totalWait))
-
-
+    task.wait(math.max(0.48, totalWait))
 
     if nonce then
-
         return {
-
             Nonce = nonce,
-
             Inputs = {
-
                 Stop = idealStop
-
             }
-
         }
-
-    else
-
-        return { true, true }
-
     end
-
+    return { true, true }
 end
 
-NW_DodgeResult = NW_BuildDodgeResult
-
-
-
 function NW_BuildQTEResult(qteName, data)
-
     local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
-
     local rep = game:GetService("ReplicatedStorage")
-
     local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
-
     if not qteRules then return true end
-
-
 
     local sName = tostring(qteName):gsub("^New", ""):gsub("QTE$", "")
 
-
-
     if sName == "Dodge" then
-
         return NW_BuildDodgeResult(data)
-
     elseif sName == "Magic" then
-
         local Magic = qteRules:FindFirstChild("Magic") and require(qteRules.Magic)
-
         local amount = 1
-
         pcall(function()
-
-            if Magic then
-
-                local layout = Magic.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Magic and Magic.Layout(data and data.Seed, data or {}))
+            if layout then
                 amount = layout.Amount or 1
-
             else
-
                 amount = tonumber(data and data.Amount) or 1
-
             end
-
         end)
-
         local slots = {}
-
-        local t = 0.40
-
+        local t = 0.35
         for i = 1, amount do
-
             t = t + 0.18 + math.random() * 0.04
-
             table.insert(slots, {
-
                 Bag = i,
-
                 Slot = i,
-
                 At = t
-
             })
-
         end
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Slots = slots
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Sword" then
-
         local Sword = qteRules:FindFirstChild("Sword") and require(qteRules.Sword)
-
         local stops = {}
-
         pcall(function()
-
-            if Sword then
-
-                local layout = Sword.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Sword and Sword.Layout(data and data.Seed, data or {}))
+            if layout then
                 local amount = layout.Amount or 1
-
                 for i = 1, amount do
-
                     local dur = layout.Durations and layout.Durations[i] or 1
-
-                    local target = (layout.WindowPosition - 0.01) / 0.95
-
+                    local target = ((layout.WindowPosition or 0.5) - 0.01) / 0.95
                     local frac = 1 - math.sqrt(math.max(0, 1 - target))
-
                     table.insert(stops, frac * dur)
-
                 end
-
             else
-
                 for i = 1, (tonumber(data and data.Amount) or 1) do
-
                     table.insert(stops, 0.35 + math.random() * 0.05)
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Stops = stops
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Fist" then
-
         local Fist = qteRules:FindFirstChild("Fist") and require(qteRules.Fist)
-
         local presses = {}
-
         pcall(function()
-
-            local amount = 5
-
-            local arrows = nil
-
-            if Fist then
-
-                local layout = Fist.Layout(data and data.Seed, data or {})
-
-                amount = layout.Amount or 5
-
-                arrows = layout.Arrows
-
-            else
-
-                amount = tonumber(data and data.Amount) or 5
-
-            end
-
-            local t = 0.35
-
+            local layout = (data and data.Layout) or (Fist and Fist.Layout(data and data.Seed, data or {}))
+            local amount = (layout and layout.Amount) or tonumber(data and data.Amount) or 5
+            local arrows = (layout and layout.Arrows) or nil
+            local t = 0.32
             for i = 1, amount do
-
                 t = t + 0.16 + math.random() * 0.04
-
                 table.insert(presses, {
-
-                    Dir = (arrows and arrows[i]) or 1,
-
+                    Dir = (arrows and arrows[i]) or math.random(1, 4),
                     At = t
-
                 })
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Presses = presses
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Axe" then
-
         local Axe = qteRules:FindFirstChild("Axe") and require(qteRules.Axe)
-
         local presses = {}
-
         pcall(function()
-
-            if Axe then
-
-                local layout = Axe.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Axe and Axe.Layout(data and data.Seed, data or {}))
+            if layout then
                 local target = layout.Threshold + layout.ThresholdSize * 0.5
-
                 local gauge = 0
-
                 local t = 0
-
                 local dt = 0.05
-
                 while t < layout.Duration do
-
                     t = t + dt
-
                     gauge = math.max(0, gauge - layout.DecayRate * dt)
-
                     if gauge + layout.FillPerPress <= target or gauge < layout.Threshold then
-
                         gauge = math.min(1, gauge + layout.FillPerPress)
-
                         table.insert(presses, t)
-
                     end
-
                 end
-
             else
-
                 local t = 0.2
-
                 for i = 1, 10 do
-
                     t = t + 0.15
-
                     table.insert(presses, t)
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Presses = presses
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Dagger" then
-
         local Dagger = qteRules:FindFirstChild("Dagger") and require(qteRules.Dagger)
-
         local presses = {}
-
         pcall(function()
-
-            if Dagger then
-
-                local layout = Dagger.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Dagger and Dagger.Layout(data and data.Seed, data or {}))
+            if layout and layout.Rings then
                 local speed = 360 / (layout.RotationPeriod or 1.25)
-
                 for ringIdx, ring in ipairs(layout.Rings) do
-
                     local wp = ring.Weakpoints and ring.Weakpoints[1]
-
                     if wp then
-
                         local delta = ((360 - wp.Angle) * ring.Direction) % 360
-
                         local tHit = delta / speed
-
                         table.insert(presses, {
-
                             Ring = ringIdx,
-
                             T = tHit
-
                         })
-
                     end
-
                 end
-
             else
-
                 local rings = (data and tonumber(data.Rings)) or 5
-
                 local t = 0.35
-
                 for i = 1, rings do
-
                     t = t + 0.28 + math.random() * 0.04
-
                     table.insert(presses, {
-
                         Ring = i,
-
                         T = t
-
                     })
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Presses = presses
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Hammer" then
-
         local Hammer = qteRules:FindFirstChild("Hammer") and require(qteRules.Hammer)
-
         local events = {}
-
         pcall(function()
-
-            if Hammer then
-
-                local layout = Hammer.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Hammer and Hammer.Layout(data and data.Seed, data or {}))
+            if layout and Hammer.NewSim then
                 local sim = Hammer.NewSim(layout)
-
                 while not sim.Finished and sim.Step < layout.MaxStep do
-
                     local zone = sim.Zones[sim.Current]
-
                     local target = zone and (zone.Position + zone.Width * 0.5) or 0.5
-
                     local shouldHold = sim.Blue < target
-
                     if shouldHold and not sim.Holding then
-
                         table.insert(events, { Step = sim.Step + 1, Code = "H" })
-
                         sim:Apply("H")
-
                     elseif not shouldHold and sim.Holding then
-
                         table.insert(events, { Step = sim.Step + 1, Code = "h" })
-
                         sim:Apply("h")
-
                     end
-
                     sim:Advance()
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Events = events
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Spear" then
-
         local Spear = qteRules:FindFirstChild("Spear") and require(qteRules.Spear)
-
         local resolved = {}
-
         pcall(function()
-
-            if Spear then
-
-                local layout = Spear.Layout(data and data.Seed, data or {})
-
-                local count = layout.Count or 5
-
-                for i = 1, count do
-
-                    local spawn = (layout.Spawns and layout.Spawns[i]) or (0.5 + (i - 1) * 0.55)
-
-                    table.insert(resolved, {
-
-                        Index = i,
-
-                        Hit = true,
-
-                        At = spawn + 0.25,
-
-                        Start = spawn + 0.05
-
-                    })
-
-                end
-
-            else
-
-                local count = (data and tonumber(data.Amount)) or 5
-
-                local t = 0.4
-
-                for i = 1, count do
-
-                    t = t + 0.35 + math.random() * 0.05
-
-                    table.insert(resolved, {
-
-                        Index = i,
-
-                        Hit = true,
-
-                        At = t,
-
-                        Start = t - 0.2
-
-                    })
-
-                end
-
+            local layout = (data and data.Layout) or (Spear and Spear.Layout(data and data.Seed, data or {}))
+            local count = (layout and layout.Count) or 5
+            for i = 1, count do
+                local spawn = (layout and layout.Spawns and layout.Spawns[i]) or (0.5 + (i - 1) * 0.55)
+                table.insert(resolved, {
+                    Index = i,
+                    Hit = true,
+                    At = spawn + 0.25,
+                    Start = spawn + 0.05
+                })
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Resolved = resolved
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Thorian" then
-
         local Thorian = qteRules:FindFirstChild("Thorian") and require(qteRules.Thorian)
-
         local events = {}
-
         pcall(function()
-
-            if Thorian then
-
-                local layout = Thorian.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Thorian and Thorian.Layout(data and data.Seed, data or {}))
+            if layout and layout.Eyes then
                 local blessed, cursed = {}, {}
-
                 for i, eye in ipairs(layout.Eyes) do
-
                     if eye.Kind == "Blessed" then
-
                         table.insert(blessed, i)
-
                     elseif eye.Kind == "Cursed" then
-
                         table.insert(cursed, i)
-
                     end
-
                 end
-
                 local curesNeeded = math.min(#blessed, #cursed, layout.ScoreTarget or 10)
-
                 local t = 0.50
-
                 for i = 1, curesNeeded do
-
                     t = t + 0.35
-
                     table.insert(events, {
-
                         Type = "Cure",
-
                         Blessed = blessed[i],
-
                         Cursed = cursed[i],
-
                         Grab = t - 0.15,
-
                         At = t
-
                     })
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Events = events
-
                 }
-
             }
-
         end
-
         return true
-
     elseif sName == "Yarthul" then
-
         local Yarthul = qteRules:FindFirstChild("Yarthul") and require(qteRules.Yarthul)
-
         local events = {}
-
         pcall(function()
-
-            if Yarthul then
-
-                local layout = Yarthul.Layout(data and data.Seed, data or {})
-
+            local layout = (data and data.Layout) or (Yarthul and Yarthul.Layout(data and data.Seed, data or {}))
+            if layout and Yarthul.NewSim then
                 local sim = Yarthul.NewSim(layout)
-
                 while sim.Step < layout.EndStep do
-
                     sim:Apply("L")
-
                     table.insert(events, { Step = sim.Step + 1, Code = "L" })
-
                     sim:Advance()
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Events = events
-
                 }
-
             }
-
         end
-
         return { true, 0 }
-
     elseif sName == "Duraelis" then
-
         local ch = game:GetService("StarterGui"):FindFirstChild("Combat") and game:GetService("StarterGui").Combat:FindFirstChild("StarterGui.Combat.CombatHandle")
-
         local rulesMod = ch and ch:FindFirstChild("DuraelisQTE") and ch.DuraelisQTE:FindFirstChild("Rules")
-
         local events = {}
-
         pcall(function()
-
             if rulesMod then
-
                 local rules = require(rulesMod)
-
-                local layout = rules.Layout(data and data.Seed, data or {})
-
+                local layout = (data and data.Layout) or rules.Layout(data and data.Seed, data or {})
                 local sim = rules.NewSim(layout)
-
                 local GRID = rules.GRID
-
-
-
                 local beatTargets = {}
-
                 for i, beat in ipairs(layout.Beats) do
-
                     for ox = 0, GRID - 1 do
-
                         for oy = 0, GRID - 1 do
-
                             local allIn = true
-
                             for fIdx, frag in ipairs(layout.Fragments) do
-
                                 if frag.Beat <= i then
-
                                     local tile = (frag.Y + oy) % GRID * GRID + (frag.X + ox) % GRID
-
                                     if not beat.LightSet[tile] then
-
                                         allIn = false
-
                                         break
-
                                     end
-
                                 end
-
                             end
-
                             if allIn then
-
                                 beatTargets[i] = { X = ox, Y = oy }
-
                                 break
-
                             end
-
                         end
-
                         if beatTargets[i] then break end
-
                     end
-
                 end
-
-
-
                 local currentBeat = 1
-
                 while not sim.Finished and sim.Step < layout.EndStep do
-
                     local t = sim.Step * rules.STEP
-
                     local beat = layout.Beats[currentBeat]
-
                     local target = beatTargets[currentBeat]
-
-
-
                     if target and sim.Step >= sim.LockUntil then
-
                         local dx = (target.X - sim.OX) % GRID
-
                         local dy = (target.Y - sim.OY) % GRID
-
                         if dx ~= 0 then
-
                             local code = (dx <= 2) and "R" or "L"
-
                             sim:Apply(code)
-
                             table.insert(events, { Step = sim.Step + 1, Code = code })
-
                         elseif dy ~= 0 then
-
                             local code = (dy <= 2) and "D" or "U"
-
                             sim:Apply(code)
-
                             table.insert(events, { Step = sim.Step + 1, Code = code })
-
                         end
-
                     end
-
-
-
                     sim:Advance()
-
                     if beat and t >= beat.End then
-
                         currentBeat = currentBeat + 1
-
                     end
-
                 end
-
             end
-
         end)
-
         if nonce then
-
             return {
-
                 Nonce = nonce,
-
                 Inputs = {
-
                     Events = events
-
                 }
-
             }
-
         end
-
         return { true, 0 }
-
     elseif sName == "WG_Gospel" then
-
         return true
-
     elseif sName == "Lockpick" then
-
         return true, 5
-
     end
-
-
 
     if nonce then
-
         return {
-
             Nonce = nonce,
-
             Inputs = {}
-
         }
-
     end
-
     return true
-
 end
 
-
-
--- 1. Stealth UI Suppressor: Hide and move all QTE frames off-screen instantaneously
-
+-- Stealth QTE Frame Suppressor: Hides and moves off-screen all genuine & scrambled QTE frames
 local function SuppressQTEGui(combatGui)
-
     if not combatGui then return end
 
-    local knownTargets = {
-
-        "AxeQTE", "DodgeQTE", "FistQTE", "HammerQTE", "MochiiMagicQTE",
-
-        "SpearQTE", "SwordQTE", "NewThorianQTE", "DaggerQTE",
-
-        "QuestChoiceQTE", "MagicQTE", "LockpickQTE", "YarthulQTE",
-
-        "TEVzo8409qc2XgK", "j6aX6uiWHth", "NXhkXbPvXK", "CMflkkh3VtG",
-
-        "1vluyLfuylEr7h2", "NAnuArdzzhbFDr", "d5ibqNVCTVQQp", "SoY4uGGjhz",
-
-        "XDnkT09BgAu", "t1ow5KUgPHmKAQ", "cl5GtJgvSSX6up"
-
-    }
-
-
+    local function isQTEFrame(child)
+        if not child:IsA("GuiObject") then return false end
+        local name = child.Name
+        if name:find("QTE") then return true end
+        if child:FindFirstChild("KeyHit") or child:FindFirstChild("KeyHolder") then return true end
+        if child:FindFirstChild("SwordSlot") then return true end
+        if child:FindFirstChild("DaggerSlot") then return true end
+        if child:FindFirstChild("MashHit") or child:FindFirstChild("SpaceHint") then return true end
+        if child:FindFirstChild("HitSound") and child:FindFirstChild("Gauge") then return true end
+        if child:FindFirstChild("Stop") and child:FindFirstChild("Inset") then return true end
+        if child:FindFirstChild("RuneSlots") or child:FindFirstChild("ActiveWord") then return true end
+        if child:FindFirstChild("ItemContainer") then return true end
+        if child:FindFirstChild("Game") and child:FindFirstChild("Environment") then return true end
+        if child:FindFirstChild("Container") and child:FindFirstChild("Timer") and not child:FindFirstChild("TextLabel") then return true end
+        return false
+    end
 
     local function hideFrame(frame)
-
         pcall(function()
-
             frame.Visible = false
-
             frame.Position = UDim2.new(50, 0, 50, 0)
-
             if frame:FindFirstChild("Toxin") then frame.Toxin.Visible = false end
-
             if frame:FindFirstChild("Vignette") then frame.Vignette.Visible = false end
-
         end)
-
     end
 
-
-
-    for _, name in ipairs(knownTargets) do
-
-        local frame = combatGui:FindFirstChild(name)
-
-        if frame and frame:IsA("GuiObject") then
-
-            hideFrame(frame)
-
-            frame:GetPropertyChangedSignal("Visible"):Connect(function()
-
-                if (Config.AutoQTE or Config.AutoDodge or Config.AutoThorianQTE) and frame.Visible then
-
-                    hideFrame(frame)
-
+    for _, child in ipairs(combatGui:GetChildren()) do
+        if isQTEFrame(child) then
+            hideFrame(child)
+            child:GetPropertyChangedSignal("Visible"):Connect(function()
+                if (Config.AutoQTE or Config.AutoDodge or Config.AutoThorianQTE) and child.Visible then
+                    hideFrame(child)
                 end
-
             end)
-
         end
-
     end
-
-
 
     combatGui.ChildAdded:Connect(function(child)
-
-        if child:IsA("GuiObject") then
-
-            local isTarget = table.find(knownTargets, child.Name) ~= nil
-
-            if not isTarget then
-
-                if child.Name:find("QTE") or child:FindFirstChild("Inset") or child:FindFirstChild("Stop") or child:FindFirstChild("Bar") or child:FindFirstChild("Timer") or child:FindFirstChild("RuneSlots") then
-
-                    isTarget = true
-
+        if isQTEFrame(child) then
+            hideFrame(child)
+            child:GetPropertyChangedSignal("Visible"):Connect(function()
+                if (Config.AutoQTE or Config.AutoDodge or Config.AutoThorianQTE) and child.Visible then
+                    hideFrame(child)
                 end
-
-            end
-
-            if isTarget then
-
-                hideFrame(child)
-
-                child:GetPropertyChangedSignal("Visible"):Connect(function()
-
-                    if (Config.AutoQTE or Config.AutoDodge or Config.AutoThorianQTE) and child.Visible then
-
-                        hideFrame(child)
-
-                    end
-
-                end)
-
-            end
-
+            end)
         end
-
     end)
-
 end
 
-
-
--- 2. Direct wrapper generator for any QTE function or module
-
+-- Wrapper constructor for any QTE function or module
 local function WrapQTEFunction(canonical, origFn)
-
     if type(origFn) ~= "function" then return origFn end
-
     local isDodge = canonical:find("Dodge") ~= nil
-
     return function(data)
+        pcall(function()
+            local pg = LocalPlayer:FindFirstChild("PlayerGui")
+            local pgc = pg and pg:FindFirstChild("Combat")
+            if pgc then SuppressQTEGui(pgc) end
+        end)
 
         if isDodge then
-
             if Config.AutoDodge or Config.LegitDodge then
-
                 return NW_BuildDodgeResult(data)
-
             end
-
         elseif Config.AutoQTE or (canonical:find("Thorian") and Config.AutoThorianQTE) then
-
             task.wait(QTEDelay(canonical, data))
-
             return NW_BuildQTEResult(canonical, data)
-
         end
-
         return origFn(data)
-
     end
-
 end
 
-
-
--- 3. Hook direct ModuleScripts (Single-require table mutation)
-
-local function HookQTEModules(handleScript, profileMap)
-
-    if not handleScript then return end
-
-    for _, child in ipairs(handleScript:GetChildren()) do
-
-        if child:IsA("ModuleScript") then
-
-            local cName = child.Name
-
-            if cName ~= "OldMagicQTE" and not cName:find("^Old") then
-
-                pcall(function()
-
-                    local mod = require(child)
-
-                    if type(mod) == "table" and type(mod.Run) == "function" then
-
-                        if HookedModules[mod] then return end
-
-                        local origRun = mod.Run
-
-
-
-                        -- Deduce canonical name from profileMap or child properties or module source
-
-                        local canonical = nil
-
-                        if profileMap then
-
-                            for c, alias in pairs(profileMap) do
-
-                                if alias == cName then
-
-                                    canonical = c
-
-                                    break
-
-                                end
-
-                            end
-
-                        end
-
-                        if not canonical then
-
-                            if cName:find("Dodge") then
-
-                                canonical = "DodgeQTE"
-
-                            elseif cName:find("Sword") then
-
-                                canonical = "SwordQTE"
-
-                            elseif cName:find("Fist") then
-
-                                canonical = "FistQTE"
-
-                            elseif cName:find("Magic") then
-
-                                canonical = "MagicQTE"
-
-                            elseif cName:find("Thorian") then
-
-                                canonical = "ThorianQTE"
-
-                            elseif cName == "vdA3BrpTCv7fTd" then
-
-                                canonical = "DodgeQTE"
-
-                            end
-
-                        end
-
-
-
-                        mod.Run = function(data)
-
-                            local isDodge = (canonical and canonical:find("Dodge") ~= nil)
-
-                            if not isDodge and type(data) == "table" and (data.BlockWindow ~= nil or data.DodgeWindow ~= nil or data.Speed ~= nil) then
-
-                                isDodge = true
-
-                            end
-
-                            if isDodge then
-
-                                if Config.AutoDodge or Config.LegitDodge then
-
-                                    return NW_BuildDodgeResult(data)
-
-                                end
-
-                            elseif Config.AutoQTE or (canonical and canonical:find("Thorian") and Config.AutoThorianQTE) then
-
-                                local key = (canonical or cName):gsub("^New", "")
-
-                                task.wait(QTEDelay(key, data))
-
-                                return NW_BuildQTEResult(key, data)
-
-                            end
-
-                            return origRun(data)
-
-                        end
-
-                        HookedModules[mod] = true
-
-                    end
-
-                end)
-
-            end
-
-        end
-
-    end
-
-end
-
-
-
--- 4. Hook u3 dispatch table in GC and CombatHandle closures (with alias resolution)
-
+-- Hook u3 dispatch table and u47 canonical list
 local function PatchU3Table(tbl, profileMap)
-
     if type(tbl) ~= "table" then return end
 
-
-
     local keysToHook = {}
-
     local aliasLookup = {}
-
     if type(profileMap) == "table" then
-
         for canonical, alias in pairs(profileMap) do
-
             if type(alias) == "string" and type(rawget(tbl, alias)) == "function" then
-
                 table.insert(keysToHook, alias)
-
                 aliasLookup[alias] = canonical
-
             end
-
         end
-
     end
 
-
-
-    local isNamedReal = (type(rawget(tbl, "DodgeQTE")) == "function")
-
-        and (type(rawget(tbl, "SwordQTE")) == "function")
-
-        and (type(rawget(tbl, "MagicQTE")) == "function")
-
-
-
-    if isNamedReal then
-
-        for _, k in ipairs({
-
-            "DodgeQTE", "ThorianQTE", "YarthulQTE", "LockpickQTE", "FistQTE",
-
-            "MagicQTE", "SwordQTE", "DaggerQTE", "SpearQTE", "AxeQTE", "HammerQTE",
-
-            "WG_GospelQTE", "UniqueQuestChoice", "StaffQTE", "PotionQTE", "ScrollQTE",
-
-            "GreatswordQTE", "ScytheQTE", "DuraelisQTE"
-
-        }) do
-
-            if type(rawget(tbl, k)) == "function" then
-
-                table.insert(keysToHook, k)
-
-                aliasLookup[k] = k
-
-            end
-
+    for _, k in ipairs({
+        "DodgeQTE", "ThorianQTE", "YarthulQTE", "LockpickQTE", "FistQTE",
+        "MagicQTE", "SwordQTE", "DaggerQTE", "SpearQTE", "AxeQTE", "HammerQTE",
+        "WG_GospelQTE", "UniqueQuestChoice", "StaffQTE", "PotionQTE", "ScrollQTE",
+        "GreatswordQTE", "ScytheQTE", "DuraelisQTE"
+    }) do
+        if type(rawget(tbl, k)) == "function" and not aliasLookup[k] then
+            table.insert(keysToHook, k)
+            aliasLookup[k] = k
         end
-
     end
-
-
 
     for _, k in ipairs(keysToHook) do
-
         local canonical = aliasLookup[k] or k
-
         local origFn = tbl[k]
-
-        -- Check if already wrapped
-
         if type(origFn) == "function" and not HookedModules[origFn] then
-
-            local isDodge = canonical:find("Dodge") ~= nil
-
-            tbl[k] = function(data)
-
-                if isDodge then
-
-                    if Config.AutoDodge or Config.LegitDodge then
-
-                        return NW_BuildDodgeResult(data)
-
-                    end
-
-                elseif Config.AutoQTE or (canonical:find("Thorian") and Config.AutoThorianQTE) then
-
-                    task.wait(QTEDelay(canonical, data))
-
-                    return NW_BuildQTEResult(canonical, data)
-
-                end
-
-                if origFn then return origFn(data) end
-
-                return false
-
-            end
-
-            HookedModules[tbl[k]] = true
-
+            local wrapped = WrapQTEFunction(canonical, origFn)
+            HookedModules[wrapped] = true
+            tbl[k] = wrapped
         end
-
     end
-
-
 
     HookedU3[tbl] = true
-
     U3HookedOnce = true
-
 end
 
+-- Hook ModuleScripts inside CombatHandle
+local function HookQTEModules(handleScript, profileMap)
+    if not handleScript then return end
+    for _, child in ipairs(handleScript:GetChildren()) do
+        if child:IsA("ModuleScript") and child.Name ~= "OldMagicQTE" and not child.Name:find("^Old") then
+            pcall(function()
+                local mod = require(child)
+                if type(mod) == "table" and type(mod.Run) == "function" then
+                    if HookedModules[mod] then return end
+                    local origRun = mod.Run
 
+                    local canonical = nil
+                    if profileMap then
+                        for c, alias in pairs(profileMap) do
+                            if alias == child.Name then
+                                canonical = c
+                                break
+                            end
+                        end
+                    end
+                    if not canonical then
+                        canonical = NW_ResolveCanonical(child.Name)
+                    end
 
-local CachedActiveProfile = nil
-
-local function GetActiveProfile()
-
-    if CachedActiveProfile then return CachedActiveProfile end
-
-    pcall(function()
-
-        local infoFolder = Remotes:FindFirstChild("Information")
-
-        local uiProf = infoFolder and infoFolder:FindFirstChild("UIProfile")
-
-        if uiProf and uiProf:IsA("RemoteFunction") then
-
-            local ok, res = pcall(uiProf.InvokeServer, uiProf)
-
-            if ok and type(res) == "table" then
-
-                CachedActiveProfile = res
-
-            end
-
+                    mod.Run = function(data)
+                        pcall(function()
+                            local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                            local pgc = pg and pg:FindFirstChild("Combat")
+                            if pgc then SuppressQTEGui(pgc) end
+                        end)
+                        local isDodge = (canonical and canonical:find("Dodge") ~= nil)
+                        if not isDodge and type(data) == "table" and (data.BlockWindow ~= nil or data.DodgeWindow ~= nil or data.Speed ~= nil) then
+                            isDodge = true
+                        end
+                        if isDodge then
+                            if Config.AutoDodge or Config.LegitDodge then
+                                return NW_BuildDodgeResult(data)
+                            end
+                        elseif Config.AutoQTE or (canonical and canonical:find("Thorian") and Config.AutoThorianQTE) then
+                            local key = canonical or child.Name
+                            task.wait(QTEDelay(key, data))
+                            return NW_BuildQTEResult(key, data)
+                        end
+                        return origRun(data)
+                    end
+                    HookedModules[mod] = true
+                end
+            end)
         end
-
-    end)
-
-    return CachedActiveProfile
-
+    end
 end
 
-
-
+-- Central QTE Multi-Layer Applier
 local function ApplyAllQTEHooks(forceGC)
-
     local activeProfile = GetActiveProfile()
 
-
-
-    -- 1. Hook Remotes.Fight RemoteFunctions (fallback)
-
+    -- 1. Continuously cache incoming server QTE data via OnClientEvent
     pcall(function()
-
-        local fightFolder = Remotes:FindFirstChild("Fight")
-
-        if fightFolder then
-
-            for _, rf in ipairs(fightFolder:GetChildren()) do
-
-                if rf:IsA("RemoteFunction") and not HubHookedRF[rf] then
-
-                    local rName = rf.Name
-
-                    pcall(function()
-
-                        local origInvoke = nil
-
-                        pcall(function() origInvoke = rf.OnClientInvoke end)
-
-                        rf.OnClientInvoke = function(data)
-
-                            if rName:find("Dodge") then
-
-                                if Config.AutoDodge or Config.LegitDodge then
-
-                                    return NW_BuildDodgeResult(data)
-
-                                end
-
-                            elseif rName:find("QTE") or rName:find("MiniGame") then
-
-                                if Config.AutoQTE then
-
-                                    task.wait(QTEDelay(rName, data))
-
-                                    return NW_BuildQTEResult(rName, data)
-
-                                end
-
-                            end
-
-                            if origInvoke then return origInvoke(data) end
-
-                            return nil
-
-                        end
-
-                        HubHookedRF[rf] = true
-
-                    end)
-
+        local infoFolder = Remotes:FindFirstChild("Information")
+        local rf = infoFolder and infoFolder:FindFirstChild("RemoteFunction")
+        if rf and not getgenv().NW_RFClientEventHooked then
+            getgenv().NW_RFClientEventHooked = true
+            rf.OnClientEvent:Connect(function(alias, data)
+                if type(alias) == "string" and type(data) == "table" then
+                    getgenv().NW_LastQTEData[alias] = data
                 end
-
-            end
-
+            end)
         end
-
     end)
 
-
-
-    -- 2. Hook direct u3 dispatch table AND u47 canonical list via Information.RemoteFunction upvalues
-
+    -- 2. Hook Information.RemoteFunction OnClientEvent upvalues (u47 canonical table & u3 dispatch table)
     pcall(function()
-
         local infoFolder = Remotes:FindFirstChild("Information")
-
         local rf = infoFolder and infoFolder:FindFirstChild("RemoteFunction")
-
         if rf and type(getconnections) == "function" then
-
             for _, conn in ipairs(getconnections(rf.OnClientEvent)) do
-
                 local fn = conn.Function
-
                 if fn and type(getupvalues) == "function" then
-
                     local upvs = getupvalues(fn)
-
-                    local scrName = debug.info(fn, "s") or ""
-
+                    local scrName = (debug.info and debug.info(fn, "s")) or ""
                     for _, up in pairs(upvs) do
-
                         if type(up) == "table" then
-
                             local match = false
-
                             if activeProfile then
-
                                 for _, alias in pairs(activeProfile) do
-
                                     if type(alias) == "string" and type(rawget(up, alias)) == "function" then
-
                                         match = true
-
                                         break
-
                                     end
-
                                 end
-
                             end
-
                             if not match and (rawget(up, "DodgeQTE") or rawget(up, "SwordQTE") or scrName:find("CombatHandle")) then
-
                                 match = true
-
                             end
-
                             if match then
-
                                 PatchU3Table(up, activeProfile)
-
                             end
-
                         elseif type(up) == "function" then
-
-                            -- Check if this is u4 (applyAliases) - crawl recursively to find u47
-
                             pcall(function()
-
                                 local function crawlU47(targetFn, d)
-
                                     d = d or 0
-
                                     if d > 4 or type(targetFn) ~= "function" then return nil end
-
                                     local innerUpvs = getupvalues(targetFn)
-
                                     for _, iup in pairs(innerUpvs) do
-
                                         if type(iup) == "table" and #iup >= 10 then
-
                                             for _, entry in ipairs(iup) do
-
-                                                if type(entry) == "table" and type(entry[1]) == "string" and entry[1]:find("QTE") and type(entry[2]) == "function" then
-
+                                                if type(entry) == "table" and type(entry[1]) == "string" and (entry[1]:find("QTE") or entry[1] == "UniqueQuestChoice") and type(entry[2]) == "function" then
                                                     return iup
-
                                                 end
-
                                             end
-
                                         elseif type(iup) == "function" then
-
                                             local found = crawlU47(iup, d + 1)
-
                                             if found then return found end
-
                                         end
-
                                     end
-
                                     return nil
-
                                 end
-
-
 
                                 local targetU47 = crawlU47(up)
-
                                 if targetU47 then
-
                                     for _, entry in ipairs(targetU47) do
-
                                         local canonical = entry[1]
-
                                         local origHandler = entry[2]
-
                                         if type(origHandler) == "function" and not HookedModules[origHandler] then
-
                                             local wrapped = WrapQTEFunction(canonical, origHandler)
-
                                             HookedModules[wrapped] = true
-
                                             entry[2] = wrapped
-
                                         end
-
                                     end
-
                                     pcall(up)
-
                                 end
-
                             end)
-
                         end
-
                     end
-
                 end
-
             end
-
         end
-
     end)
 
-
-
-    -- 3. Hook GC u3 dispatch tables (only on startup if forced)
-
-    if forceGC and type(getgc) == "function" then
-
-        task.spawn(function()
-
-            pcall(function()
-
-                for _, obj in pairs(getgc(true)) do
-
-                    if type(obj) == "table" then
-
-                        local match = false
-
-                        if activeProfile then
-
-                            for _, alias in pairs(activeProfile) do
-
-                                if type(alias) == "string" and type(rawget(obj, alias)) == "function" then
-
-                                    match = true
-
-                                    break
-
-                                end
-
-                            end
-
-                        end
-
-                        if not match and (rawget(obj, "DodgeQTE") or rawget(obj, "ThorianQTE") or rawget(obj, "SwordQTE") or rawget(obj, "FistQTE")) then
-
-                            match = true
-
-                        end
-
-                        if match then
-
-                            PatchU3Table(obj, activeProfile)
-
-                        end
-
-                    end
-
-                end
-
-            end)
-
-        end)
-
-    end
-
-
-
-    -- 4. Hook PlayerGui CombatHandle ModuleScripts & Frames
-
+    -- 3. Hook PlayerGui CombatHandle ModuleScripts & Frames
     pcall(function()
-
         local pg = LocalPlayer:FindFirstChild("PlayerGui")
-
         local pgCombat = pg and pg:FindFirstChild("Combat")
-
         if pgCombat then
-
             SuppressQTEGui(pgCombat)
-
-            local handle = pgCombat:FindFirstChild("StarterGui.Combat.CombatHandle") or pgCombat:FindFirstChild("CombatHandle")
-
+            local handle = pgCombat:FindFirstChild("StarterGui.Combat.CombatHandle", true) or pgCombat:FindFirstChild("CombatHandle", true)
             if not handle then
-
-                handle = pgCombat:FindFirstChildWhichIsA("LocalScript", true) or pgCombat:FindFirstChildWhichIsA("Script", true)
-
+                handle = pgCombat:FindFirstChildWhichIsA("LocalScript", true)
             end
-
             if handle then HookQTEModules(handle, activeProfile) end
-
         end
-
     end)
 
+    -- 4. Hook GC u3 dispatch tables (only on startup if forced)
+    if forceGC and type(getgc) == "function" then
+        task.spawn(function()
+            pcall(function()
+                for _, obj in pairs(getgc(true)) do
+                    if type(obj) == "table" then
+                        local match = false
+                        if activeProfile then
+                            for _, alias in pairs(activeProfile) do
+                                if type(alias) == "string" and type(rawget(obj, alias)) == "function" then
+                                    match = true
+                                    break
+                                end
+                            end
+                        end
+                        if not match and (rawget(obj, "DodgeQTE") or rawget(obj, "ThorianQTE") or rawget(obj, "SwordQTE") or rawget(obj, "FistQTE")) then
+                            match = true
+                        end
+                        if match then
+                            PatchU3Table(obj, activeProfile)
+                        end
+                    end
+                end
+            end)
+        end)
+    end
 end
 
+-- LAYER 5: METAMETHOD NETWORK GUARDIAN (Delta Mobile & Universal Fallback)
+pcall(function()
+    if not getgenv().NW_QTE_Namecall_Installed and type(hookmetamethod) == "function" then
+        getgenv().NW_QTE_Namecall_Installed = true
+        local oldNc
+        oldNc = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if method == "FireServer" and typeof(self) == "Instance" then
+                local sName = self.Name
+                if sName == "RemoteFunction" and self.Parent and self.Parent.Name == "Information" then
+                    local args = {...}
+                    local v32 = args[1]
+                    local p30 = args[2]
 
+                    if (Config.AutoQTE or Config.AutoDodge) and type(p30) == "string" then
+                        local canonical = NW_ResolveCanonical(p30)
+                        if canonical then
+                            local isDodge = canonical:find("Dodge") ~= nil
+                            if (isDodge and (Config.AutoDodge or Config.LegitDodge)) or (not isDodge and Config.AutoQTE) then
+                                local serverData = (getgenv().NW_LastQTEData and getgenv().NW_LastQTEData[p30]) or {}
+                                local nonce = (type(v32) == "table" and (v32.Nonce or v32.nonce)) or (type(serverData) == "table" and (serverData.Nonce or serverData.nonce))
+                                if nonce then
+                                    serverData.Nonce = nonce
+                                end
 
--- Initialize QTE hooks once on script load
+                                local winningResult = isDodge and NW_BuildDodgeResult(serverData) or NW_BuildQTEResult(canonical, serverData)
+                                if winningResult ~= nil then
+                                    return oldNc(self, winningResult, p30)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            return oldNc(self, ...)
+        end))
+    end
+end)
 
+-- Initialize hooks immediately
 pcall(function() ApplyAllQTEHooks(true) end)
 
-
-
--- Event-driven hook re-application when Combat GUI appears (0% CPU impact)
-
+-- Event-driven hook re-application when combat becomes active
 pcall(function()
-
     local pg = LocalPlayer:WaitForChild("PlayerGui", 5)
-
-    if pg then
-
-        pg.ChildAdded:Connect(function(child)
-
-            if child.Name == "Combat" then
-
-                task.wait(0.3)
-
-                pcall(function() ApplyAllQTEHooks(false) end)
-
-            end
-
-        end)
-
+    local pgCombat = pg and pg:WaitForChild("Combat", 5)
+    if pgCombat then
+        SuppressQTEGui(pgCombat)
+        local actionBG = pgCombat:FindFirstChild("ActionBG")
+        if actionBG then
+            actionBG:GetPropertyChangedSignal("Visible"):Connect(function()
+                if actionBG.Visible then
+                    pcall(function() ApplyAllQTEHooks(false) end)
+                    pcall(function() SuppressQTEGui(pgCombat) end)
+                end
+            end)
+        end
     end
-
 end)
 
-
-
--- Lightweight calm watchdog with loop overlap protection (every 25 seconds, no GC scan, no network RPC)
-
+-- Watchdog (every 2.5 seconds during combat, every 12 seconds in overworld)
 getgenv().__NWHUB_QTE_LOOP_ID = (getgenv().__NWHUB_QTE_LOOP_ID or 0) + 1
-
 local currentQteLoopId = getgenv().__NWHUB_QTE_LOOP_ID
-
 task.spawn(function()
-
-    while task.wait(25) do
-
+    while true do
+        local inCombat = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("FightInProgress") ~= nil
+        task.wait(inCombat and 2.5 or 12)
         if HubUnloaded or getgenv().__NWHUB_QTE_LOOP_ID ~= currentQteLoopId then break end
-
+        pcall(function() ApplyAllQTEHooks(false) end)
         pcall(function()
-
-            ApplyAllQTEHooks(false)
-
+            local pg = LocalPlayer:FindFirstChild("PlayerGui")
+            local pgc = pg and pg:FindFirstChild("Combat")
+            if pgc then SuppressQTEGui(pgc) end
         end)
-
     end
-
 end)
-
-
 
 -- End of QTE hooks
+
 
 
 

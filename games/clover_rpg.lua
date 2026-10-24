@@ -7445,17 +7445,36 @@ local function interactWithNPC(npc)
     end
 end
 
+local function countPlayerInventory(itemName)
+    if not itemName or itemName == "" then return 0 end
+    local count = 0
+    local bp = LocalPlayer:FindFirstChild("Backpack")
+    local char = LocalPlayer.Character
+    local target = itemName:lower()
+    if bp then
+        for _, t in ipairs(bp:GetChildren()) do
+            if t.Name:lower():find(target) then count = count + 1 end
+        end
+    end
+    if char then
+        for _, t in ipairs(char:GetChildren()) do
+            if t:IsA("Tool") and t.Name:lower():find(target) then count = count + 1 end
+        end
+    end
+    return count
+end
+
 local function getActivePlayerQuest()
     local quests = LocalPlayer:FindFirstChild("Quests")
     if not quests then return nil end
 
-    -- Priority 1: Check specific sub-quests (quests with TrackAfter, e.g. Johan, Eira)
-    -- Priority 2: Overarching storyline quests (e.g. Helping)
+    -- Priority 1: Specific sub-quests (TrackAfter, e.g. Johan, Eira)
+    -- Priority 2: Overarching storyline chapters (e.g. Helping)
     local questList = {}
     for _, q in ipairs(quests:GetChildren()) do
         if not q:GetAttribute("Completed") then
             if q:GetAttribute("TrackAfter") then
-                table.insert(questList, 1, q) -- Sub-quests take first priority!
+                table.insert(questList, 1, q) -- Prioritize sub-quests!
             else
                 table.insert(questList, q)
             end
@@ -7475,10 +7494,19 @@ local function getActivePlayerQuest()
                     hasUnhidden = true
                     local curProg = t:GetAttribute("TaskProgress") or 0
                     local maxProg = t:GetAttribute("TaskMax") or 1
+                    local objName = t:GetAttribute("Object") or ""
+
+                    -- If it's a Collect task, check if the items are already in player's inventory
+                    if t:GetAttribute("TaskType") == "Collect" and objName ~= "" then
+                        local invCount = countPlayerInventory(objName)
+                        if invCount > curProg then
+                            curProg = invCount
+                        end
+                    end
+
                     if curProg < maxProg then
                         allDone = false
                         local trackPos = t:GetAttribute("TrackPosition")
-                        local objName = t:GetAttribute("Object") or ""
 
                         -- Dynamic Resolution for zero trackPos or Collect tasks
                         if (not trackPos or trackPos.Magnitude < 5) and objName ~= "" then
@@ -7705,6 +7733,15 @@ local function runQuestFarmStep()
                                 break
                             end
                         end
+                    end
+
+                    -- Auto-purchase if material node in ShopObjects / Materials
+                    local mats = WS:FindFirstChild("Objects") and WS.Objects:FindFirstChild("ShopObjects") and WS.Objects.ShopObjects:FindFirstChild("Materials")
+                    if mats and mats:FindFirstChild(objName) then
+                        local needed = math.max(1, (activeQuest.Max or 1) - (activeQuest.Current or 0))
+                        pcall(function()
+                            RS.Remotes.Player.ShopEvent:InvokeServer("Buy", mats[objName], needed)
+                        end)
                     end
 
                     if prompt then

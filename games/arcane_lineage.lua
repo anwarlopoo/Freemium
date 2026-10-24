@@ -48,7 +48,7 @@ end)
 
     =====================================================================
 
-    NW HUB & KYOKA UI ┬╖ EXECUTOR COMPATIBILITY GUARD (ENGLISH)
+    NW HUB & KYOKA UI | EXECUTOR COMPATIBILITY GUARD (ENGLISH)
 
     =====================================================================
 
@@ -980,11 +980,11 @@ local Kyoka = (function()
 
 	--[[
 
-		Ky┼ìka V2  ┬╖  NW Hub
+		Kyoka V2  |  NW Hub
 
 		Librairie d'interface Roblox (Luau). Sobre, noire, au style de getnwhub.com.
 
-		Rempla├ºant direct de Ky┼ìka / Vesper : m├¬me API, m├¬mes flags, m├¬me format de config.
+		Rempla├ºant direct de Kyoka / Vesper : m├¬me API, m├¬mes flags, m├¬me format de config.
 
 
 
@@ -994,7 +994,7 @@ local Kyoka = (function()
 
 
 
-		Window > Tab (barre lat├⌐rale) > Page (onglets du haut) > Group (colonne) > ├ël├⌐ments
+		Window > Tab (barre laterale) > Page (onglets du haut) > Group (colonne) > ├ëlements
 
 	]]
 
@@ -1026,7 +1026,7 @@ local Kyoka = (function()
 
 
 
-	-- Espace interne partag├⌐ entre les fichiers (├⌐vite la limite de locales du chunk).
+	-- Espace interne partage entre les fichiers (evite la limite de locales du chunk).
 
 	local K = {}
 
@@ -1068,7 +1068,7 @@ local Kyoka = (function()
 
 		ConfigFolder = nil,
 
-		-- M├⌐dias lourds (vid├⌐o d'intro, voix) : servis par le site, mis en cache par l'executor.
+		-- Medias lourds (video d'intro, voix) : servis par le site, mis en cache par l'executor.
 
 		MediaBase   = "https://www.getnwhub.com/kyoka/",
 
@@ -1128,7 +1128,7 @@ local Kyoka = (function()
 
 	Library.Presets = {
 
-		{ Name = "Ky┼ìka",   Accent = Color3.fromRGB(143, 124, 255) },
+		{ Name = "Kyoka",   Accent = Color3.fromRGB(143, 124, 255) },
 
 		{ Name = "Mono",    Accent = Color3.fromRGB(226, 226, 232) },
 
@@ -1154,7 +1154,7 @@ local Kyoka = (function()
 
 
 
-	-- Couleurs d├⌐riv├⌐es de l'accent (le texte pos├⌐ sur l'accent s'inverse si l'accent est clair).
+	-- Couleurs derivees de l'accent (le texte pose sur l'accent s'inverse si l'accent est clair).
 
 	local function DeriveAccent(a)
 
@@ -1182,7 +1182,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Pr├⌐f├⌐rences de l'utilisateur (communes ├á tous les scripts)
+	-- Preferences de l'utilisateur (communes ├á tous les scripts)
 
 	--=====================================================================
 
@@ -1320,7 +1320,7 @@ local Kyoka = (function()
 
 
 
-	-- Cl├⌐ de rangement par jeu (positions, ├⌐pingles).
+	-- Cle de rangement par jeu (positions, epingles).
 
 	function K.GameKey()
 
@@ -1332,7 +1332,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Mobile et m├⌐triques
+	-- Mobile et metriques
 
 	--=====================================================================
 
@@ -1702,7 +1702,7 @@ local Kyoka = (function()
 
 	-- Transition vers une couleur du th├¿me, retenue pour qu'un changement de th├¿me
 
-	-- repeigne l'objet dans son ├⌐tat courant (et non dans sa couleur de d├⌐part).
+	-- repeigne l'objet dans son etat courant (et non dans sa couleur de depart).
 
 	local function Paint(inst, dur, prop, key, style)
 
@@ -1984,7 +1984,7 @@ local Kyoka = (function()
 
 
 
-	-- Mesure d'un texte (en unit├⌐s logiques).
+	-- Mesure d'un texte (en unites logiques).
 
 	function K.TextWidth(text, size, role, weight)
 
@@ -2014,7 +2014,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Images (H┼ìgyoku + Ky┼ìka V2), id remplac├⌐s au build
+	-- Images (Hogyoku + Kyoka V2), id remplaces au build
 
 	--=====================================================================
 
@@ -2094,7 +2094,7 @@ local Kyoka = (function()
 
 
 
-	-- Ic├┤ne teintable. name = nom d'atlas, ou rbxassetid / id num├⌐rique.
+	-- Ic├┤ne teintable. name = nom d'atlas, ou rbxassetid / id numerique.
 
 	local function Icon(parent, name, size, colorKey, z)
 
@@ -2180,7 +2180,7 @@ local Kyoka = (function()
 
 
 
-	-- Ombre port├⌐e 9-slice (image H┼ìgyoku).
+	-- Ombre portee 9-slice (image Hogyoku).
 
 	local function Shadow(parent, spread, transparency, z)
 
@@ -2260,7 +2260,7 @@ local Kyoka = (function()
 
 
 
-	-- ┬½ Vesper_Kyoka_ ┬╗ : les scripts existants nettoient une ancienne instance par ce nom.
+	-- |½ Vesper_Kyoka_ |╗ : les scripts existants nettoient une ancienne instance par ce nom.
 
 	local ScreenGui = New("ScreenGui", {
 
@@ -2308,7 +2308,7 @@ local Kyoka = (function()
 
 
 
-	-- ├ëchelle en unit├⌐s Vesper : 2 = taille nominale en 1080p ; facteur r├⌐el = Scale / 2.
+	-- ├ëchelle en unites Vesper : 2 = taille nominale en 1080p ; facteur reel = Scale / 2.
 
 	local ScaleTargets = setmetatable({}, { __mode = "k" })
 
@@ -2388,7 +2388,7 @@ local Kyoka = (function()
 
 
 
-	-- Position souris dans le rep├¿re d'un calque plein ├⌐cran.
+	-- Position souris dans le rep├¿re d'un calque plein ecran.
 
 	local function MouseLocal()
 
@@ -2468,7 +2468,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- M├⌐dias distants (vid├⌐o d'intro, voix) : cache disque + getcustomasset
+	-- Medias distants (video d'intro, voix) : cache disque + getcustomasset
 
 	--=====================================================================
 
@@ -2480,7 +2480,7 @@ local Kyoka = (function()
 
 
 
-	-- Renvoie un chemin jouable ou nil. Bloquant au premier t├⌐l├⌐chargement : appeler dans un task.
+	-- Renvoie un chemin jouable ou nil. Bloquant au premier telechargement : appeler dans un task.
 
 	function K.Media(name, minBytes)
 
@@ -2488,7 +2488,7 @@ local Kyoka = (function()
 
 		local env = (getgenv and getgenv()) or _G
 
-		-- Tests : { ["intro.webm"] = "rbxasset://ΓÇª" } fourni par le script de d├⌐mo.
+		-- Tests : { ["intro.webm"] = "rbxasset://ΓÇª" } fourni par le script de demo.
 
 		local localMedia = (env and env.KYOKA_LOCAL_MEDIA) or Library.LocalMedia
 
@@ -2670,7 +2670,7 @@ local Kyoka = (function()
 
 
 
-	-- Voix d'ouverture (compatibilit├⌐ Ky┼ìka : un mp3 servi par le site, sinon l'asset Roblox).
+	-- Voix d'ouverture (compatibilite Kyoka : un mp3 servi par le site, sinon l'asset Roblox).
 
 	function Library.GetSplashAsset()
 
@@ -2682,7 +2682,7 @@ local Kyoka = (function()
 
 
 
-	-- Pr├⌐chargement des sons (au lancement, en t├óche de fond).
+	-- Prechargement des sons (au lancement, en t├óche de fond).
 
 	task.spawn(function()
 
@@ -2708,7 +2708,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Infobulle (appara├«t apr├¿s un court d├⌐lai, suit la souris)
+	-- Infobulle (appara├«t apr├¿s un court delai, suit la souris)
 
 	--=====================================================================
 
@@ -2816,7 +2816,7 @@ local Kyoka = (function()
 
 
 
-	-- ├ëclats du miroir (atlas H┼ìgyoku) : { anneau, x, y, w, h, atlasX, atlasY } dans un miroir 720├ù450.
+	-- ├ëclats du miroir (atlas Hogyoku) : { anneau, x, y, w, h, atlasX, atlasY } dans un miroir 720├ù450.
 
 	K.ShardList = {
 
@@ -2954,7 +2954,7 @@ local Kyoka = (function()
 
 	-- Sobres dans le menu (ondes, halos), spectaculaires aux transitions
 
-	-- (miroir qui se reforme / vole en ├⌐clats, fissures, flash).
+	-- (miroir qui se reforme / vole en eclats, fissures, flash).
 
 	--=====================================================================
 
@@ -2974,7 +2974,7 @@ local Kyoka = (function()
 
 
 
-	-- Onde blanche depuis le point cliqu├⌐ (dans un bouton qui coupe ses enfants).
+	-- Onde blanche depuis le point clique (dans un bouton qui coupe ses enfants).
 
 	function FX.Ripple(gui, point, color)
 
@@ -3008,7 +3008,7 @@ local Kyoka = (function()
 
 
 
-	-- Halo d'accent qui s'allume puis s'├⌐teint derri├¿re un contr├┤le (interrupteur, etc.).
+	-- Halo d'accent qui s'allume puis s'eteint derri├¿re un contr├┤le (interrupteur, etc.).
 
 	function FX.Pulse(gui, color, scale)
 
@@ -3034,7 +3034,7 @@ local Kyoka = (function()
 
 
 
-	-- Poussi├¿re de lumi├¿re qui jaillit d'un point ├⌐cran.
+	-- Poussi├¿re de lumi├¿re qui jaillit d'un point ecran.
 
 	function FX.Burst(point, count, color)
 
@@ -3116,7 +3116,7 @@ local Kyoka = (function()
 
 
 
-	-- Flash blanc plein ├⌐cran (ou dans un rectangle du calque d'effets).
+	-- Flash blanc plein ecran (ou dans un rectangle du calque d'effets).
 
 	function FX.Flash(strength, duration, rect)
 
@@ -3150,7 +3150,7 @@ local Kyoka = (function()
 
 
 
-	-- Onde de choc : anneau qui s'├⌐largit depuis un point ├⌐cran.
+	-- Onde de choc : anneau qui s'elargit depuis un point ecran.
 
 	function FX.Shockwave(point, size, color)
 
@@ -3178,7 +3178,7 @@ local Kyoka = (function()
 
 
 
-	-- Secousse d'un objet positionn├⌐ en Offset.
+	-- Secousse d'un objet positionne en Offset.
 
 	function FX.Shake(gui, amount, duration)
 
@@ -3216,7 +3216,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Miroir : fissures, ├⌐clats qui se reforment ou volent en ├⌐clats
+	-- Miroir : fissures, eclats qui se reforment ou volent en eclats
 
 	--=====================================================================
 
@@ -3228,7 +3228,7 @@ local Kyoka = (function()
 
 
 
-	-- Fissures pos├⌐es sur un rectangle (rep├¿re du calque d'effets), avec flash.
+	-- Fissures posees sur un rectangle (rep├¿re du calque d'effets), avec flash.
 
 	function FX.Cracks(rect, z)
 
@@ -3348,7 +3348,7 @@ local Kyoka = (function()
 
 
 
-	-- Les ├⌐clats convergent et reforment le miroir ; onFlash r├⌐v├¿le la fen├¬tre.
+	-- Les eclats convergent et reforment le miroir ; onFlash rev├¿le la fen├¬tre.
 
 	function FX.Assemble(rect, onFlash, onDone)
 
@@ -3414,9 +3414,9 @@ local Kyoka = (function()
 
 
 
-	-- Le miroir ├⌐clate : les ├⌐clats partent du point d'impact puis tombent.
+	-- Le miroir eclate : les eclats partent du point d'impact puis tombent.
 
-	-- toward = true : ils volent vers l'├⌐cran (fin de l'intro).
+	-- toward = true : ils volent vers l'ecran (fin de l'intro).
 
 	function FX.Shatter(rect, onDone, toward, z)
 
@@ -3606,7 +3606,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Rep├¿res d'aimantation (d├⌐placement de la fen├¬tre)
+	-- Rep├¿res d'aimantation (deplacement de la fen├¬tre)
 
 	--=====================================================================
 
@@ -3642,7 +3642,7 @@ local Kyoka = (function()
 
 
 
-	-- axis 1 = trait vertical ├á x, 2 = trait horizontal ├á y ; nil = cach├⌐.
+	-- axis 1 = trait vertical ├á x, 2 = trait horizontal ├á y ; nil = cache.
 
 	function FX.Guide(axis, value)
 
@@ -3678,7 +3678,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- ├ël├⌐ments (mixin partag├⌐ par les groupes)
+	-- ├ëlements (mixin partage par les groupes)
 
 	--=====================================================================
 
@@ -3704,7 +3704,7 @@ local Kyoka = (function()
 
 
 
-	-- Clic droit sur une ligne : menu contextuel (├⌐pingler, r├⌐initialiserΓÇª), d├⌐fini plus loin.
+	-- Clic droit sur une ligne : menu contextuel (epingler, reinitialiserΓÇª), defini plus loin.
 
 	local function BindContext(hit, obj)
 
@@ -4054,7 +4054,7 @@ local Kyoka = (function()
 
 			Tween(knob, 0.22 * d, { BackgroundColor3 = on and Theme.OnAccent or Color3.fromRGB(139, 139, 148) })
 
-			-- Le bouton s'├⌐tire en glissant puis reprend sa forme.
+			-- Le bouton s'etire en glissant puis reprend sa forme.
 
 			Tween(knob, 0.32 * d, { Position = on and UDim2.new(1, -k - 3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0) }, Enum.EasingStyle.Quint)
 
@@ -4518,7 +4518,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Label, paragraphe, s├⌐parateur
+	-- Label, paragraphe, separateur
 
 	--=====================================================================
 
@@ -4742,7 +4742,7 @@ local Kyoka = (function()
 
 
 
-		-- Valeur : pastille ├⌐ditable (clic pour taper une valeur exacte).
+		-- Valeur : pastille editable (clic pour taper une valeur exacte).
 
 		local chip = New("Frame", {
 
@@ -5338,7 +5338,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Liste d├⌐roulante
+	-- Liste deroulante
 
 	--=====================================================================
 
@@ -6074,7 +6074,7 @@ local Kyoka = (function()
 
 			Paint(box, 0.12, "BackgroundColor3", "ElementHover")
 
-			Library:ShowTooltip(opts.Tooltip or "Click: assign  ┬╖  Right click: mode  ┬╖  Backspace: clear")
+			Library:ShowTooltip(opts.Tooltip or "Click: assign  |  Right click: mode  |  Backspace: clear")
 
 		end)
 
@@ -6118,7 +6118,7 @@ local Kyoka = (function()
 
 					or input.UserInputType == Enum.UserInputType.MouseButton3 then
 
-					-- Le clic qui a lanc├⌐ l'├⌐coute ne compte pas.
+					-- Le clic qui a lance l'ecoute ne compte pas.
 
 					if K.PointInside(box, MousePos()) then return end
 
@@ -6214,7 +6214,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- S├⌐lecteur de couleur
+	-- Selecteur de couleur
 
 	--=====================================================================
 
@@ -6606,7 +6606,7 @@ local Kyoka = (function()
 
 
 
-		-- Hauteur recopi├⌐e de la pile (pas d'AutomaticSize : le halo qui suit la souris l'agrandirait).
+		-- Hauteur recopiee de la pile (pas d'AutomaticSize : le halo qui suit la souris l'agrandirait).
 
 		local frame = New("Frame", {
 
@@ -6628,7 +6628,7 @@ local Kyoka = (function()
 
 		local stroke = Stroke(frame, "BorderSoft")
 
-		-- La pile (en-t├¬te + corps) porte la UIListLayout ; les calques d'effet restent ├á c├┤t├⌐.
+		-- La pile (en-t├¬te + corps) porte la UIListLayout ; les calques d'effet restent ├á c├┤te.
 
 		local stack = New("Frame", {
 
@@ -6804,7 +6804,7 @@ local Kyoka = (function()
 
 
 
-		-- Halo discret qui suit la souris sur le groupe survol├⌐.
+		-- Halo discret qui suit la souris sur le groupe survole.
 
 		local spotClip = New("Frame", { Name = "Spot", BackgroundTransparency = 1, ClipsDescendants = true, Size = UDim2.fromScale(1, 1), ZIndex = 1, Parent = frame })
 
@@ -7390,7 +7390,7 @@ local Kyoka = (function()
 
 
 
-	-- Bouton-ic├┤ne carr├⌐ de l'en-t├¬te.
+	-- Bouton-ic├┤ne carre de l'en-t├¬te.
 
 	local function IconButton(parent, icon, tip, z)
 
@@ -7504,7 +7504,7 @@ local Kyoka = (function()
 
 
 
-		-- Intro plein ├⌐cran (d├⌐sactivable par le script ou par l'utilisateur).
+		-- Intro plein ecran (desactivable par le script ou par l'utilisateur).
 
 		if opts.Intro ~= false and Prefs.Intro ~= false and not Library.IntroPlayed and Library.Intro then
 
@@ -7650,7 +7650,7 @@ local Kyoka = (function()
 
 		--=================================================================
 
-		-- Barre lat├⌐rale
+		-- Barre laterale
 
 		--=================================================================
 
@@ -7690,7 +7690,7 @@ local Kyoka = (function()
 
 
 
-		-- Marque : vignette anim├⌐e d'Aizen + nom du hub + jeu.
+		-- Marque : vignette animee d'Aizen + nom du hub + jeu.
 
 		local brand = New("Frame", {
 
@@ -7808,7 +7808,7 @@ local Kyoka = (function()
 
 		brandTitle.ZIndex = 4
 
-		local brandSub = Label(brandText, opts.Game or opts.Subtitle or "Ky┼ìka V2", 12, "TextFaint")
+		local brandSub = Label(brandText, opts.Game or opts.Subtitle or "Kyoka V2", 12, "TextFaint")
 
 		brandSub.Size = UDim2.new(1, 0, 0, 15)
 
@@ -7832,7 +7832,7 @@ local Kyoka = (function()
 
 
 
-		-- Champ ┬½ Ask Ky┼ìka ┬╗ : ouvre l'assistant.
+		-- Champ |½ Ask Kyoka |╗ : ouvre l'assistant.
 
 		local ask = New("TextButton", {
 
@@ -7864,7 +7864,7 @@ local Kyoka = (function()
 
 		askIcon.Position = UDim2.new(0, 10, 0.5, 0)
 
-		local askText = Label(ask, "Ask Ky┼ìkaΓÇª", 12.5, "TextFaint")
+		local askText = Label(ask, "Ask KyokaΓÇª", 12.5, "TextFaint")
 
 		askText.Position = UDim2.fromOffset(31, 0)
 
@@ -8270,7 +8270,7 @@ local Kyoka = (function()
 
 		local spacer = New("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(4, 1), LayoutOrder = 2, Parent = buttons })
 
-		local aiBtn = IconButton(buttons, "sparkles", "Ask Ky┼ìka  (Ctrl K)", 22)
+		local aiBtn = IconButton(buttons, "sparkles", "Ask Kyoka  (Ctrl K)", 22)
 
 		aiBtn.LayoutOrder = 3
 
@@ -8364,7 +8364,7 @@ local Kyoka = (function()
 
 		Library:Register(footLine, { BackgroundColor3 = "BorderSoft" })
 
-		local footer = Mono(footerBar, string.upper(opts.Footer or ("nwhub ┬╖ ky┼ìka v" .. Library.Version)), 10, "TextFaint")
+		local footer = Mono(footerBar, string.upper(opts.Footer or ("nwhub | kyoka v" .. Library.Version)), 10, "TextFaint")
 
 		footer.Position = UDim2.fromOffset(16, 0)
 
@@ -8468,7 +8468,7 @@ local Kyoka = (function()
 
 
 
-		-- Opacit├⌐ de la fen├¬tre (pr├⌐f├⌐rence).
+		-- Opacite de la fen├¬tre (preference).
 
 		function self:SetOpacity(a)
 
@@ -8516,7 +8516,7 @@ local Kyoka = (function()
 
 		--=================================================================
 
-		-- Barre lat├⌐rale repliable
+		-- Barre laterale repliable
 
 		--=================================================================
 
@@ -8588,7 +8588,7 @@ local Kyoka = (function()
 
 		--=================================================================
 
-		-- D├⌐placement (aimant├⌐ aux bords et au centre), redimensionnement
+		-- Deplacement (aimante aux bords et au centre), redimensionnement
 
 		--=================================================================
 
@@ -8878,7 +8878,7 @@ local Kyoka = (function()
 
 					pcall(function() ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
 
-					footerRight.Text = ('<font color="#%s">ΓùÅ</font>  %s  ┬╖  %d FPS  ┬╖  %d MS'):format(Theme.Success:ToHex(), statusText, fps, ping)
+					footerRight.Text = ('<font color="#%s">•</font>  %s  |  %d FPS  |  %d MS'):format(Theme.Success:ToHex(), statusText, fps, ping)
 
 					for _, tab in ipairs(self.Tabs) do tab.CountLabel.Text = tostring(tab:CountRows()) end
 
@@ -8964,7 +8964,7 @@ local Kyoka = (function()
 
 			state = state and true or false
 
-			-- Pendant l'intro, l'ouverture attend la fin de la cin├⌐matique.
+			-- Pendant l'intro, l'ouverture attend la fin de la cinematique.
 
 			if Library.SplashActive and state then
 
@@ -9078,7 +9078,7 @@ local Kyoka = (function()
 
 				end
 
-				-- Le miroir se fend, puis vole en ├⌐clats.
+				-- Le miroir se fend, puis vole en eclats.
 
 				transitionUntil = now + 0.45
 
@@ -9346,7 +9346,7 @@ local Kyoka = (function()
 
 
 
-			-- Onglets de page de l'en-t├¬te, soulign├⌐s par un trait qui glisse.
+			-- Onglets de page de l'en-t├¬te, soulignes par un trait qui glisse.
 
 			local pageBox = New("Frame", {
 
@@ -9496,7 +9496,7 @@ local Kyoka = (function()
 
 					if tab.ActivePage == p then
 
-						-- Rejoue l'entr├⌐e des colonnes et des groupes.
+						-- Rejoue l'entree des colonnes et des groupes.
 
 						p.Content.Visible = false
 
@@ -9696,13 +9696,13 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Intro plein ├⌐cran
+	-- Intro plein ecran
 
-	-- Vid├⌐o HD d'Aizen (webm servi par le site, lue en local par l'executor),
+	-- Video HD d'Aizen (webm servi par le site, lue en local par l'executor),
 
-	-- sinon la planche anim├⌐e h├⌐berg├⌐e sur Roblox. Barres cin├⌐ma, ├⌐talonnage,
+	-- sinon la planche animee hebergee sur Roblox. Barres cinema, etalonnage,
 
-	-- ΘÅíΦè▒µ░┤µ£ê, titre, voix ; puis l'├⌐cran se fend et vole en ├⌐clats.
+	-- ΘÅíΦè▒µ░┤µ£ê, titre, voix ; puis l'ecran se fend et vole en eclats.
 
 	--=====================================================================
 
@@ -9714,7 +9714,7 @@ local Kyoka = (function()
 
 		if Library.Unloaded then return end
 
-		-- D├⌐sactivation totale de l'intro plein ├⌐cran sur Mobile et par d├⌐faut pour ├⌐viter tout ├⌐cran noir
+		-- Desactivation totale de l'intro plein ecran sur Mobile et par defaut pour eviter tout ecran noir
 
 		if Library.Mobile or K.DetectMobile() or opts.Intro == false then
 
@@ -9730,7 +9730,7 @@ local Kyoka = (function()
 
 		Library.IntroPlayed = true
 
-		-- L'intro garde ses effets m├¬me si le script a coup├⌐ Kyoka.Effects.
+		-- L'intro garde ses effets m├¬me si le script a coupe Kyoka.Effects.
 
 		local scriptFx = Library.Effects
 
@@ -9738,7 +9738,7 @@ local Kyoka = (function()
 
 
 
-		-- La taille de l'├⌐cran n'est pas toujours d├⌐finitive au lancement.
+		-- La taille de l'ecran n'est pas toujours definitive au lancement.
 
 		local t00 = os.clock()
 
@@ -9796,7 +9796,7 @@ local Kyoka = (function()
 
 
 
-		-- Image : vid├⌐o si disponible, sinon planche de sprites.
+		-- Image : video si disponible, sinon planche de sprites.
 
 		local media = New("Frame", {
 
@@ -9864,7 +9864,7 @@ local Kyoka = (function()
 
 		end
 
-		-- Pendant le t├⌐l├⌐chargement : noir, filet lumineux, grondement.
+		-- Pendant le telechargement : noir, filet lumineux, grondement.
 
 		local t0 = os.clock()
 
@@ -9960,7 +9960,7 @@ local Kyoka = (function()
 
 
 
-		-- Barres cin├⌐ma : ferm├⌐es au d├⌐part (l'┼ôil s'ouvre).
+		-- Barres cinema : fermees au depart (l'┼ôil s'ouvre).
 
 		local barH = math.floor(H * 0.1)
 
@@ -9994,7 +9994,7 @@ local Kyoka = (function()
 
 
 
-		-- Bloc titre, en bas ├á gauche, comme un g├⌐n├⌐rique.
+		-- Bloc titre, en bas ├á gauche, comme un generique.
 
 		local margin = math.floor(math.max(vp.X * 0.06, 28))
 
@@ -10126,7 +10126,7 @@ local Kyoka = (function()
 
 		local subY = titleY + math.floor(titleSize * 1.3)
 
-		local sub = Mono(block, ("KY┼îKA V2   ┬╖   %s"):format(string.upper(tostring(opts.Subtitle or "Ky┼ìka Suigetsu"))), math.clamp(H * 0.015, 11, 16), "Glass", Enum.FontWeight.SemiBold)
+		local sub = Mono(block, ("KY┼îKA V2   |   %s"):format(string.upper(tostring(opts.Subtitle or "Kyoka Suigetsu"))), math.clamp(H * 0.015, 11, 16), "Glass", Enum.FontWeight.SemiBold)
 
 		sub.Position = UDim2.fromOffset(2, subY)
 
@@ -10138,7 +10138,7 @@ local Kyoka = (function()
 
 
 
-		-- Jauge de chargement (pr├⌐chargement r├⌐el des images de l'interface).
+		-- Jauge de chargement (prechargement reel des images de l'interface).
 
 		local track = New("Frame", {
 
@@ -10196,7 +10196,7 @@ local Kyoka = (function()
 
 
 
-		-- Passer : clic ou Espace / ├ëchap / Entr├⌐e.
+		-- Passer : clic ou Espace / ├ëchap / Entree.
 
 		local skipHit = Hit(overlay, "Skip", 850)
 
@@ -10250,7 +10250,7 @@ local Kyoka = (function()
 
 
 
-		-- Pr├⌐chargement en t├óche de fond, pour la jauge.
+		-- Prechargement en t├óche de fond, pour la jauge.
 
 		local loaded, total = 0, 0
 
@@ -10386,11 +10386,11 @@ local Kyoka = (function()
 
 
 
-		-- 4. La r├⌐plique, tap├⌐e.
+		-- 4. La replique, tapee.
 
 		local line = opts.Quote or "Since when were you under the impression this was just another script hub?"
 
-		-- Deux caract├¿res par image : la r├⌐plique s'├⌐crit en ~1 s.
+		-- Deux caract├¿res par image : la replique s'ecrit en ~1 s.
 
 		local chars = {}
 
@@ -10422,7 +10422,7 @@ local Kyoka = (function()
 
 
 
-		-- 5. Fissure, puis l'├⌐cran vole en ├⌐clats vers le joueur.
+		-- 5. Fissure, puis l'ecran vole en eclats vers le joueur.
 
 		finished = true
 
@@ -10496,7 +10496,7 @@ local Kyoka = (function()
 
 
 
-	-- Compatibilit├⌐ Ky┼ìka / Vesper : ├⌐cran de chargement pilot├⌐ par le script.
+	-- Compatibilite Kyoka / Vesper : ecran de chargement pilote par le script.
 
 	function Library:Splash(opts)
 
@@ -10534,13 +10534,13 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Petits panneaux d├⌐pla├ºables (filigrane, raccourcis, barre rapide)
+	-- Petits panneaux depla├ºables (filigrane, raccourcis, barre rapide)
 
 	--=====================================================================
 
 
 
-	-- Rend un cadre d├⌐pla├ºable ; la position est retenue dans Prefs[key].
+	-- Rend un cadre depla├ºable ; la position est retenue dans Prefs[key].
 
 	local function Draggable(frame, handle, key)
 
@@ -10972,7 +10972,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Filigrane (d├⌐pla├ºable)
+	-- Filigrane (depla├ºable)
 
 	--=====================================================================
 
@@ -11110,7 +11110,7 @@ local Kyoka = (function()
 
 				:gsub("{[Pp][Ii][Nn][Gg]}", tostring(ping) .. "ms")
 
-				-- Le pseudo n'est jamais affich├⌐ (captures, streams) : {player} est retir├⌐.
+				-- Le pseudo n'est jamais affiche (captures, streams) : {player} est retire.
 
 				:gsub("{[Pp][Ll][Aa][Yy][Ee][Rr]}%s*[/|]%s*", "")
 
@@ -11136,7 +11136,7 @@ local Kyoka = (function()
 
 			WatermarkText.Text = ('<font color="#%s"><b>%s</b></font>'):format(Theme.Text:ToHex(), string.upper(head))
 
-				.. (#parts > 0 and ("   " .. string.upper(table.concat(parts, "  ┬╖  "))) or "")
+				.. (#parts > 0 and ("   " .. string.upper(table.concat(parts, "  |  "))) or "")
 
 		end)
 
@@ -11146,7 +11146,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Raccourcis actifs (d├⌐pla├ºable)
+	-- Raccourcis actifs (depla├ºable)
 
 	--=====================================================================
 
@@ -11296,7 +11296,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Barre rapide : options ├⌐pingl├⌐es (clic droit > Pin), visible menu ferm├⌐
+	-- Barre rapide : options epinglees (clic droit > Pin), visible menu ferme
 
 	--=====================================================================
 
@@ -11500,7 +11500,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Curseur dessin├⌐ (beaucoup de jeux cachent l'ic├┤ne syst├¿me)
+	-- Curseur dessine (beaucoup de jeux cachent l'ic├┤ne syst├¿me)
 
 	--=====================================================================
 
@@ -11598,7 +11598,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Configuration (m├¬me format que Vesper / Ky┼ìka)
+	-- Configuration (m├¬me format que Vesper / Kyoka)
 
 	--=====================================================================
 
@@ -11834,19 +11834,19 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Ky┼ìka Assist (Ctrl+K)
+	-- Kyoka Assist (Ctrl+K)
 
 	-- Recherche globale + commandes en langage naturel, fran├ºais ou anglais :
 
-	--   ┬½ active l'esp et mets la distance ├á 12 ┬╗, ┬½ turn off auto farm ┬╗,
+	--   |½ active l'esp et mets la distance ├á 12 |╗, |½ turn off auto farm |╗,
 
-	--   ┬½ th├¿me rouge ┬╗, ┬½ volume 40 ┬╗, ┬½ va dans visuals ┬╗, ┬½ save config farm ┬╗
+	--   |½ th├¿me rouge |╗, |½ volume 40 |╗, |½ va dans visuals |╗, |½ save config farm |╗
 
-	-- Tout est compris en local (aucune cl├⌐, aucun serveur). Un mod├¿le distant
+	-- Tout est compris en local (aucune cle, aucun serveur). Un mod├¿le distant
 
-	-- peut ├¬tre branch├⌐ avec Kyoka:SetAI({ Endpoint = url }) pour les phrases floues.
+	-- peut ├¬tre branche avec Kyoka:SetAI({ Endpoint = url }) pour les phrases floues.
 
-	-- Port├⌐e propre : le chunk principal approche la limite de locales de Luau.
+	-- Portee propre : le chunk principal approche la limite de locales de Luau.
 
 	--=====================================================================
 
@@ -11876,7 +11876,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Indexation : on enveloppe les fabriques d'├⌐l├⌐ments
+	-- Indexation : on enveloppe les fabriques d'elements
 
 	--=====================================================================
 
@@ -11958,7 +11958,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Texte : normalisation, similarit├⌐
+	-- Texte : normalisation, similarite
 
 	--=====================================================================
 
@@ -11966,9 +11966,9 @@ local Kyoka = (function()
 
 	local ACCENTS = {
 
-		["├á"] = "a", ["├ó"] = "a", ["├ñ"] = "a", ["├í"] = "a", ["├⌐"] = "e", ["├¿"] = "e", ["├¬"] = "e", ["├½"] = "e",
+		["├á"] = "a", ["├ó"] = "a", ["├ñ"] = "a", ["├í"] = "a", ["e"] = "e", ["├¿"] = "e", ["├¬"] = "e", ["├½"] = "e",
 
-		["├«"] = "i", ["├»"] = "i", ["├¡"] = "i", ["├┤"] = "o", ["├╢"] = "o", ["├│"] = "o", ["┼ì"] = "o",
+		["├«"] = "i", ["├»"] = "i", ["├¡"] = "i", ["├┤"] = "o", ["├╢"] = "o", ["├│"] = "o", ["o"] = "o",
 
 		["├╣"] = "u", ["├╗"] = "u", ["├╝"] = "u", ["├║"] = "u", ["├º"] = "c", ["├▒"] = "n",
 
@@ -12098,7 +12098,7 @@ local Kyoka = (function()
 
 		elseif nt:find(table.concat(words, " "), 1, true) then s += 0.2 end
 
-		-- Petit avantage aux textes courts (┬½ ESP ┬╗ plut├┤t que ┬½ ESP Max Distance ┬╗).
+		-- Petit avantage aux textes courts (|½ ESP |╗ plut├┤t que |½ ESP Max Distance |╗).
 
 		return s - #tt * 0.01
 
@@ -12108,7 +12108,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Compr├⌐hension des phrases
+	-- Comprehension des phrases
 
 	--=====================================================================
 
@@ -12140,7 +12140,7 @@ local Kyoka = (function()
 
 	local COLOR_WORDS = {
 
-		violet = "Ky┼ìka", purple = "Ky┼ìka", mauve = "Ky┼ìka", kyoka = "Ky┼ìka", aizen = "Ky┼ìka",
+		violet = "Kyoka", purple = "Kyoka", mauve = "Kyoka", kyoka = "Kyoka", aizen = "Kyoka",
 
 		blanc = "Mono", white = "Mono", mono = "Mono", gris = "Mono", gray = "Mono", grey = "Mono", noir = "Mono", black = "Mono",
 
@@ -12272,7 +12272,7 @@ local Kyoka = (function()
 
 
 
-		-- R├⌐glages de l'interface d'abord.
+		-- Reglages de l'interface d'abord.
 
 		if norm:find("theme") or norm:find("couleur") or norm:find("color") or norm:find("accent") then
 
@@ -12594,7 +12594,7 @@ local Kyoka = (function()
 
 		end
 
-		-- ┬½ active esp et boxes ┬╗ : le verbe vaut pour la suite.
+		-- |½ active esp et boxes |╗ : le verbe vaut pour la suite.
 
 		local lastVerb
 
@@ -12698,7 +12698,7 @@ local Kyoka = (function()
 
 		BackgroundTransparency = 1, Text = "", ClearTextOnFocus = false,
 
-		PlaceholderText = "Ask Ky┼ìka anythingΓÇª",
+		PlaceholderText = "Ask Kyoka anythingΓÇª",
 
 		TextSize = TS(16), TextXAlignment = Enum.TextXAlignment.Left,
 
@@ -12782,7 +12782,7 @@ local Kyoka = (function()
 
 	Library:Register(FootLine, { BackgroundColor3 = "BorderSoft" })
 
-	local FootHint = Mono(Foot, "ΓåæΓåô NAVIGATE   ┬╖   ENTER RUN   ┬╖   TAB REVEAL   ┬╖   ΓåÉΓåÆ ADJUST", 9.5, "TextFaint", Enum.FontWeight.SemiBold)
+	local FootHint = Mono(Foot, "ΓåæΓåô NAVIGATE   |   ENTER RUN   |   TAB REVEAL   |   ΓåÉΓåÆ ADJUST", 9.5, "TextFaint", Enum.FontWeight.SemiBold)
 
 	FootHint.Position = UDim2.fromOffset(18, 0)
 
@@ -12826,7 +12826,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Lignes de r├⌐sultat
+	-- Lignes de resultat
 
 	--=====================================================================
 
@@ -13002,7 +13002,7 @@ local Kyoka = (function()
 
 
 
-	-- Contr├┤le vivant ├á droite d'un r├⌐sultat.
+	-- Contr├┤le vivant ├á droite d'un resultat.
 
 	local function LiveControl(e)
 
@@ -13268,7 +13268,7 @@ local Kyoka = (function()
 
 
 
-		-- 1. Ce que Ky┼ìka propose de faire.
+		-- 1. Ce que Kyoka propose de faire.
 
 		local actions = Parse(q)
 
@@ -13278,7 +13278,7 @@ local Kyoka = (function()
 
 		if #runnable > 0 then
 
-			Caption(#runnable > 1 and ("Ky┼ìka will do " .. #runnable .. " things") or "Ky┼ìka will", nextOrder())
+			Caption(#runnable > 1 and ("Kyoka will do " .. #runnable .. " things") or "Kyoka will", nextOrder())
 
 			ResultRow(nextOrder(), "wand", #runnable > 1 and ("Run all " .. #runnable .. " actions") or runnable[1].Label,
 
@@ -13306,7 +13306,7 @@ local Kyoka = (function()
 
 
 
-		-- 2. R├⌐sultats de recherche (options + commandes).
+		-- 2. Resultats de recherche (options + commandes).
 
 		local words = Tokens(q)
 
@@ -13404,7 +13404,7 @@ local Kyoka = (function()
 
 		if not ok or not res or not res.Body then
 
-			Library:Notify({ Title = "Ky┼ìka Assist", Content = "The AI model did not answer.", Type = "error" })
+			Library:Notify({ Title = "Kyoka Assist", Content = "The AI model did not answer.", Type = "error" })
 
 			return
 
@@ -13424,7 +13424,7 @@ local Kyoka = (function()
 
 		end
 
-		if data.reply then Library:Notify({ Title = "Ky┼ìka", Content = tostring(data.reply), Duration = 6 }) end
+		if data.reply then Library:Notify({ Title = "Kyoka", Content = tostring(data.reply), Duration = 6 }) end
 
 		if n > 0 then FX.Burst(Spark.AbsolutePosition + Spark.AbsoluteSize / 2, 10) end
 
@@ -13496,7 +13496,7 @@ local Kyoka = (function()
 
 	Reply = function(n)
 
-		A.LastReply = { Text = ("Done  ┬╖  %d change%s applied"):format(n, n == 1 and "" or "s"), At = os.clock() }
+		A.LastReply = { Text = ("Done  |  %d change%s applied"):format(n, n == 1 and "" or "s"), At = os.clock() }
 
 		Input.Text = ""
 
@@ -13528,7 +13528,7 @@ local Kyoka = (function()
 
 		exampleIdx = exampleIdx % #EXAMPLES + 1
 
-		Input.PlaceholderText = "Ask Ky┼ìkaΓÇª  e.g. \"" .. EXAMPLES[exampleIdx] .. "\""
+		Input.PlaceholderText = "Ask KyokaΓÇª  e.g. \"" .. EXAMPLES[exampleIdx] .. "\""
 
 		Input.Text = ""
 
@@ -13728,7 +13728,7 @@ local Kyoka = (function()
 
 	end
 
-	-- Ex├⌐cuter une phrase depuis le script (ex. raccourci personnalis├⌐).
+	-- Executer une phrase depuis le script (ex. raccourci personnalise).
 
 	function Library:Ask(text)
 
@@ -13742,7 +13742,7 @@ local Kyoka = (function()
 
 
 
-	-- Commandes int├⌐gr├⌐es.
+	-- Commandes integrees.
 
 	Library:AddCommand("Customize the interface", { Keywords = { "theme", "settings", "personnaliser", "apparence" }, Callback = function()
 
@@ -13890,7 +13890,7 @@ local Kyoka = (function()
 
 		elseif obj.Type == "Button" and obj.Entry then
 
-			-- Les boutons n'ont pas de flag : on en cr├⌐e un pour la barre rapide.
+			-- Les boutons n'ont pas de flag : on en cree un pour la barre rapide.
 
 			local key = "__btn_" .. tostring(obj.Text)
 
@@ -13926,7 +13926,7 @@ local Kyoka = (function()
 
 		end
 
-		CtxItem("sparkles", "Ask Ky┼ìka about it", false, function()
+		CtxItem("sparkles", "Ask Kyoka about it", false, function()
 
 			Open()
 
@@ -13978,7 +13978,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- Panneau ┬½ Customize ┬╗ : tout ce qui se r├¿gle, retenu pour tous les scripts
+	-- Panneau |½ Customize |╗ : tout ce qui se r├¿gle, retenu pour tous les scripts
 
 	--=====================================================================
 
@@ -14270,11 +14270,11 @@ local Kyoka = (function()
 
 		end })
 
-		over:AddLabel("Tip: right click an option to pin it, reset it or ask Ky┼ìka about it.", { Wrap = true, Size = 12, Color = "TextFaint" })
+		over:AddLabel("Tip: right click an option to pin it, reset it or ask Kyoka about it.", { Wrap = true, Size = 12, Color = "TextFaint" })
 
 
 
-		-- D├⌐marrage
+		-- Demarrage
 
 		local start = G("Startup")
 
@@ -14362,7 +14362,7 @@ local Kyoka = (function()
 
 
 
-		local ver = Mono(scroll, ("KY┼îKA V2  ┬╖  v%s  ┬╖  NW HUB"):format(Library.Version), 10, "TextFaint", Enum.FontWeight.SemiBold)
+		local ver = Mono(scroll, ("KY┼îKA V2  |  v%s  |  NW HUB"):format(Library.Version), 10, "TextFaint", Enum.FontWeight.SemiBold)
 
 		ver.Size = UDim2.new(1, 0, 0, 20)
 
@@ -14440,7 +14440,7 @@ local Kyoka = (function()
 
 	--=====================================================================
 
-	-- D├⌐chargement
+	-- Dechargement
 
 	--=====================================================================
 
@@ -14778,18 +14778,24 @@ function NW_BuildDodgeResult(data)
     local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
     local Dodge = qteRules and qteRules:FindFirstChild("Dodge") and require(qteRules.Dodge)
 
-    local idealStop = 0.5
-    local totalWait = 0.5
+    local idealStop = 0.35
     pcall(function()
         local layout = (data and data.Layout) or (Dodge and type(data) == "table" and Dodge.Layout(data.Seed, data))
         if layout then
-            idealStop = math.clamp((layout.Position or 0.5) + (layout.Glint or 0.5) * 0.015, 0.1, 0.95)
-            local spd = tonumber(type(data) == "table" and data.Speed) or 1.5
-            totalWait = 0.34 + (idealStop / 0.95) * (spd * 0.65)
+            local sweep = layout.Sweep or 0.8
+            local pos = layout.Glint or layout.Position or 0.5
+            idealStop = sweep * math.clamp(pos, 0.15, 0.85)
         end
     end)
 
-    task.wait(math.max(0.48, totalWait))
+    task.wait(idealStop)
+
+    pcall(function()
+        local pg = LocalPlayer:FindFirstChild("PlayerGui")
+        local pgc = pg and pg:FindFirstChild("Combat")
+        local dq = pgc and pgc:FindFirstChild("DodgeQTE", true)
+        if dq then dq.Visible = false end
+    end)
 
     if nonce then
         return {
@@ -15200,6 +15206,8 @@ local function SuppressQTEGui(combatGui)
         if isQTEFrame(child) then
             hideFrame(child)
             child:GetPropertyChangedSignal("Visible"):Connect(function()
+                local isDodge = child:FindFirstChild("Stop") and child:FindFirstChild("Inset") and child:FindFirstChild("Dodge", true) ~= nil
+                if isDodge and not (Config.AutoDodge or Config.LegitDodge) then return end
                 if (Config.AutoQTE or Config.AutoDodge or Config.AutoThorianQTE) and child.Visible then
                     hideFrame(child)
                 end
@@ -15211,6 +15219,8 @@ local function SuppressQTEGui(combatGui)
         if isQTEFrame(child) then
             hideFrame(child)
             child:GetPropertyChangedSignal("Visible"):Connect(function()
+                local isDodge = child:FindFirstChild("Stop") and child:FindFirstChild("Inset") and child:FindFirstChild("Dodge", true) ~= nil
+                if isDodge and not (Config.AutoDodge or Config.LegitDodge) then return end
                 if (Config.AutoQTE or Config.AutoDodge or Config.AutoThorianQTE) and child.Visible then
                     hideFrame(child)
                 end
@@ -15283,6 +15293,20 @@ local function PatchU3Table(tbl, profileMap)
     U3HookedOnce = true
 end
 
+-- Scrambled CombatHandle Module Name Map
+local KNOWN_COMBAT_MODULE_MAP = {
+    ["56p2kZ7GMx"] = "Dodge",
+    ["JKRVydk6lirw"] = "Fist",
+    ["P3YYx7krMCy0d"] = "Sword",
+    ["h3oeXqQALNLpmC"] = "Dagger",
+    ["iNrIMr7y9RAbaX"] = "Magic",
+    ["mNTc0sak2Grw8M4"] = "Spear",
+    ["NwNpmb7LSD297"] = "Axe",
+    ["LsWwnybFBudXl"] = "Hammer",
+    ["5p9FIJHnZvngXHxx"] = "Thorian",
+    ["rkEmoy7SNVdFsr"] = "Yarthul"
+}
+
 -- Hook ModuleScripts inside CombatHandle
 local function HookQTEModules(handleScript, profileMap)
     if not handleScript then return end
@@ -15294,8 +15318,8 @@ local function HookQTEModules(handleScript, profileMap)
                     if HookedModules[mod] then return end
                     local origRun = mod.Run
 
-                    local canonical = nil
-                    if profileMap then
+                    local canonical = KNOWN_COMBAT_MODULE_MAP[child.Name]
+                    if not canonical and profileMap then
                         for c, alias in pairs(profileMap) do
                             if alias == child.Name then
                                 canonical = c
@@ -15308,23 +15332,42 @@ local function HookQTEModules(handleScript, profileMap)
                     end
 
                     mod.Run = function(data)
-                        pcall(function()
-                            local pg = LocalPlayer:FindFirstChild("PlayerGui")
-                            local pgc = pg and pg:FindFirstChild("Combat")
-                            if pgc then SuppressQTEGui(pgc) end
-                        end)
                         local isDodge = (canonical and canonical:find("Dodge") ~= nil)
                         if not isDodge and type(data) == "table" and (data.BlockWindow ~= nil or data.DodgeWindow ~= nil or data.Speed ~= nil) then
                             isDodge = true
                         end
+
                         if isDodge then
                             if Config.AutoDodge or Config.LegitDodge then
+                                pcall(function()
+                                    local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                                    local pgc = pg and pg:FindFirstChild("Combat")
+                                    local dq = pgc and pgc:FindFirstChild("DodgeQTE", true)
+                                    if dq then dq.Visible = false end
+                                end)
                                 return NW_BuildDodgeResult(data)
                             end
                         elseif Config.AutoQTE or (canonical and canonical:find("Thorian") and Config.AutoThorianQTE) then
+                            pcall(function()
+                                local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                                local pgc = pg and pg:FindFirstChild("Combat")
+                                if pgc then SuppressQTEGui(pgc) end
+                            end)
                             local key = canonical or child.Name
                             task.wait(QTEDelay(key, data))
-                            return NW_BuildQTEResult(key, data)
+                            local res = NW_BuildQTEResult(key, data)
+                            pcall(function()
+                                local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                                local pgc = pg and pg:FindFirstChild("Combat")
+                                if pgc then
+                                    for _, f in ipairs(pgc:GetChildren()) do
+                                        if f:IsA("GuiObject") and (f.Name:find("QTE") or f.Name == "FistQTE" or f.Name == "SwordQTE") then
+                                            f.Visible = false
+                                        end
+                                    end
+                                end
+                            end)
+                            return res
                         end
                         return origRun(data)
                     end
@@ -16360,7 +16403,7 @@ end
 
 
 
--- Prot├⌐ger imm├⌐diatement le personnage actuel et ├á chaque respawn
+-- Proteger immediatement le personnage actuel et ├á chaque respawn
 
 if LocalPlayer and LocalPlayer.Character then
 
@@ -17708,7 +17751,7 @@ task.spawn(function()
 
 
 
-                -- B) Priority 2: Knock on doors / hand out flyers (Act II ┬╖ Opening Night)
+                -- B) Priority 2: Knock on doors / hand out flyers (Act II | Opening Night)
 
                 if curStep == "A2_Flyers" or goalText:find("door") or goalText:find("flyer") then
 
@@ -17770,34 +17813,109 @@ task.spawn(function()
 
 
 
-                    -- If all 7 doors delivered (or no enabled door found): pumpkin milestone required
+                    -- After 7 flyers delivered: proceed to Caldera Crying Child -> Deeproot Father -> Escort sequence
+                    if not foundDoor or goalText:find("7 delivered") or goalText:find("child") or goalText:find("crying") or goalText:find("father") then
+                        if IsTweening then return end
 
-                    if not foundDoor or goalText:find("7 delivered") then
-
-                        local pumpkins = LocalPlayer:GetAttribute("CarvedPumpkins") or 0
-
-                        local tRank = LocalPlayer:GetAttribute("TheaterRank") or 1
-
-                        local duraelis = Workspace:FindFirstChild("NPCs") and Workspace.NPCs:FindFirstChild("Duraelis")
-
-                        local pp = duraelis and duraelis:FindFirstChildWhichIsA("ProximityPrompt", true)
-
-
-
-                        if pumpkins < 20 or tRank < 3 then
-
-                            SetNPCCooldown("Duraelis", 120)
-
-                            if not Config.AutoHalloweenPumpkins then
-
-                                Config.AutoHalloweenPumpkins = true
-
-                                warn("[Halloween] 20 Carved Pumpkins required for next story milestone. Auto-engaging pumpkin farm!")
-
+                        -- Check if NPCDialogue is currently open (father or child dialogue)
+                        local pgui = LocalPlayer:FindFirstChild("PlayerGui")
+                        local dia = pgui and pgui:FindFirstChild("NPCDialogue")
+                        if dia then
+                            for _, btn in ipairs(dia:GetDescendants()) do
+                                if btn:IsA("TextButton") and btn.Visible then
+                                    local txt = btn.Text:lower()
+                                    if not txt:find("leave") and not txt:find("nevermind") and not txt:find("bye") then
+                                        for _, c in ipairs(getconnections(btn.MouseButton1Click)) do c:Fire() end
+                                        task.wait(0.3)
+                                        return
+                                    end
+                                end
                             end
+                            -- If only leave/bye is available, exit dialogue
+                            for _, btn in ipairs(dia:GetDescendants()) do
+                                if btn:IsA("TextButton") and btn.Visible then
+                                    for _, c in ipairs(getconnections(btn.MouseButton1Click)) do c:Fire() end
+                                    task.wait(0.2)
+                                    return
+                                end
+                            end
+                        end
 
-                            return
+                        -- Step 1: Caldera Crying Child / KidCry trigger (Door_8 area at 5108, 658, -4253)
+                        local kidCry = Workspace:FindFirstChild("NPCs") and Workspace.NPCs:FindFirstChild("Quest")
+                                      and Workspace.NPCs.Quest:FindFirstChild("Halloween")
+                                      and Workspace.NPCs.Quest.Halloween:FindFirstChild("Story")
+                                      and Workspace.NPCs.Quest.Halloween.Story:FindFirstChild("Triggers")
+                                      and Workspace.NPCs.Quest.Halloween.Story.Triggers:FindFirstChild("KidCry")
 
+                        local calderaChildPos = kidCry and kidCry.Position or Vector3.new(5108, 658, -4253)
+
+                        -- Step 2: Grieving Father at Deeproot (8009, 819, -5565)
+                        local grievingFather = Workspace:FindFirstChild("NPCs") and Workspace.NPCs:FindFirstChild("Grieving Father")
+                        local fatherPos = grievingFather and grievingFather:GetPivot().Position or Vector3.new(8009, 819, -5565)
+
+                        -- Step 3: Escort anchors
+                        local storyAnchors = Workspace:FindFirstChild("NPCs") and Workspace.NPCs:FindFirstChild("Quest")
+                                            and Workspace.NPCs.Quest:FindFirstChild("Halloween")
+                                            and Workspace.NPCs.Quest.Halloween:FindFirstChild("Story")
+                                            and Workspace.NPCs.Quest.Halloween.Story:FindFirstChild("Anchors")
+
+                        -- Decide next target based on quest card goal and state
+                        if goalText:find("father") or curStep:find("Father") then
+                            -- Talk to Grieving Father in Deeproot
+                            if (hrp.Position - fatherPos).Magnitude > 7 then
+                                SafeTweenTo(fatherPos + Vector3.new(0, 2, 3), function()
+                                    task.wait(0.3)
+                                    if grievingFather then
+                                        local pp = grievingFather:FindFirstChildWhichIsA("ProximityPrompt", true)
+                                        if pp then
+                                            pcall(function() pp:InputHoldBegin(); task.wait(0.1); pp:InputHoldEnd() end)
+                                            pcall(function() fireproximityprompt(pp, 0) end)
+                                        end
+                                    end
+                                end)
+                                return
+                            else
+                                if grievingFather then
+                                    local pp = grievingFather:FindFirstChildWhichIsA("ProximityPrompt", true)
+                                    if pp then
+                                        pcall(function() pp:InputHoldBegin(); task.wait(0.1); pp:InputHoldEnd() end)
+                                        pcall(function() fireproximityprompt(pp, 0) end)
+                                    end
+                                end
+                                return
+                            end
+                        else
+                            -- First visit Caldera Crying Child
+                            if (hrp.Position - calderaChildPos).Magnitude > 8 then
+                                SafeTweenTo(calderaChildPos + Vector3.new(0, 2, 2), function()
+                                    task.wait(0.3)
+                                    if kidCry and HStoryRemote then
+                                        pcall(function() NW_SafeFireServer(HStoryRemote, "Interact", kidCry) end)
+                                    end
+                                    local prompt = kidCry and kidCry:FindFirstChildWhichIsA("ProximityPrompt", true)
+                                    if prompt then
+                                        pcall(function() prompt:InputHoldBegin(); task.wait(0.1); prompt:InputHoldEnd() end)
+                                        pcall(function() fireproximityprompt(prompt, 0) end)
+                                    end
+                                end)
+                                return
+                            else
+                                if kidCry and HStoryRemote then
+                                    pcall(function() NW_SafeFireServer(HStoryRemote, "Interact", kidCry) end)
+                                end
+                                local prompt = kidCry and kidCry:FindFirstChildWhichIsA("ProximityPrompt", true)
+                                if prompt then
+                                    pcall(function() prompt:InputHoldBegin(); task.wait(0.1); prompt:InputHoldEnd() end)
+                                    pcall(function() fireproximityprompt(prompt, 0) end)
+                                end
+                                task.wait(0.5)
+                                -- Also fallback to Grieving Father if child trigger registered
+                                if grievingFather and (hrp.Position - fatherPos).Magnitude > 15 then
+                                    SafeTweenTo(fatherPos + Vector3.new(0, 2, 3))
+                                end
+                                return
+                            end
                         end
 
 
@@ -17880,7 +17998,7 @@ task.spawn(function()
 
 
 
-                -- C) Priority 3: Close Rifts (Act I ┬╖ Tundra Gate / Veilsight)
+                -- C) Priority 3: Close Rifts (Act I | Tundra Gate / Veilsight)
 
                 if curStep == "A1_CloseRifts" or goalText:find("rift") then
 
@@ -18842,7 +18960,7 @@ local Window = Kyoka:CreateWindow({
 
     Game           = "Arcane Lineage",
 
-    Footer         = "nwhub ┬╖ v3.9 ┬╖ VIP",
+    Footer         = "nwhub | v3.9 | VIP",
 
     StatusRight    = "RightShift to hide",
 

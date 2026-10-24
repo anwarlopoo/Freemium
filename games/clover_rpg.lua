@@ -7367,11 +7367,9 @@ local ESPEntries = {}
 
 local function ensureESPFolder()
     if not ESPFolder or not ESPFolder.Parent then
-        local pgui = LocalPlayer:FindFirstChild("PlayerGui")
-        local core = pgui or game:GetService("CoreGui")
         ESPFolder = Instance.new("Folder")
         ESPFolder.Name = "Clover_ESP_Container"
-        ESPFolder.Parent = core
+        ESPFolder.Parent = game:GetService("CoreGui")
     end
     return ESPFolder
 end
@@ -7433,7 +7431,7 @@ local function updateOrCreateESP(key, character, rootPart, labelText, mainColor)
         hl.FillTransparency = 0.65
         hl.OutlineColor = Color3.fromRGB(255, 255, 255)
         hl.OutlineTransparency = 0.1
-        hl.Parent = folder
+        hl.Parent = character
 
         entry = { Gui = bbg, Label = lbl, Highlight = hl, LastUpdate = os.clock() }
         ESPEntries[key] = entry
@@ -7478,8 +7476,7 @@ local espConn = RunService.RenderStepped:Connect(function()
                             local m = pf and pf:GetAttribute("Magic")
                             if m and m ~= "" and m ~= "None" then magicTag = " [" .. tostring(m) .. "]" end
                         end
-                        local txt = string.format("[PLAYER] %s%s
-%d/%d HP (%dm)", plr.Name, magicTag, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
+                        local txt = string.format("[PLAYER] %s%s\n%d/%d HP (%dm)", plr.Name, magicTag, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
                         local color = isSelf and Color3.fromRGB(255, 220, 80) or (Hub.Flags.PlayerESPColor or Color3.fromRGB(0, 255, 140))
                         updateOrCreateESP(key, pChar, hrp, txt, color)
                     end
@@ -7499,8 +7496,7 @@ local espConn = RunService.RenderStepped:Connect(function()
                     local dist = math.floor((hrp.Position - myPos).Magnitude)
                     if dist <= 600 then
                         local key = "MOB_" .. tostring(mob:GetDebugId())
-                        local txt = string.format("[MOB] %s
-%d/%d HP (%dm)", mob.Name, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
+                        local txt = string.format("[MOB] %s\n%d/%d HP (%dm)", mob.Name, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
                         updateOrCreateESP(key, mob, hrp, txt, Hub.Flags.MobESPColor or Color3.fromRGB(255, 80, 80))
                     end
                 end

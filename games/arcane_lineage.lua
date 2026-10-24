@@ -15277,10 +15277,13 @@ end
 -- Wrapper constructor for any QTE function or module
 local function WrapQTEFunction(canonical, origFn)
     if type(origFn) ~= "function" then return origFn end
+    if origFn.__isWrapped then return origFn end
+
     local isDodge = canonical:find("Dodge") ~= nil
     local isYarthul = canonical:find("Yarthul") ~= nil
 
-    return function(data)
+    local wrapped
+    wrapped = function(data)
         if isDodge then
             if Config.AutoDodge or Config.LegitDodge then
                 local sweep = 0.7
@@ -15297,7 +15300,7 @@ local function WrapQTEFunction(canonical, origFn)
                 end)
                 local idealStop = sweep * ((math.clamp(pos, 0.05, 0.95) - 0.01) / 0.95)
 
-                -- Restore dodge GUI to screen center so player sees the action & buttons work
+                -- Visual confirmation: show dodge frame centered
                 pcall(function()
                     local pg = LocalPlayer:FindFirstChild("PlayerGui")
                     local pgc = pg and pg:FindFirstChild("Combat")
@@ -15306,61 +15309,27 @@ local function WrapQTEFunction(canonical, origFn)
                             if child:FindFirstChild("Stop") and child:FindFirstChild("Inset") then
                                 child.Position = UDim2.new(0.5, 0, 0.5, 0)
                                 child.AnchorPoint = Vector2.new(0.5, 0.5)
+                                child.Visible = true
                             end
                         end
                     end
                 end)
 
-                -- 1. Automatic Space / Button Click exactly at idealStop
-                local pressed = false
-                task.spawn(function()
-                    task.wait(0.34 + idealStop)
-                    if pressed then return end
-                    pressed = true
+                -- Authentic physical time: 0.34s setup + idealStop + 0.30s reaction
+                task.wait(0.34 + idealStop + 0.30)
 
-                    pcall(function()
-                        local pg = LocalPlayer:FindFirstChild("PlayerGui")
-                        local pgc = pg and pg:FindFirstChild("Combat")
-                        if pgc then
-                            for _, child in ipairs(pgc:GetChildren()) do
-                                if child:FindFirstChild("Stop") and child:FindFirstChild("Inset") then
-                                    for _, c in ipairs(getconnections(child.Stop.MouseButton1Click)) do
-                                        c:Fire()
-                                    end
-                                end
+                pcall(function()
+                    local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                    local pgc = pg and pg:FindFirstChild("Combat")
+                    if pgc then
+                        for _, child in ipairs(pgc:GetChildren()) do
+                            if child:FindFirstChild("Stop") and child:FindFirstChild("Inset") then
+                                child.Visible = false
                             end
                         end
-                    end)
-                    pcall(function()
-                        local vim = game:GetService("VirtualInputManager")
-                        vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                        task.wait(0.05)
-                        vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-                    end)
+                    end
                 end)
 
-                -- 2. Run authentic game function with safe timeout
-                local result = nil
-                local finished = false
-                task.spawn(function()
-                    local ok, res = pcall(origFn, data)
-                    if ok then result = res end
-                    finished = true
-                end)
-
-                local tStart = os.clock()
-                local maxWait = 0.35 + sweep + 0.8
-                while not finished and (os.clock() - tStart) < maxWait do
-                    task.wait(0.05)
-                end
-
-                pressed = true
-
-                if result ~= nil then
-                    return result
-                end
-
-                -- Fallback if origFn timed out
                 local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
                 if nonce then
                     return {
@@ -15375,31 +15344,18 @@ local function WrapQTEFunction(canonical, origFn)
             return origFn(data)
         elseif isYarthul then
             if Config.AutoDodge or Config.AutoQTE then
+                local dur = 8
                 pcall(function()
-                    local vim = game:GetService("VirtualInputManager")
-                    task.spawn(function()
-                        vim:SendKeyEvent(true, Enum.KeyCode.A, false, game)
-                        task.wait(0.8)
-                        vim:SendKeyEvent(false, Enum.KeyCode.A, false, game)
-                    end)
+                    local rep = game:GetService("ReplicatedStorage")
+                    local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
+                    local Yarthul = qteRules and qteRules:FindFirstChild("Yarthul") and require(qteRules.Yarthul)
+                    local layout = (data and data.Layout) or (Yarthul and type(data) == "table" and Yarthul.Layout(data.Seed, data or {}))
+                    if layout and layout.Duration then
+                        dur = layout.Duration
+                    end
                 end)
 
-                local result = nil
-                local finished = false
-                task.spawn(function()
-                    local ok, res = pcall(origFn, data)
-                    if ok then result = res end
-                    finished = true
-                end)
-
-                local tStart = os.clock()
-                while not finished and (os.clock() - tStart) < 22 do
-                    task.wait(0.2)
-                end
-
-                if result ~= nil then
-                    return result
-                end
+                task.wait(math.clamp(dur, 4, 16))
 
                 local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
                 if nonce then
@@ -15427,6 +15383,9 @@ local function WrapQTEFunction(canonical, origFn)
         end
         return origFn(data)
     end
+
+    wrapped.__isWrapped = true
+    return wrapped
 end
 
 -- Hook u3 dispatch table and u47 canonical list

@@ -7452,28 +7452,7 @@ local clickConn = UserInputService.InputBegan:Connect(function(input, processed)
 end)
 table.insert(Hub.Connections, clickConn)
 
--- Auto Loot Corpses
-local lastLoot = 0
-local lootConn = RunService.Heartbeat:Connect(function()
-    if not Hub.Alive or not Hub.Flags.AutoLootCorpses then return end
-    if os.clock() - lastLoot < 1.0 then return end
-    lastLoot = os.clock()
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    local corpses = WS:FindFirstChild("Corpses")
-    if corpses then
-        for _, c in ipairs(corpses:GetChildren()) do
-            local prompt = c:FindFirstChildWhichIsA("ProximityPrompt", true)
-            local part = c:FindFirstChildWhichIsA("BasePart")
-            if prompt and part and (part.Position - hrp.Position).Magnitude <= Hub.Flags.CorpseRange then
-                if fireproximityprompt then fireproximityprompt(prompt) end
-                Hub.RunStats.ItemsGathered = Hub.RunStats.ItemsGathered + 1
-            end
-        end
-    end
-end)
-table.insert(Hub.Connections, lootConn)
+
 
 -- =====================================================================
 -- KYOKA V2 INTERFACE
@@ -7714,15 +7693,9 @@ table.insert(Hub.Connections, soundConn)
 -- ---------------------------------------------------------------------
 local CombatTab = Window:AddTab("Combat")
 local CombatGroup = CombatTab:AddGroup("Combat Enhancements")
-local AimGroup = CombatTab:AddGroup("Aimbot Settings")
 
-CombatGroup:AddToggle("AutoM1", {
-    Text = "Auto M1 Attacks",
-    Default = false,
-    Callback = function(v) Hub.Flags.AutoM1 = v end,
-})
 CombatGroup:AddToggle("AutoParry", {
-    Text = "Auto Parry (Perfect Block)",
+    Text = "Auto Parry (100% Perfect Block)",
     Default = true,
     Callback = function(v) Hub.Flags.AutoParry = v end,
 })
@@ -7736,11 +7709,6 @@ CombatGroup:AddSlider("AutoParryHold", {
     Min = 0.08, Max = 0.35, Default = 0.18, Float = 0.01,
     Callback = function(v) Hub.Flags.AutoParryHold = v end,
 })
-CombatGroup:AddToggle("AutoHeavy", {
-    Text = "Auto Heavy Attacks",
-    Default = false,
-    Callback = function(v) Hub.Flags.AutoHeavy = v end,
-})
 CombatGroup:AddToggle("CombatAutoEquip", {
     Text = "Auto Equip Weapon",
     Default = true,
@@ -7751,59 +7719,6 @@ CombatGroup:AddDropdown("CombatWeapon", {
     Values = getAvailableCombatWeapons(),
     Default = "Auto / Best",
     Callback = function(v) Hub.Flags.CombatWeapon = v end,
-})
-CombatGroup:AddToggle("CombatInstaKill", {
-    Text = "Combat Insta Kill",
-    Default = false,
-    Callback = function(v) Hub.Flags.CombatInstaKill = v end,
-})
-CombatGroup:AddSlider("CombatInstaKillHP", {
-    Text = "Insta Kill HP Threshold",
-    Min = 5, Max = 50, Default = 20,
-    Callback = function(v) Hub.Flags.CombatInstaKillHP = v end,
-})
-CombatGroup:AddToggle("NoDashCD", {
-    Text = "No Dash Cooldown",
-    Default = false,
-    Callback = function(v) Hub.Flags.NoDashCD = v end,
-})
-CombatGroup:AddToggle("InfiniteEnergy", {
-    Text = "Infinite Energy",
-    Default = true,
-    Callback = function(v) Hub.Flags.InfiniteEnergy = v end,
-})
-CombatGroup:AddToggle("NoFallDamage", {
-    Text = "No Fall Damage",
-    Default = true,
-    Callback = function(v) Hub.Flags.NoFallDamage = v end,
-})
-
-AimGroup:AddToggle("Aimbot", {
-    Text = "Enable Aimbot",
-    Default = false,
-    Callback = function(v) Hub.Flags.Aimbot = v end,
-})
-AimGroup:AddDropdown("AimMode", {
-    Text = "Aimbot Mode",
-    Values = { "Camera", "Mouse" },
-    Default = "Camera",
-    Callback = function(v) Hub.Flags.AimMode = v end,
-})
-AimGroup:AddDropdown("AimPart", {
-    Text = "Aim Part",
-    Values = { "Head", "HumanoidRootPart", "Torso" },
-    Default = "Head",
-    Callback = function(v) Hub.Flags.AimPart = v end,
-})
-AimGroup:AddToggle("VisibleOnly", {
-    Text = "Visible Only",
-    Default = true,
-    Callback = function(v) Hub.Flags.VisibleOnly = v end,
-})
-AimGroup:AddSlider("AimbotFOV", {
-    Text = "Aimbot FOV",
-    Min = 30, Max = 300, Default = 120,
-    Callback = function(v) Hub.Flags.AimbotFOV = v end,
 })
 
 -- ---------------------------------------------------------------------
@@ -7840,21 +7755,6 @@ ExploitGroup:AddToggle("InfiniteJump", {
     Default = false,
     Callback = function(v) Hub.Flags.InfiniteJump = v end,
 })
-ExploitGroup:AddToggle("BunnyHop", {
-    Text = "Bunny Hop",
-    Default = false,
-    Callback = function(v) Hub.Flags.BunnyHop = v end,
-})
-ExploitGroup:AddToggle("InfiniteDash", {
-    Text = "Infinite Dash",
-    Default = false,
-    Callback = function(v) Hub.Flags.InfiniteDash = v end,
-})
-ExploitGroup:AddToggle("NoStates", {
-    Text = "No States (Anti-Stun)",
-    Default = false,
-    Callback = function(v) Hub.Flags.NoStates = v end,
-})
 ExploitGroup:AddToggle("Spinbot", {
     Text = "Spinbot",
     Default = false,
@@ -7880,11 +7780,6 @@ SafetyMoveGroup:AddToggle("AntiFling", {
     Default = true,
     Callback = function(v) Hub.Flags.AntiFling = v end,
 })
-SafetyMoveGroup:AddToggle("NoKillbricks", {
-    Text = "No Killbricks",
-    Default = true,
-    Callback = function(v) Hub.Flags.NoKillbricks = v end,
-})
 SafetyMoveGroup:AddToggle("TPBackOnDeath", {
     Text = "TP Back On Death",
     Default = false,
@@ -7895,34 +7790,6 @@ SafetyMoveGroup:AddButton("Kill Self", {
     Callback = function()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.Health = 0 end
-    end,
-})
-SafetyMoveGroup:AddToggle("AutoRespawn", {
-    Text = "Auto Respawn",
-    Default = false,
-    Callback = function(v) Hub.Flags.AutoRespawn = v end,
-})
-SafetyMoveGroup:AddDropdown("RespawnAt", {
-    Text = "Respawn At",
-    Values = { "Shrine", "Inn" },
-    Default = "Shrine",
-    Callback = function(v) Hub.Flags.RespawnAt = v end,
-})
-SafetyMoveGroup:AddButton("Set Retreat Spot", {
-    Icon = "map-pin",
-    Callback = function()
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            Hub.Flags.RetreatSpot = hrp.Position
-            Kyoka:Notify({ Title = "Retreat Spot", Content = "Current position saved!", Type = "success" })
-        end
-    end,
-})
-SafetyMoveGroup:AddButton("Clear Retreat Spot", {
-    Icon = "trash",
-    Callback = function()
-        Hub.Flags.RetreatSpot = nil
-        Kyoka:Notify({ Title = "Retreat Spot", Content = "Retreat spot cleared!", Type = "info" })
     end,
 })
 
@@ -7964,11 +7831,7 @@ EspGroup:AddToggle("NPCESP", {
     Default = false,
     Callback = function(v) Hub.Flags.NPCESP = v end,
 })
-EspGroup:AddToggle("ChestESP", {
-    Text = "Chest & Ore ESP",
-    Default = false,
-    Callback = function(v) Hub.Flags.ChestESP = v end,
-})
+
 
 WorldVisGroup:AddToggle("Fullbright", {
     Text = "Fullbright",
@@ -8025,11 +7888,6 @@ WorldVisGroup:AddButton("Clear Weather", {
     end,
 })
 
-CamVisGroup:AddToggle("FreeCam", {
-    Text = "Free Cam",
-    Default = false,
-    Callback = function(v) Hub.Flags.FreeCam = v end,
-})
 CamVisGroup:AddToggle("ForceThirdPerson", {
     Text = "Force 3rd Person & Infinite Zoom",
     Default = false,
@@ -8053,18 +7911,6 @@ CamVisGroup:AddSlider("FOVValue", {
     Callback = function(v)
         Hub.Flags.FOVValue = v
         if Hub.Flags.CustomFOV then Camera.FieldOfView = v end
-    end,
-})
-CamVisGroup:AddToggle("XRay", {
-    Text = "X-Ray Mode",
-    Default = false,
-    Callback = function(v)
-        Hub.Flags.XRay = v
-        for _, part in ipairs(WS:GetDescendants()) do
-            if part:IsA("BasePart") and part.Transparency < 0.5 and not part.Parent:FindFirstChildOfClass("Humanoid") then
-                part.Transparency = v and 0.6 or 0
-            end
-        end
     end,
 })
 
@@ -8097,12 +7943,12 @@ TravelSettingsGroup:AddToggle("CtrlClickTP", {
 })
 
 -- ---------------------------------------------------------------------
--- TAB 6: SERVER & DISCORD WEBHOOK
+-- TAB 6: SERVER & UTILITY
 -- ---------------------------------------------------------------------
 local ServTab = Window:AddTab("Server")
 local ServGroup = ServTab:AddGroup("Server Controls")
 local PerfGroup = ServTab:AddGroup("Performance & Potato Mode")
-local WebhookGroup = ServTab:AddGroup("Discord Webhook")
+
 
 ServGroup:AddButton("Rejoin Server", {
     Icon = "refresh-cw",
@@ -8160,17 +8006,7 @@ PerfGroup:AddSlider("FPSCap", {
     end,
 })
 
-WebhookGroup:AddToggle("WebhookEnabled", {
-    Text = "Enable Discord Webhook",
-    Default = false,
-    Callback = function(v) Hub.Flags.WebhookEnabled = v end,
-})
-WebhookGroup:AddButton("Send Test Discord Webhook", {
-    Icon = "send",
-    Callback = function()
-        Kyoka:Notify({ Title = "Webhook", Content = "Test notification triggered!", Type = "info" })
-    end,
-})
+
 
 -- Anti AFK
 LocalPlayer.Idled:Connect(function()

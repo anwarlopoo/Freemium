@@ -15293,19 +15293,34 @@ local function PatchU3Table(tbl, profileMap)
     U3HookedOnce = true
 end
 
--- Scrambled CombatHandle Module Name Map
-local KNOWN_COMBAT_MODULE_MAP = {
-    ["56p2kZ7GMx"] = "Dodge",
-    ["JKRVydk6lirw"] = "Fist",
-    ["P3YYx7krMCy0d"] = "Sword",
-    ["h3oeXqQALNLpmC"] = "Dagger",
-    ["iNrIMr7y9RAbaX"] = "Magic",
-    ["mNTc0sak2Grw8M4"] = "Spear",
-    ["NwNpmb7LSD297"] = "Axe",
-    ["LsWwnybFBudXl"] = "Hammer",
-    ["5p9FIJHnZvngXHxx"] = "Thorian",
-    ["rkEmoy7SNVdFsr"] = "Yarthul"
-}
+-- Dynamic QTE Module Resolver for any server
+local function ResolveQTEFromModule(child)
+    if not child or not child:IsA("ModuleScript") then return nil end
+    local name = child.Name
+    if name:find("Sword") then return "SwordQTE" end
+    if name:find("Dodge") then return "DodgeQTE" end
+    if name:find("Fist") then return "FistQTE" end
+    if name:find("Dagger") then return "DaggerQTE" end
+    if name:find("Magic") then return "MagicQTE" end
+    if name:find("Spear") then return "SpearQTE" end
+    if name:find("Axe") then return "AxeQTE" end
+    if name:find("Hammer") then return "HammerQTE" end
+    if name:find("Thorian") then return "ThorianQTE" end
+    if name:find("Yarthul") then return "YarthulQTE" end
+
+    -- Inspect module code for QTERules reference
+    local foundRule = nil
+    pcall(function()
+        if type(decompile) == "function" then
+            local src = decompile(child)
+            if src then
+                local r = src:match("QTERules%.([%a%d_]+)")
+                if r then foundRule = r .. "QTE" end
+            end
+        end
+    end)
+    return foundRule
+end
 
 -- Hook ModuleScripts inside CombatHandle
 local function HookQTEModules(handleScript, profileMap)
@@ -15313,23 +15328,23 @@ local function HookQTEModules(handleScript, profileMap)
     for _, child in ipairs(handleScript:GetChildren()) do
         if child:IsA("ModuleScript") and child.Name ~= "OldMagicQTE" and not child.Name:find("^Old") then
             pcall(function()
+                local canonical = ResolveQTEFromModule(child)
+                if not canonical and profileMap then
+                    for c, alias in pairs(profileMap) do
+                        if alias == child.Name then
+                            canonical = c
+                            break
+                        end
+                    end
+                end
+                if not canonical then
+                    canonical = NW_ResolveCanonical(child.Name)
+                end
+
                 local mod = require(child)
                 if type(mod) == "table" and type(mod.Run) == "function" then
                     if HookedModules[mod] then return end
                     local origRun = mod.Run
-
-                    local canonical = KNOWN_COMBAT_MODULE_MAP[child.Name]
-                    if not canonical and profileMap then
-                        for c, alias in pairs(profileMap) do
-                            if alias == child.Name then
-                                canonical = c
-                                break
-                            end
-                        end
-                    end
-                    if not canonical then
-                        canonical = NW_ResolveCanonical(child.Name)
-                    end
 
                     mod.Run = function(data)
                         local isDodge = (canonical and canonical:find("Dodge") ~= nil)
@@ -15361,7 +15376,7 @@ local function HookQTEModules(handleScript, profileMap)
                                 local pgc = pg and pg:FindFirstChild("Combat")
                                 if pgc then
                                     for _, f in ipairs(pgc:GetChildren()) do
-                                        if f:IsA("GuiObject") and (f.Name:find("QTE") or f.Name == "FistQTE" or f.Name == "SwordQTE") then
+                                        if f:IsA("GuiObject") and (f.Name:find("QTE") or f.Name == "FistQTE" or f.Name == "SwordQTE" or f.Name == "DodgeQTE") then
                                             f.Visible = false
                                         end
                                     end

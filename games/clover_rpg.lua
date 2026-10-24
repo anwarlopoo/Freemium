@@ -6938,6 +6938,10 @@ local Hub = {
         -- Combat
         AutoM1 = false,
         AutoHeavy = false,
+        AutoParry = true,
+        AutoParryRange = 22,
+        AutoParryDelay = 0.0,
+        AutoParryHold = 0.18,
         CombatInstaKill = false,
         CombatInstaKillHP = 20,
         CombatInstaKillRange = 25,
@@ -8546,6 +8550,154 @@ ShopGroup:AddToggle("AutoBuy", {
 })
 
 -- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- INSTANT PERFECT AUTO-PARRY SYSTEM
+-- ---------------------------------------------------------------------
+local lastParryTime = 0
+local parryInProgress = false
+
+local function triggerPerfectParry()
+    if parryInProgress then return end
+    if (os.clock() - lastParryTime) < 0.22 then return end
+    parryInProgress = true
+    lastParryTime = os.clock()
+
+    task.spawn(function()
+        pcall(function()
+            local delayTime = Hub.Flags.AutoParryDelay or 0
+            if delayTime > 0 then task.wait(delayTime) end
+
+            local holdTime = math.clamp(Hub.Flags.AutoParryHold or 0.18, 0.08, 0.35)
+
+            -- Send Block Input packet (ByteNetMax)
+            Packets.Combat.packets.BlockInput.send({
+                Action = "Block Input"
+            })
+
+            local t0 = os.clock()
+            while (os.clock() - t0) < holdTime and Hub.Alive do
+                task.wait()
+            end
+
+            -- Release Block to complete Parry window
+            Packets.Combat.packets.BlockInput.send({
+                Action = "End Block"
+            })
+        end)
+        parryInProgress = false
+    end)
+end
+
+-- Track all attacking entities in FightableNPCS and pCharacters
+local function monitorAttacker(model)
+    if not model or not model:IsA("Model") then return end
+    if model == LocalPlayer.Character then return end
+
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    local root = model:FindFirstChild("HumanoidRootPart")
+    if not hum or not root then return end
+
+    local function checkTrack(track)
+        if not Hub.Alive or not Hub.Flags.AutoParry then return end
+        local char = LocalPlayer.Character
+        local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+        local myHum = char and char:FindFirstChildOfClass("Humanoid")
+        if not myHrp or not myHum or myHum.Health <= 0 then return end
+
+        local dist = (root.Position - myHrp.Position).Magnitude
+        local maxRange = Hub.Flags.AutoParryRange or 22
+        if dist > maxRange then return end
+
+        local animName = track.Name:lower()
+        local animObj = track.Animation
+        local animId = animObj and animObj.AnimationId or ""
+
+        -- Exclude idle, walking, running, emote, down, hit-react animations
+        if animName:find("idle") or animName:find("walk") or animName:find("run")
+           or animName:find("strafe") or animName:find("emote") or animName:find("down")
+           or animName:find("swim") or animName:find("sit") or animName:find("fall") then
+            return
+        end
+
+        -- Check if it's an attack, swing, punch, kick, or non-movement action
+        local isAttack = false
+        if animName:find("swing") or animName:find("attack") or animName:find("slash")
+           or animName:find("punch") or animName:find("kick") or animName:find("heavy")
+           or animName:find("crit") or animName:find("strike") or animName:find("lunge")
+           or animName:find("cleave") or animName:find("barrage") or animName:find("slam")
+           or animName:find("bite") or animName:find("claw") or animName:find("rush") then
+            isAttack = true
+        elseif animId ~= "" and animId ~= "rbxassetid://18910040255" and animId ~= "rbxassetid://9839955546"
+               and animId ~= "rbxassetid://9839859772" and animId ~= "rbxassetid://9839879425"
+               and animId ~= "rbxassetid://105273448305185" and animId ~= "rbxassetid://124023674688709"
+               and animId ~= "rbxassetid://103048719190843" and animId ~= "rbxassetid://126657595467301" then
+            isAttack = true
+        end
+
+        if isAttack then
+            triggerPerfectParry()
+        end
+    end
+
+    -- Hook AnimationPlayed
+    local conn = hum.AnimationPlayed:Connect(checkTrack)
+    table.insert(Hub.Connections, conn)
+
+    -- Also check currently playing tracks
+    for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
+        checkTrack(tr)
+    end
+end
+
+-- Initialize Parry Watchers
+local function initParryWatchers()
+    local fightable = WS:FindFirstChild("FightableNPCS")
+    if fightable then
+        for _, m in ipairs(fightable:GetChildren()) do
+            monitorAttacker(m)
+        end
+        local c1 = fightable.ChildAdded:Connect(function(m)
+            task.wait(0.1)
+            monitorAttacker(m)
+        end)
+        table.insert(Hub.Connections, c1)
+    end
+
+    local pChars = WS:FindFirstChild("pCharacters")
+    if pChars then
+        for _, p in ipairs(pChars:GetChildren()) do
+            monitorAttacker(p)
+        end
+        local c2 = pChars.ChildAdded:Connect(function(p)
+            task.wait(0.1)
+            monitorAttacker(p)
+        end)
+        table.insert(Hub.Connections, c2)
+    end
+end
+initParryWatchers()
+
+-- Sound & FX Parry Trigger (Catches un-animated and instant special attacks)
+local soundConn = game:GetService("SoundService").DescendantAdded:Connect(function(snd)
+    if not Hub.Alive or not Hub.Flags.AutoParry then return end
+    if not snd:IsA("Sound") then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local sName = snd.Name:lower()
+    if sName:find("swing") or sName:find("slash") or sName:find("punch") or sName:find("whoosh") then
+        local p = snd.Parent
+        if p and p:IsA("BasePart") then
+            if (p.Position - hrp.Position).Magnitude <= (Hub.Flags.AutoParryRange or 22) then
+                triggerPerfectParry()
+            end
+        end
+    end
+end)
+table.insert(Hub.Connections, soundConn)
+
 -- TAB 4: COMBAT & AIMBOT
 -- ---------------------------------------------------------------------
 local CombatTab = Window:AddTab("Combat")
@@ -8556,6 +8708,21 @@ CombatGroup:AddToggle("AutoM1", {
     Text = "Auto M1 Attacks",
     Default = false,
     Callback = function(v) Hub.Flags.AutoM1 = v end,
+})
+CombatGroup:AddToggle("AutoParry", {
+    Text = "Auto Parry (Perfect Block)",
+    Default = true,
+    Callback = function(v) Hub.Flags.AutoParry = v end,
+})
+CombatGroup:AddSlider("AutoParryRange", {
+    Text = "Parry Detection Range",
+    Min = 10, Max = 45, Default = 22,
+    Callback = function(v) Hub.Flags.AutoParryRange = v end,
+})
+CombatGroup:AddSlider("AutoParryHold", {
+    Text = "Parry Hold Duration",
+    Min = 0.08, Max = 0.35, Default = 0.18, Float = 0.01,
+    Callback = function(v) Hub.Flags.AutoParryHold = v end,
 })
 CombatGroup:AddToggle("AutoHeavy", {
     Text = "Auto Heavy Attacks",

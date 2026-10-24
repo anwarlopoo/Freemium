@@ -7918,7 +7918,6 @@ local function performDodge(enemyHrp)
         end)
     end)
 end
-end
 
 local function evaluateTrack(model, track, root, dist)
     if not Hub.Alive or not Hub.Flags.AutoParry then return end

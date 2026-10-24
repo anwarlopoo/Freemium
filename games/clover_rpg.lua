@@ -6887,7 +6887,7 @@ local Hub = {
         -- Navigation, Noclip & Travel (Fast Ground Glide - Zero Rollback)
         Noclip = true,
         TravelMethod = "Ground Glide", -- "Ground Glide", "Instant TP", "Segmented Fast TP"
-        TravelGlideSpeed = 150,
+        TravelGlideSpeed = 80,
         TravelTPStep = 85,
         -- Mob Farm
         AutoFarm = false,
@@ -7193,6 +7193,29 @@ local isTravelling = false
 local groundRayParams = RaycastParams.new()
 
 -- Continuous Stepped Noclip: ensures no collision exists right before physics simulation
+-- Permanent Fall Damage Immunity Hook
+pcall(function()
+    local char = LocalPlayer.Character
+    if char then char:SetAttribute("DisableFallDamage", true) end
+    LocalPlayer.CharacterAdded:Connect(function(c)
+        task.wait(0.2)
+        c:SetAttribute("DisableFallDamage", true)
+    end)
+    local gmt = getrawmetatable(game)
+    if gmt and setreadonly then
+        setreadonly(gmt, false)
+        local oldNamecall = gmt.__namecall
+        gmt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if (method == "FireServer" or method == "fireServer") and tostring(self) == "Event" and self.Parent and tostring(self.Parent) == "FallDamage" then
+                return nil
+            end
+            return oldNamecall(self, ...)
+        end)
+        setreadonly(gmt, true)
+    end
+end)
+
 local noclipConn = RunService.Stepped:Connect(function()
     if not Hub.Alive then return end
     if Hub.Flags.Noclip or Hub.Flags.AutoFarm or Hub.Flags.AutoQuest or Hub.Flags.BossFarm or Hub.Flags.Fly or isTravelling then
@@ -7222,7 +7245,8 @@ local function safeMoveTo(targetPos, speed)
     end
 
     isTravelling = true
-    speed = math.clamp(speed or Hub.Flags.TravelGlideSpeed or Hub.Flags.TravelTweenSpeed or 150, 60, 240)
+    speed = math.clamp(speed or Hub.Flags.TravelGlideSpeed or 80, 40, 100)
+    pcall(function() char:SetAttribute("DisableFallDamage", true) end)
 
     groundRayParams.FilterDescendantsInstances = { char }
     groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -7551,7 +7575,7 @@ local function runQuestFarmStep()
                 local dest = activeQuest.TrackPosition + Vector3.new(0, 2, 0)
                 local curDist = (hrp.Position - dest).Magnitude
                 if curDist > 10 then
-                    safeMoveTo(dest, Hub.Flags.TravelGlideSpeed or 150)
+                    safeMoveTo(dest, Hub.Flags.TravelGlideSpeed or 80)
                     task.wait(0.2)
                 end
 
@@ -7615,7 +7639,7 @@ local function runQuestFarmStep()
                 Hub.QuestState.Phase = "Return -> " .. activeQuest.ReturnNPC
                 local npcPos, npc = getNPCLocation(activeQuest.ReturnNPC)
                 if (hrp.Position - npcPos).Magnitude > 10 then
-                    safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 150)
+                    safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 80)
                     task.wait(0.2)
                 end
                 interactWithNPC(npc)
@@ -7641,7 +7665,7 @@ local function runQuestFarmStep()
         Hub.QuestState.Phase = "Travel -> " .. targetQuest.NpcName
         local npcPos, npc = getNPCLocation(targetQuest.NpcName, targetQuest.NpcFallbackPos)
         if (hrp.Position - npcPos).Magnitude > 10 then
-            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 150)
+            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 80)
             task.wait(0.2)
         end
         interactWithNPC(npc)
@@ -7682,7 +7706,7 @@ local function runQuestFarmStep()
         -- 3. Rendre la quete
         Hub.QuestState.Phase = "Return -> " .. targetQuest.NpcName
         if (hrp.Position - npcPos).Magnitude > 10 then
-            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 150)
+            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 80)
             task.wait(0.2)
         end
         interactWithNPC(npc)
@@ -8112,6 +8136,11 @@ end)
 
 local FarmPosGroup = FarmTab:AddGroup("Farm Position & Weapon")
 
+FarmPosGroup:AddSlider("TravelGlideSpeed", {
+    Text = "Ground Glide Speed",
+    Min = 45, Max = 110, Default = 80,
+    Callback = function(v) Hub.Flags.TravelGlideSpeed = v end,
+})
 FarmPosGroup:AddDropdown("TravelMethod", {
     Text = "Farm Travel Method",
     Values = { "Ground Glide", "Instant TP", "Segmented Fast TP" },

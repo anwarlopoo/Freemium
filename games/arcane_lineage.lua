@@ -15237,8 +15237,8 @@ local function SuppressQTEGui(combatGui)
 
     local function hideFrame(frame)
         local isDefensive = (frame:FindFirstChild("Stop") and frame:FindFirstChild("Inset")) or frame.Name:find("Dodge") or frame.Name:find("Yarthul")
-        if isDefensive and not (Config.AutoDodge or Config.LegitDodge) then return end
-        if not isDefensive and not Config.AutoQTE then return end
+        if isDefensive then return end
+        if not Config.AutoQTE then return end
         pcall(function()
             frame.Visible = false
             frame.Position = UDim2.new(50, 0, 50, 0)
@@ -15277,22 +15277,151 @@ end
 -- Wrapper constructor for any QTE function or module
 local function WrapQTEFunction(canonical, origFn)
     if type(origFn) ~= "function" then return origFn end
-    local isDodge = canonical:find("Dodge") ~= nil or canonical:find("Yarthul") ~= nil
-    return function(data)
-        pcall(function()
-            local pg = LocalPlayer:FindFirstChild("PlayerGui")
-            local pgc = pg and pg:FindFirstChild("Combat")
-            if pgc then SuppressQTEGui(pgc) end
-        end)
+    local isDodge = canonical:find("Dodge") ~= nil
+    local isYarthul = canonical:find("Yarthul") ~= nil
 
+    return function(data)
         if isDodge then
             if Config.AutoDodge or Config.LegitDodge then
-                if Config.LegitDodge and canonical:find("Dodge") then
-                    task.wait(0.15)
+                local sweep = 0.7
+                local pos = 0.5
+                pcall(function()
+                    local rep = game:GetService("ReplicatedStorage")
+                    local qteRules = rep:FindFirstChild("Libraries") and rep.Libraries:FindFirstChild("QTERules")
+                    local Dodge = qteRules and qteRules:FindFirstChild("Dodge") and require(qteRules.Dodge)
+                    local layout = (data and data.Layout) or (Dodge and type(data) == "table" and Dodge.Layout(data.Seed, data))
+                    if layout then
+                        sweep = layout.Sweep or sweep
+                        pos = layout.Position or pos
+                    end
+                end)
+                local idealStop = sweep * ((math.clamp(pos, 0.05, 0.95) - 0.01) / 0.95)
+
+                -- Restore dodge GUI to screen center so player sees the action & buttons work
+                pcall(function()
+                    local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                    local pgc = pg and pg:FindFirstChild("Combat")
+                    if pgc then
+                        for _, child in ipairs(pgc:GetChildren()) do
+                            if child:FindFirstChild("Stop") and child:FindFirstChild("Inset") then
+                                child.Position = UDim2.new(0.5, 0, 0.5, 0)
+                                child.AnchorPoint = Vector2.new(0.5, 0.5)
+                            end
+                        end
+                    end
+                end)
+
+                -- 1. Automatic Space / Button Click exactly at idealStop
+                local pressed = false
+                task.spawn(function()
+                    task.wait(0.34 + idealStop)
+                    if pressed then return end
+                    pressed = true
+
+                    pcall(function()
+                        local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                        local pgc = pg and pg:FindFirstChild("Combat")
+                        if pgc then
+                            for _, child in ipairs(pgc:GetChildren()) do
+                                if child:FindFirstChild("Stop") and child:FindFirstChild("Inset") then
+                                    for _, c in ipairs(getconnections(child.Stop.MouseButton1Click)) do
+                                        c:Fire()
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                    pcall(function()
+                        local vim = game:GetService("VirtualInputManager")
+                        vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                        task.wait(0.05)
+                        vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                    end)
+                end)
+
+                -- 2. Run authentic game function with safe timeout
+                local result = nil
+                local finished = false
+                task.spawn(function()
+                    local ok, res = pcall(origFn, data)
+                    if ok then result = res end
+                    finished = true
+                end)
+
+                local tStart = os.clock()
+                local maxWait = 0.35 + sweep + 0.8
+                while not finished and (os.clock() - tStart) < maxWait do
+                    task.wait(0.05)
                 end
-                return NW_BuildWinningResult(canonical, data)
+
+                pressed = true
+
+                if result ~= nil then
+                    return result
+                end
+
+                -- Fallback if origFn timed out
+                local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
+                if nonce then
+                    return {
+                        Nonce = nonce,
+                        Inputs = {
+                            Stop = idealStop
+                        }
+                    }
+                end
+                return { true, true }
             end
+            return origFn(data)
+        elseif isYarthul then
+            if Config.AutoDodge or Config.AutoQTE then
+                pcall(function()
+                    local vim = game:GetService("VirtualInputManager")
+                    task.spawn(function()
+                        vim:SendKeyEvent(true, Enum.KeyCode.A, false, game)
+                        task.wait(0.8)
+                        vim:SendKeyEvent(false, Enum.KeyCode.A, false, game)
+                    end)
+                end)
+
+                local result = nil
+                local finished = false
+                task.spawn(function()
+                    local ok, res = pcall(origFn, data)
+                    if ok then result = res end
+                    finished = true
+                end)
+
+                local tStart = os.clock()
+                while not finished and (os.clock() - tStart) < 22 do
+                    task.wait(0.2)
+                end
+
+                if result ~= nil then
+                    return result
+                end
+
+                local nonce = type(data) == "table" and (data.Nonce or data.nonce or data.Key or data.key)
+                if nonce then
+                    return {
+                        Nonce = nonce,
+                        Inputs = {
+                            Events = {
+                                { Step = 1, Code = "L" },
+                                { Step = 50, Code = "l" }
+                            }
+                        }
+                    }
+                end
+                return { true, 0 }
+            end
+            return origFn(data)
         elseif Config.AutoQTE or (canonical:find("Thorian") and Config.AutoThorianQTE) then
+            pcall(function()
+                local pg = LocalPlayer:FindFirstChild("PlayerGui")
+                local pgc = pg and pg:FindFirstChild("Combat")
+                if pgc then SuppressQTEGui(pgc) end
+            end)
             task.wait(QTEDelay(canonical, data))
             return NW_BuildWinningResult(canonical, data)
         end

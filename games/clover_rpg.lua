@@ -6877,7 +6877,7 @@ local Hub = {
     Flags = {
         -- Home & Stats
         -- Navigation, Noclip & Travel (Fast Ground Glide - Zero Rollback)
-        Noclip = true,
+        Noclip = false,
         TravelMethod = "Ground Glide", -- "Ground Glide", "Instant TP", "Segmented Fast TP"
         TravelGlideSpeed = 80,
         TravelTPStep = 85,
@@ -7067,7 +7067,7 @@ local cloverPathfinder = PathfindingService:CreatePath({
 -- Continuous Stepped Noclip: Only when Fly or Noclip explicitly enabled (never during normal pathing)
 local noclipConn = RunService.Stepped:Connect(function()
     if not Hub.Alive then return end
-    if Hub.Flags.Noclip or Hub.Flags.Fly then
+    if Hub.Flags.Noclip then
         local char = LocalPlayer.Character
         if char then
             for _, p in ipairs(char:GetDescendants()) do
@@ -7376,9 +7376,7 @@ local moveConn = RunService.RenderStepped:Connect(function(dt)
         if moveDir.Magnitude > 0 then
             moveDir = moveDir.Unit
             local speed = Hub.Flags.FlySpeed or 65
-            for _, p in ipairs(char:GetChildren()) do
-                if p:IsA("BasePart") then p.CanCollide = false end
-            end
+            -- Solid character collision preserved (no wall clipping)
             hrp.CFrame = hrp.CFrame + (moveDir * (speed * math.clamp(dt, 0.005, 0.05)))
         end
     else

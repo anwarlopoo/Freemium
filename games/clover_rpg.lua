@@ -6884,6 +6884,10 @@ local Hub = {
         QuestSafeFly = true,
         QuestAttackType = "M1",
         QuestAttackDelay = 0.32,
+        -- Navigation, Noclip & Travel (Anticheat Safe)
+        Noclip = true,
+        TravelMethod = "Segmented Fast TP", -- "Segmented Fast TP", "Instant TP", "Smooth Fly"
+        TravelTPStep = 85,
         -- Mob Farm
         AutoFarm = false,
         SelectedMob = "All",
@@ -7183,10 +7187,28 @@ for _, q in ipairs(CloverQuests) do
     table.insert(QuestDropdownNames, q.Name)
 end
 
--- 100% UNKICKABLE GHOST GLIDE / SAFE TRAVEL (Bypasses ZeroSecure & Error 267)
+-- 100% UNKICKABLE GHOST GLIDE & FAST TP TRAVEL (Bypasses ZeroSecure & Error 267)
+local isTravelling = false
+
+-- Continuous Stepped Noclip: ensures no collision exists right before physics simulation
+local noclipConn = RunService.Stepped:Connect(function()
+    if not Hub.Alive then return end
+    if Hub.Flags.Noclip or Hub.Flags.AutoFarm or Hub.Flags.AutoQuest or Hub.Flags.BossFarm or Hub.Flags.Fly or isTravelling then
+        local char = LocalPlayer.Character
+        if char then
+            for _, p in ipairs(char:GetDescendants()) do
+                if p:IsA("BasePart") and p.CanCollide then
+                    p.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+table.insert(Hub.Connections, noclipConn)
+
 local lastBroomInvoke = 0
 local function ensureBroomMountState()
-    if os.clock() - lastBroomInvoke >= 4.0 then
+    if os.clock() - lastBroomInvoke >= 3.0 then
         lastBroomInvoke = os.clock()
         pcall(function()
             local broom = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("BroomRemote")
@@ -7201,9 +7223,7 @@ local function safeMoveTo(targetPos, speed)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum then return end
 
-    speed = math.clamp(speed or Hub.Flags.TravelTweenSpeed or 85, 45, 120)
-
-    -- Activer le statut de vol serveur officiel (Broom)
+    isTravelling = true
     ensureBroomMountState()
 
     -- Spoofing Humanoid State pour immuniser contre le timer de kick "Freefall / Fly"
@@ -7212,53 +7232,63 @@ local function safeMoveTo(targetPos, speed)
     pcall(function() hum:ChangeState(Enum.HumanoidStateType.Swimming) end)
 
     local totalDist = (hrp.Position - targetPos).Magnitude
+    local method = Hub.Flags.TravelMethod or "Segmented Fast TP"
 
-    -- SKY CORRIDOR NAVIGATION :
-    -- Pour eviter les collisions contre les murs/toits qui declenchent le TP back du serveur,
-    -- le vol monte dans le ciel degage, traverse sans obstacle a grande vitesse, puis descend directement sur la cible.
-    local waypoints = {}
-    if totalDist > 35 then
-        local skyAltitude = math.max(hrp.Position.Y, targetPos.Y) + 32
-        -- Verifier que l'altitude est suffisamment haute pour survoler les batiments
-        if skyAltitude < 155 then skyAltitude = 155 end
+    if method == "Instant TP" or totalDist <= 20 then
+        -- Direct instantaneous CFrame teleportation
+        hrp.Velocity = Vector3.zero
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.AssemblyAngularVelocity = Vector3.zero
+        hrp.CFrame = CFrame.new(targetPos)
+        task.wait(0.04)
+    elseif method == "Segmented Fast TP" then
+        -- Segmented Fast TP (phases through walls, roofs, mountains without getting stuck)
+        local hopDist = math.clamp(Hub.Flags.TravelTPStep or 85, 30, 150)
+        local startTime = os.clock()
 
-        local p1 = Vector3.new(hrp.Position.X, skyAltitude, hrp.Position.Z)
-        local p2 = Vector3.new(targetPos.X, skyAltitude, targetPos.Z)
-
-        table.insert(waypoints, p1)
-        table.insert(waypoints, p2)
-    end
-    table.insert(waypoints, targetPos)
-
-    local step = 0.03
-    local stepDist = speed * step
-
-    for _, wp in ipairs(waypoints) do
-        local wpStart = os.clock()
-        while Hub.Alive and char and hrp and (hrp.Position - wp).Magnitude > 5 and (os.clock() - wpStart < 25) do
-            -- Noclip constant pour fluidifier les micro-collisions
-            for _, p in ipairs(char:GetChildren()) do
-                if p:IsA("BasePart") then p.CanCollide = false end
-            end
-
+        while Hub.Alive and char and hrp and (hrp.Position - targetPos).Magnitude > 5 and (os.clock() - startTime < 8) do
             local cur = hrp.Position
-            local diff = wp - cur
-            local moveStep = math.min(stepDist, diff.Magnitude)
-            local nextPos = cur + (diff.Unit * moveStep)
+            local diff = targetPos - cur
+            local moveDist = math.min(hopDist, diff.Magnitude)
+            local nextPos = cur + (diff.Unit * moveDist)
 
-            hrp.CFrame = CFrame.new(nextPos, wp)
-            
-            -- Annulation totale de la velocite physique pour que le serveur lise 0
             hrp.Velocity = Vector3.zero
             hrp.AssemblyLinearVelocity = Vector3.zero
             hrp.AssemblyAngularVelocity = Vector3.zero
+            hrp.CFrame = CFrame.new(nextPos, targetPos)
+
+            task.wait(0.02)
+        end
+
+        if hrp and (hrp.Position - targetPos).Magnitude <= 12 then
+            hrp.CFrame = CFrame.new(targetPos)
+        end
+    else
+        -- Smooth direct Fly (with continuous Stepped Noclip to never stick on terrain/buildings)
+        speed = math.clamp(speed or Hub.Flags.TravelTweenSpeed or 85, 45, 120)
+        local step = 0.03
+        local stepDist = speed * step
+        local startTime = os.clock()
+
+        while Hub.Alive and char and hrp and (hrp.Position - targetPos).Magnitude > 5 and (os.clock() - startTime < 15) do
+            local cur = hrp.Position
+            local diff = targetPos - cur
+            local moveStep = math.min(stepDist, diff.Magnitude)
+            local nextPos = cur + (diff.Unit * moveStep)
+
+            hrp.Velocity = Vector3.zero
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            hrp.AssemblyAngularVelocity = Vector3.zero
+            hrp.CFrame = CFrame.new(nextPos, targetPos)
 
             task.wait(step)
         end
     end
 
-    hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
-    hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+    hrp.Velocity = Vector3.zero
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.AssemblyAngularVelocity = Vector3.zero
+    isTravelling = false
 end
 
 -- Safe Weapon Detection & Equip
@@ -7635,6 +7665,119 @@ task.spawn(function()
     end
 end)
 
+-- =====================================================================
+-- AUTO FARM MOBS & BOSSES (With Stepped Noclip & Fast Positioning)
+-- =====================================================================
+local function findTargetMob()
+    local fightable = WS:FindFirstChild("FightableNPCS")
+    if not fightable then return nil end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local selected = Hub.Flags.AutoFarm and Hub.Flags.SelectedMob or (Hub.Flags.BossFarm and Hub.Flags.SelectedBoss or nil)
+    if not selected then return nil end
+
+    local best = nil
+    local minDist = math.huge
+
+    for _, mob in ipairs(fightable:GetChildren()) do
+        local hum = mob:FindFirstChildOfClass("Humanoid")
+        local mHrp = mob:FindFirstChild("HumanoidRootPart")
+        if hum and hum.Health > 0 and mHrp then
+            local isMatch = (selected == "All") or (mob.Name == selected) or (Hub.Flags.BossFarm and mob.Name == Hub.Flags.SelectedBoss)
+            if Hub.Flags.HostileOnly and mob.Name:find("Guard") and selected == "All" then
+                isMatch = false
+            end
+            if isMatch then
+                local d = (mHrp.Position - hrp.Position).Magnitude
+                if d < minDist then
+                    minDist = d
+                    best = mob
+                end
+            end
+        end
+    end
+    return best
+end
+
+local lastFarmAttack = 0
+local farmRetreating = false
+
+task.spawn(function()
+    while Hub.Alive do
+        if Hub.Flags.AutoFarm or Hub.Flags.BossFarm then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+            if hrp and hum and hum.Health > 0 then
+                -- Low HP Back Off Check
+                if Hub.Flags.LowHpBackOff then
+                    local hpPct = (hum.Health / hum.MaxHealth) * 100
+                    if hpPct <= (Hub.Flags.RetreatHP or 25) then
+                        farmRetreating = true
+                    elseif hpPct >= (Hub.Flags.ResumeHP or 75) then
+                        farmRetreating = false
+                    end
+
+                    if farmRetreating then
+                        ensureBroomMountState()
+                        if Hub.Flags.RetreatSpot then
+                            safeMoveTo(Hub.Flags.RetreatSpot)
+                        else
+                            hrp.CFrame = hrp.CFrame + Vector3.new(0, 35, 0)
+                        end
+                        task.wait(0.5)
+                        continue
+                    end
+                end
+
+                local mob = findTargetMob()
+                if mob and mob:FindFirstChild("HumanoidRootPart") then
+                    local mHrp = mob.HumanoidRootPart
+                    local mHum = mob:FindFirstChildOfClass("Humanoid")
+
+                    if mHum and mHum.Health > 0 then
+                        local offset = Vector3.new(Hub.Flags.FarmOffsetX or 0, Hub.Flags.FarmOffsetY or 3, Hub.Flags.FarmOffsetZ or 0)
+                        local targetHover = mHrp.Position + offset
+                        local dist = (hrp.Position - targetHover).Magnitude
+
+                        -- Travel to mob if distant
+                        if dist > (Hub.Flags.FarmDistance or 9) + 4 then
+                            safeMoveTo(targetHover, Hub.Flags.TravelTweenSpeed or 85)
+                        end
+
+                        if hrp and mHrp and mHum.Health > 0 then
+                            hrp.CFrame = CFrame.new(mHrp.Position + offset, mHrp.Position)
+                            hrp.Velocity = Vector3.zero
+                            hrp.AssemblyLinearVelocity = Vector3.zero
+
+                            if Hub.Flags.AutoEquip then
+                                equipWeapon(Hub.Flags.FarmWeapon)
+                            end
+
+                            if os.clock() - lastFarmAttack >= (Hub.Flags.SwingDelay or 0.35) then
+                                lastFarmAttack = os.clock()
+                                local atk = Hub.Flags.FarmAttackType == "Heavy" and "HeavyAttack" or "LightAttack"
+                                pcall(function()
+                                    Packets.Combat.packets.AttackInput.send({ Action = atk, SprintAttack = false })
+                                end)
+                                if mHum and mHum.Health <= 0 then
+                                    Hub.RunStats.Kills = Hub.RunStats.Kills + 1
+                                end
+                            end
+                        end
+                    end
+                else
+                    task.wait(0.5)
+                end
+            end
+        end
+        task.wait(0.04)
+    end
+end)
+
 -- UNKICKABLE GHOST FLY (Zero-Velocity CFrame + Broom State Bypass)
 local moveConn = RunService.RenderStepped:Connect(function(dt)
     if not Hub.Alive then return end
@@ -7924,6 +8067,24 @@ task.spawn(function()
 end)
 
 local FarmPosGroup = FarmTab:AddGroup("Farm Position & Weapon")
+
+FarmPosGroup:AddDropdown("TravelMethod", {
+    Text = "Farm Travel Method",
+    Values = { "Segmented Fast TP", "Instant TP", "Smooth Fly" },
+    Default = "Segmented Fast TP",
+    Callback = function(v) Hub.Flags.TravelMethod = v end,
+})
+FarmPosGroup:AddSlider("TravelTPStep", {
+    Text = "TP Step Distance",
+    Min = 30, Max = 150, Default = 85,
+    Callback = function(v) Hub.Flags.TravelTPStep = v end,
+})
+FarmPosGroup:AddToggle("Noclip", {
+    Text = "Always Noclip (Anti-Stuck)",
+    Default = true,
+    Callback = function(v) Hub.Flags.Noclip = v end,
+})
+
 local SafetyGroup = FarmTab:AddGroup("Low Health Back Off")
 local BossFarmGroup = FarmTab:AddGroup("Boss & Player Farm")
 

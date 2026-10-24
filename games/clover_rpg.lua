@@ -6859,6 +6859,7 @@ local Remotes = RS:FindFirstChild("Remotes")
 
 -- Configuration & State
 local Hub = {
+
     Alive = true,
     StartTime = os.clock(),
     RunStats = {
@@ -6899,7 +6900,7 @@ local Hub = {
         CombatAutoEquip = true,
         CombatWeapon = "Auto / Best",
         -- ESP & Visuals
-        PlayerESP = false,
+        PlayerESP = true,
         PlayerESPColor = Color3.fromRGB(0, 255, 140),
         ShowLocalPlayer = false,
         ShowMagic = true,
@@ -7883,7 +7884,7 @@ local CamVisGroup = VisTab:AddGroup("Camera & Rendering")
 
 EspGroup:AddToggle("PlayerESP", {
     Text = "Player ESP",
-    Default = false,
+    Default = true,
     Callback = function(v) Hub.Flags.PlayerESP = v end,
 })
 EspGroup:AddToggle("ShowLocalPlayer", {

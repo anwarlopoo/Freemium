@@ -6884,9 +6884,10 @@ local Hub = {
         QuestSafeFly = true,
         QuestAttackType = "M1",
         QuestAttackDelay = 0.32,
-        -- Navigation, Noclip & Travel (Anticheat Safe)
+        -- Navigation, Noclip & Travel (Fast Ground Glide - Zero Rollback)
         Noclip = true,
-        TravelMethod = "Segmented Fast TP", -- "Segmented Fast TP", "Instant TP", "Smooth Fly"
+        TravelMethod = "Ground Glide", -- "Ground Glide", "Instant TP", "Segmented Fast TP"
+        TravelGlideSpeed = 150,
         TravelTPStep = 85,
         -- Mob Farm
         AutoFarm = false,
@@ -7187,8 +7188,9 @@ for _, q in ipairs(CloverQuests) do
     table.insert(QuestDropdownNames, q.Name)
 end
 
--- 100% UNKICKABLE GHOST GLIDE & FAST TP TRAVEL (Bypasses ZeroSecure & Error 267)
+-- 100% AUTHENTIC FAST GROUND GLIDE (Zero Rollback, Zero Pause, Hugs Terrain)
 local isTravelling = false
+local groundRayParams = RaycastParams.new()
 
 -- Continuous Stepped Noclip: ensures no collision exists right before physics simulation
 local noclipConn = RunService.Stepped:Connect(function()
@@ -7206,83 +7208,69 @@ local noclipConn = RunService.Stepped:Connect(function()
 end)
 table.insert(Hub.Connections, noclipConn)
 
-local lastBroomInvoke = 0
-local function ensureBroomMountState()
-    if os.clock() - lastBroomInvoke >= 3.0 then
-        lastBroomInvoke = os.clock()
-        pcall(function()
-            local broom = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("BroomRemote")
-            if broom then broom:InvokeServer("Active") end
-        end)
-    end
-end
-
 local function safeMoveTo(targetPos, speed)
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum then return end
+    if not hrp or not hum or hum.Health <= 0 then return end
+
+    -- Check if already at destination (prevent looping when standing on spot)
+    local horizDist = Vector2.new(hrp.Position.X - targetPos.X, hrp.Position.Z - targetPos.Z).Magnitude
+    local vertDist = math.abs(hrp.Position.Y - targetPos.Y)
+    if horizDist <= 5.0 and vertDist <= 7.0 then
+        return
+    end
 
     isTravelling = true
-    ensureBroomMountState()
+    speed = math.clamp(speed or Hub.Flags.TravelGlideSpeed or Hub.Flags.TravelTweenSpeed or 150, 60, 240)
 
-    -- Spoofing Humanoid State pour immuniser contre le timer de kick "Freefall / Fly"
-    hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
-    hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-    pcall(function() hum:ChangeState(Enum.HumanoidStateType.Swimming) end)
+    groundRayParams.FilterDescendantsInstances = { char }
+    groundRayParams.FilterType = Enum.RaycastFilterType.Exclude
 
-    local totalDist = (hrp.Position - targetPos).Magnitude
-    local method = Hub.Flags.TravelMethod or "Segmented Fast TP"
+    local method = Hub.Flags.TravelMethod or "Ground Glide"
 
-    if method == "Instant TP" or totalDist <= 20 then
-        -- Direct instantaneous CFrame teleportation
+    if method == "Instant TP" then
         hrp.Velocity = Vector3.zero
         hrp.AssemblyLinearVelocity = Vector3.zero
         hrp.AssemblyAngularVelocity = Vector3.zero
         hrp.CFrame = CFrame.new(targetPos)
         task.wait(0.04)
-    elseif method == "Segmented Fast TP" then
-        -- Segmented Fast TP (phases through walls, roofs, mountains without getting stuck)
-        local hopDist = math.clamp(Hub.Flags.TravelTPStep or 85, 30, 150)
-        local startTime = os.clock()
+        isTravelling = false
+        return
+    end
 
-        while Hub.Alive and char and hrp and (hrp.Position - targetPos).Magnitude > 5 and (os.clock() - startTime < 8) do
-            local cur = hrp.Position
-            local diff = targetPos - cur
-            local moveDist = math.min(hopDist, diff.Magnitude)
-            local nextPos = cur + (diff.Unit * moveDist)
+    -- Fast Ground Glide (smoothly hugs terrain, walks through fences/walls with Noclip, zero rollback)
+    local startTime = os.clock()
+    local maxDuration = math.clamp((horizDist / (speed * 0.75)) + 2.5, 3.0, 20.0)
 
-            hrp.Velocity = Vector3.zero
-            hrp.AssemblyLinearVelocity = Vector3.zero
-            hrp.AssemblyAngularVelocity = Vector3.zero
-            hrp.CFrame = CFrame.new(nextPos, targetPos)
+    while Hub.Alive and char and hrp and hum and hum.Health > 0 do
+        if os.clock() - startTime > maxDuration then break end
 
-            task.wait(0.02)
+        local cur = hrp.Position
+        local diffHoriz = Vector3.new(targetPos.X - cur.X, 0, targetPos.Z - cur.Z)
+        local hDist = diffHoriz.Magnitude
+        local vDist = math.abs(targetPos.Y - cur.Y)
+
+        if hDist <= 4.0 and vDist <= 6.0 then
+            break
         end
 
-        if hrp and (hrp.Position - targetPos).Magnitude <= 12 then
-            hrp.CFrame = CFrame.new(targetPos)
-        end
-    else
-        -- Smooth direct Fly (with continuous Stepped Noclip to never stick on terrain/buildings)
-        speed = math.clamp(speed or Hub.Flags.TravelTweenSpeed or 85, 45, 120)
-        local step = 0.03
-        local stepDist = speed * step
-        local startTime = os.clock()
+        local dt = task.wait()
+        local moveStep = math.min(speed * dt, hDist)
+        local moveDir = hDist > 0.1 and diffHoriz.Unit or Vector3.zero
+        local nextHoriz = cur + (moveDir * moveStep)
 
-        while Hub.Alive and char and hrp and (hrp.Position - targetPos).Magnitude > 5 and (os.clock() - startTime < 15) do
-            local cur = hrp.Position
-            local diff = targetPos - cur
-            local moveStep = math.min(stepDist, diff.Magnitude)
-            local nextPos = cur + (diff.Unit * moveStep)
+        -- Raycast down from 15 studs above to find ground elevation
+        local ray = WS:Raycast(nextHoriz + Vector3.new(0, 15, 0), Vector3.new(0, -40, 0), groundRayParams)
+        local targetY = ray and (ray.Position.Y + 3.0) or (cur.Y + (targetPos.Y - cur.Y) * math.clamp(moveStep / math.max(hDist, 1), 0, 1))
 
-            hrp.Velocity = Vector3.zero
-            hrp.AssemblyLinearVelocity = Vector3.zero
-            hrp.AssemblyAngularVelocity = Vector3.zero
-            hrp.CFrame = CFrame.new(nextPos, targetPos)
+        local nextPos = Vector3.new(nextHoriz.X, targetY, nextHoriz.Z)
+        local lookTarget = Vector3.new(targetPos.X, nextPos.Y, targetPos.Z)
 
-            task.wait(step)
-        end
+        hrp.CFrame = CFrame.new(nextPos, lookTarget)
+        hrp.Velocity = Vector3.zero
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.AssemblyAngularVelocity = Vector3.zero
     end
 
     hrp.Velocity = Vector3.zero
@@ -7538,11 +7526,32 @@ local function runQuestFarmStep()
             Hub.QuestState.TargetKills = activeQuest.Max
             Hub.QuestState.Kills = activeQuest.Current
 
+            -- Auto-handle StarterQuest reward modal if open
+            local sq = LocalPlayer.PlayerGui:FindFirstChild("StarterQuest")
+            if sq and sq:FindFirstChild("StarterWeapon") and sq.StarterWeapon.Visible then
+                local blade = sq.StarterWeapon.Options:FindFirstChild("Novice Blade") or sq.StarterWeapon.Options:FindFirstChildWhichIsA("GuiButton")
+                if blade then
+                    for _, c in ipairs(getconnections(blade.MouseButton1Click)) do c:Fire() end
+                    for _, c in ipairs(getconnections(blade.Activated)) do c:Fire() end
+                end
+                task.wait(0.2)
+                local confirm = sq.StarterWeapon:FindFirstChild("Confirm")
+                if confirm then
+                    for _, c in ipairs(getconnections(confirm.MouseButton1Click)) do c:Fire() end
+                    for _, c in ipairs(getconnections(confirm.Activated)) do c:Fire() end
+                end
+                pcall(function() RS.Remotes.StarterQuest:InvokeServer("Novice Blade") end)
+                task.wait(0.4)
+            end
+
             if activeQuest.TrackPosition then
                 Hub.QuestState.Phase = "Objective: " .. activeQuest.TaskName
-                local dest = activeQuest.TrackPosition + Vector3.new(0, 4, 0)
-                safeMoveTo(dest, Hub.Flags.TravelTweenSpeed or 75)
-                task.wait(0.3)
+                local dest = activeQuest.TrackPosition + Vector3.new(0, 2, 0)
+                local curDist = (hrp.Position - dest).Magnitude
+                if curDist > 10 then
+                    safeMoveTo(dest, Hub.Flags.TravelGlideSpeed or 150)
+                    task.wait(0.2)
+                end
 
                 -- Verification d'interaction ou de prompt sur place
                 for _, obj in ipairs(WS:GetDescendants()) do
@@ -7576,8 +7585,10 @@ local function runQuestFarmStep()
             elseif activeQuest.ReturnNPC then
                 Hub.QuestState.Phase = "Return -> " .. activeQuest.ReturnNPC
                 local npcPos, npc = getNPCLocation(activeQuest.ReturnNPC)
-                safeMoveTo(npcPos + Vector3.new(0, 3, 0), 75)
-                task.wait(0.3)
+                if (hrp.Position - npcPos).Magnitude > 10 then
+                    safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 150)
+                    task.wait(0.2)
+                end
                 interactWithNPC(npc)
                 task.wait(0.5)
             end
@@ -7600,8 +7611,10 @@ local function runQuestFarmStep()
         -- 1. Rejoindre le NPC et accepter la quete
         Hub.QuestState.Phase = "Travel -> " .. targetQuest.NpcName
         local npcPos, npc = getNPCLocation(targetQuest.NpcName, targetQuest.NpcFallbackPos)
-        safeMoveTo(npcPos + Vector3.new(0, 3, 0), Hub.Flags.TravelTweenSpeed or 75)
-        task.wait(0.3)
+        if (hrp.Position - npcPos).Magnitude > 10 then
+            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 150)
+            task.wait(0.2)
+        end
         interactWithNPC(npc)
         task.wait(0.5)
 
@@ -7639,8 +7652,10 @@ local function runQuestFarmStep()
 
         -- 3. Rendre la quete
         Hub.QuestState.Phase = "Return -> " .. targetQuest.NpcName
-        safeMoveTo(npcPos + Vector3.new(0, 3, 0), Hub.Flags.TravelTweenSpeed or 75)
-        task.wait(0.3)
+        if (hrp.Position - npcPos).Magnitude > 10 then
+            safeMoveTo(npcPos + Vector3.new(0, 2, 0), Hub.Flags.TravelGlideSpeed or 150)
+            task.wait(0.2)
+        end
         interactWithNPC(npc)
         task.wait(0.4)
 
@@ -8070,8 +8085,8 @@ local FarmPosGroup = FarmTab:AddGroup("Farm Position & Weapon")
 
 FarmPosGroup:AddDropdown("TravelMethod", {
     Text = "Farm Travel Method",
-    Values = { "Segmented Fast TP", "Instant TP", "Smooth Fly" },
-    Default = "Segmented Fast TP",
+    Values = { "Ground Glide", "Instant TP", "Segmented Fast TP" },
+    Default = "Ground Glide",
     Callback = function(v) Hub.Flags.TravelMethod = v end,
 })
 FarmPosGroup:AddSlider("TravelTPStep", {

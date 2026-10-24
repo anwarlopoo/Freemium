@@ -7665,7 +7665,7 @@ task.spawn(function()
 end)
 
 -- ---------------------------------------------------------------------
--- MASTER DUAL AUTO-PARRY & SPELL REFLEX ENGINE (ANIMATION + REMOTE VECTORS)
+-- MASTER DUAL AUTO-PARRY & SPELL REFLEX ENGINE (180 ANIMATIONS + REMOTES)
 -- ---------------------------------------------------------------------
 -- Comprehensive Attack & Spell Timings (M1 + Skills + Magic)
 local AttackConfig = {
@@ -7834,6 +7834,30 @@ local AttackConfig = {
     ["rbxassetid://11254946683"] = { Name = "Combat/ChokeGrab", Delay = 0.42, Length = 1.567, Heavy = false },
     ["rbxassetid://11469887779"] = { Name = "Combat/GrabLunge", Delay = 0.42, Length = 2.4, Heavy = false },
     ["rbxassetid://14450433743"] = { Name = "Combat/UpwardPalm", Delay = 0.289, Length = 1.033, Heavy = false },
+    ["rbxassetid://138780595177276"] = { Name = "NPCS/BlightClawAnim", Delay = 0.75, Length = 2.767, Heavy = false },
+    ["rbxassetid://76370649113417"] = { Name = "NPCS/BlightEyeAnim", Delay = 0.75, Length = 4.05, Heavy = false },
+    ["rbxassetid://114135137062549"] = { Name = "NPCS/MushRushAnim", Delay = 0.75, Length = 3.767, Heavy = false },
+    ["rbxassetid://122498520268119"] = { Name = "NPCS/RootAttackAnim", Delay = 0.75, Length = 2.067, Heavy = false },
+    ["rbxassetid://9922542154"] = { Name = "NPCS/AlkeRoar", Delay = 0.75, Length = 4.8, Heavy = false },
+    ["rbxassetid://115129415528730"] = { Name = "NPCS/DireWolf/Whip Kick", Delay = 0.85, Length = 4.133, Heavy = false },
+    ["rbxassetid://78815029207104"] = { Name = "NPCS/DireWolf/Clawed Attack", Delay = 0.72, Length = 2.233, Heavy = false },
+    ["rbxassetid://89888765605896"] = { Name = "NPCS/DireWolf/Terror Howl", Delay = 0.75, Length = 3.6, Heavy = true },
+    ["rbxassetid://114021786029196"] = { Name = "NPCS/DireWolf/Bite Twist", Delay = 0.75, Length = 2.2, Heavy = false },
+    ["rbxassetid://124572427631698"] = { Name = "NPCS/Wolf/Bite Pounce", Delay = 0.65, Length = 1.733, Heavy = false },
+    ["rbxassetid://73807165586659"] = { Name = "NPCS/Wolf/Tail Sweep", Delay = 0.6, Length = 1.667, Heavy = false },
+    ["rbxassetid://16356100194"] = { Name = "NPCS/AlkeBoss/StandIdle", Delay = 0.75, Length = 6.625, Heavy = false },
+    ["rbxassetid://16361980707"] = { Name = "NPCS/AlkeBoss/Walk", Delay = 0.367, Length = 0.917, Heavy = false },
+    ["rbxassetid://16992820686"] = { Name = "NPCS/AlkeBoss/Jump", Delay = 0.733, Length = 1.833, Heavy = false },
+    ["rbxassetid://16380529517"] = { Name = "NPCS/AlkeBoss/Slam", Delay = 0.75, Length = 3.333, Heavy = true },
+    ["rbxassetid://16386284918"] = { Name = "NPCS/AlkeBoss/Screech", Delay = 0.75, Length = 3.333, Heavy = true },
+    ["rbxassetid://16787058938"] = { Name = "NPCS/AlkeBoss/Staggered", Delay = 0.75, Length = 2.083, Heavy = true },
+    ["rbxassetid://16790816582"] = { Name = "NPCS/AlkeBoss/Bomb", Delay = 0.75, Length = 3.917, Heavy = true },
+    ["rbxassetid://16926676358"] = { Name = "NPCS/AlkeBoss/RageScreech", Delay = 0.75, Length = 3.292, Heavy = true },
+    ["rbxassetid://16933879612"] = { Name = "NPCS/AlkeBoss/Rupture", Delay = 0.75, Length = 2.917, Heavy = true },
+    ["rbxassetid://16786767788"] = { Name = "NPCS/AlkeBoss/Consecutive", Delay = 0.75, Length = 3.208, Heavy = false },
+    ["rbxassetid://16889541896"] = { Name = "NPCS/AlkeBoss/Double", Delay = 0.75, Length = 3.583, Heavy = false },
+    ["rbxassetid://17049621435"] = { Name = "NPCS/AlkeBoss/LeftStrike", Delay = 0.75, Length = 2.292, Heavy = false },
+    ["rbxassetid://17049581150"] = { Name = "NPCS/AlkeBoss/RightStrike", Delay = 0.75, Length = 2.208, Heavy = false },
 }
 
 local lastParryTime = 0
@@ -7843,13 +7867,13 @@ local lastDodgeTime = 0
 local function performParry(holdDuration)
     if parryInProgress then return end
     local now = os.clock()
-    if (now - lastParryTime) < 0.95 then return end -- Strict parry cooldown
+    if (now - lastParryTime) < 0.92 then return end -- Strict parry cooldown
     parryInProgress = true
     lastParryTime = now
 
     task.spawn(function()
         pcall(function()
-            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.18, 0.08, 0.28)
+            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.22, 0.12, 0.35)
             
             -- Send Block Input packet (ByteNetMax)
             Packets.Combat.packets.BlockInput.send({
@@ -7906,44 +7930,50 @@ local function handleIncomingAttack(model, track)
     local animId = animObj and animObj.AnimationId or ""
     local animName = track.Name:lower()
 
-    -- Exclude non-combat movement
+    -- Exclude non-combat movement (idle, walk, run, strafe)
     if animName:find("idle") or animName:find("walk") or animName:find("run")
        or animName:find("strafe") or animName:find("emote") or animName:find("down")
        or animName:find("swim") or animName:find("sit") or animName:find("fall") then
         return
     end
 
+    -- Specific exclude for known non-attack animations
+    if animId == "rbxassetid://105273448305185" or animId == "rbxassetid://124023674688709"
+       or animId == "rbxassetid://126657595467301" or animId == "rbxassetid://103048719190843"
+       or animId == "rbxassetid://18910040255" or animId == "rbxassetid://9839955546" then
+        return
+    end
+
     local cfg = AttackConfig[animId]
     local isHeavy = false
-    local delayTime = 0.18
+    local delayTime = 0.50 -- Default timing for unindexed creature swings (never instant!)
 
     if cfg then
         isHeavy = cfg.Heavy
-        delayTime = cfg.Delay or 0.18
+        delayTime = cfg.Delay or 0.50
     else
-        -- Fallback detection for spells & abilities
+        -- Fallback detection when track.Name is generic or an unindexed spell
         local lower = animName
         if lower:find("heavy") or lower:find("slam") or lower:find("smash")
            or lower:find("howl") or lower:find("headbutt") or lower:find("stomp")
            or lower:find("roar") or lower:find("rupture") or lower:find("crush")
            or lower:find("dive") or lower:find("comet") or lower:find("ultimate") then
             isHeavy = true
-            delayTime = 0.28
-        elseif lower:find("skill") or lower:find("magic") or lower:find("spell")
-               or lower:find("strike") or lower:find("flurry") or lower:find("thrust")
-               or lower:find("burst") or lower:find("blade") or lower:find("palm")
-               or lower:find("kick") or lower:find("cleave") or lower:find("slash")
-               or lower:find("swing") or lower:find("attack") or lower:find("punch") then
-            isHeavy = false
-            delayTime = 0.22
+            delayTime = 0.55
         else
-            return
+            -- If length is known, delay to ~40% of the animation before parrying
+            local len = track.Length or 1.2
+            if len > 0.5 then
+                delayTime = round(len * 0.40, 3)
+            else
+                delayTime = 0.35
+            end
         end
     end
 
     -- Deduplicate track processing per entity
     local queueKey = tostring(model:GetDebugId()) .. "_" .. tostring(animId)
-    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.45 then
+    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.5 then
         return
     end
     activeAttackQueues[queueKey] = os.clock()
@@ -7963,7 +7993,7 @@ local function handleIncomingAttack(model, track)
         if isHeavy then
             performDodge()
         else
-            performParry(0.18)
+            performParry(0.20)
         end
     end)
 end
@@ -8040,11 +8070,10 @@ local function hookSpellRemotes()
         end
 
         if dist <= (Hub.Flags.AutoParryRange or 25) + 5 then
-            -- Determine if spell is an unparriable ultimate / smash or a parriable direct projectile/slash
             if mName:find("ultimate") or mName:find("stomp") or mName:find("howl") or mName:find("collapse") or mName:find("dive") or mName:find("comet") then
                 performDodge()
             else
-                performParry(0.22)
+                performParry(0.24)
             end
         end
     end

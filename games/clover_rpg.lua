@@ -7596,20 +7596,20 @@ end)
 -- Comprehensive Attack & Spell Timings (M1 + Skills + Magic)
 local AttackConfig = {
     ["rbxassetid://8314692364"] = { Name = "Combat.HammerDown", Delay = 0.2, Length = 0.5, Heavy = false },
-    ["rbxassetid://8594363819"] = { Name = "Combat.HeavyPunch", Delay = 0.52, Length = 0.767, Heavy = true },
+    ["rbxassetid://8594363819"] = { Name = "Combat.HeavyPunch", Delay = 0.60, Length = 0.767, Heavy = true },
     ["rbxassetid://9757167816"] = { Name = "Combat.AerialKickUp", Delay = 0.315, Length = 0.899, Heavy = false },
     ["rbxassetid://9757223208"] = { Name = "Combat.AerialKickDown", Delay = 0.315, Length = 0.899, Heavy = false },
     ["rbxassetid://11254946683"] = { Name = "Combat.ChokeGrab", Delay = 0.65, Length = 1.566, Heavy = true },
     ["rbxassetid://11469887779"] = { Name = "Combat.GrabLunge", Delay = 0.65, Length = 2.4, Heavy = true },
-    ["rbxassetid://14450433743"] = { Name = "Combat.UpwardPalm", Delay = 0.362, Length = 1.033, Heavy = false },
+    ["rbxassetid://14450433743"] = { Name = "Combat.UpwardPalm", Delay = 0.433, Length = 1.033, Heavy = false },
     ["rbxassetid://12671888495"] = { Name = "Skills.BurstPistol", Delay = 0.502, Length = 1.116, Heavy = true },
     ["rbxassetid://12687752087"] = { Name = "Skills.FireStomp", Delay = 0.38, Length = 0.833, Heavy = true },
-    ["rbxassetid://12709977831"] = { Name = "Skills.ScorchingBarrage", Delay = 0.45, Length = 1.433, Heavy = false },
+    ["rbxassetid://12709977831"] = { Name = "Skills.ScorchingBarrage", Delay = 0.55, Length = 1.433, Heavy = false, Barrage = true, Interval = 0.14, Hits = 6 },
     ["rbxassetid://84889290807745"] = { Name = "Skills.GaleRupture", Delay = 0.435, Length = 0.966, Heavy = true },
     ["rbxassetid://13990394139"] = { Name = "Skills.PiercingFlurry", Delay = 0.45, Length = 1.919, Heavy = false },
     ["rbxassetid://13990348548"] = { Name = "Skills.VerticalStrike", Delay = 0.406, Length = 1.159, Heavy = false },
-    ["rbxassetid://13990295202"] = { Name = "Skills.VaultBreaker", Delay = 0.45, Length = 1.32, Heavy = false },
-    ["rbxassetid://13990268150"] = { Name = "Skills.RelentlessRush", Delay = 0.45, Length = 1.44, Heavy = false },
+    ["rbxassetid://13990295202"] = { Name = "Skills.VaultBreaker", Delay = 0.76, Length = 1.32, Heavy = false },
+    ["rbxassetid://13990268150"] = { Name = "Skills.RelentlessRush", Delay = 0.48, Length = 1.44, Heavy = false, Barrage = true, Interval = 0.30, Hits = 3 },
     ["rbxassetid://13990437059"] = { Name = "Skills.Cyclone", Delay = 0.45, Length = 1.833, Heavy = false },
     ["rbxassetid://14056852710"] = { Name = "Skills.Flourish", Delay = 0.42, Length = 1.2, Heavy = false },
     ["rbxassetid://14452988294"] = { Name = "Skills.BladeThrust", Delay = 0.392, Length = 1.12, Heavy = false },
@@ -7620,13 +7620,13 @@ local AttackConfig = {
     ["rbxassetid://16456073067"] = { Name = "Skills.VoltSurge", Delay = 0.45, Length = 1.375, Heavy = false },
     ["rbxassetid://15671883283"] = { Name = "Skills.Snap", Delay = 0.219, Length = 0.625, Heavy = false },
     ["rbxassetid://9666453960"] = { Name = "Skills.SlashesOfLight", Delay = 0.14, Length = 0.383, Heavy = false },
-    ["rbxassetid://9093819642"] = { Name = "Skills.LightningBarrage", Delay = 0.2, Length = 0.3, Heavy = false },
+    ["rbxassetid://9093819642"] = { Name = "Skills.LightningBarrage", Delay = 0.15, Length = 0.3, Heavy = false, Barrage = true, Interval = 0.10, Hits = 5 },
     ["rbxassetid://9557400534"] = { Name = "Skills.RushingTempest", Delay = 0.397, Length = 1.133, Heavy = false },
     ["rbxassetid://97806594512867"] = { Name = "Skills.Updraft", Delay = 0.438, Length = 1.25, Heavy = false },
-    ["rbxassetid://76343258849163"] = { Name = "Skills.KickUp", Delay = 0.227, Length = 0.649, Heavy = false },
-    ["rbxassetid://120859667959635"] = { Name = "Skills.PalmThrustNormal", Delay = 0.385, Length = 1.1, Heavy = false },
+    ["rbxassetid://76343258849163"] = { Name = "Skills.KickUp", Delay = 0.383, Length = 0.649, Heavy = false },
+    ["rbxassetid://120859667959635"] = { Name = "Skills.PalmThrustNormal", Delay = 0.80, Length = 1.1, Heavy = false },
     ["rbxassetid://121366593881808"] = { Name = "Skills.EnGarde", Delay = 0.45, Length = 1.666, Heavy = false },
-    ["rbxassetid://84025524847215"] = { Name = "Skills.MeteorKick", Delay = 0.443, Length = 1.266, Heavy = false },
+    ["rbxassetid://84025524847215"] = { Name = "Skills.MeteorKick", Delay = 0.483, Length = 1.266, Heavy = false },
     ["rbxassetid://131567006787701"] = { Name = "Skills.RendingSlash", Delay = 0.327, Length = 0.933, Heavy = false },
     ["rbxassetid://114221502866879"] = { Name = "Skills.Conviction", Delay = 0.427, Length = 0.949, Heavy = true },
     ["rbxassetid://12948865998"] = { Name = "Skills.DarkHaste", Delay = 0.45, Length = 1.566, Heavy = false },
@@ -7645,7 +7645,7 @@ local AttackConfig = {
     ["rbxassetid://108546548680913"] = { Name = "Skills.FlameUltimate", Delay = 0.622, Length = 1.383, Heavy = true },
     ["rbxassetid://127378047230118"] = { Name = "Skills.ShadowUltimate", Delay = 0.65, Length = 2.366, Heavy = true },
     ["rbxassetid://104174247581463"] = { Name = "Skills.VitalPulse", Delay = 0.45, Length = 2.5, Heavy = false },
-    ["rbxassetid://82645141726816"] = { Name = "Skills.ChargedStrike", Delay = 0.50, Length = 1.083, Heavy = false },
+    ["rbxassetid://82645141726816"] = { Name = "Skills.ChargedStrike", Delay = 0.583, Length = 1.083, Heavy = false },
     ["rbxassetid://97749185835376"] = { Name = "Skills.Rampage", Delay = 0.65, Length = 2.583, Heavy = true },
     ["rbxassetid://72107940559330"] = { Name = "Skills.TimeUltimate", Delay = 0.495, Length = 1.1, Heavy = true },
     ["rbxassetid://8495698342"] = { Name = "Misc.LeftDodge", Delay = 0.2, Length = 0.349, Heavy = false },
@@ -7746,9 +7746,9 @@ local AttackConfig = {
     ["rbxassetid://89849437438829"] = { Name = "Server.Sword1", Delay = 0.302, Length = 0.916, Heavy = false },
     ["rbxassetid://11893001175"] = { Name = "Server.Zombie2", Delay = 0.251, Length = 0.716, Heavy = false },
     ["rbxassetid://70936328766912"] = { Name = "Server.Dagger1", Delay = 0.24, Length = 0.733, Heavy = false },
-    ["rbxassetid://111510911006717"] = { Name = "Server.Punch2", Delay = 0.48, Length = 0.617, Heavy = false },
-    ["rbxassetid://123693468061117"] = { Name = "Server.Punch1", Delay = 0.38, Length = 0.517, Heavy = false },
-    ["rbxassetid://8594363819"] = { Name = "Combat.HeavyPunch", Delay = 0.52, Length = 0.767, Heavy = true },
+    ["rbxassetid://111510911006717"] = { Name = "Server.Punch2", Delay = 0.417, Length = 0.617, Heavy = false },
+    ["rbxassetid://123693468061117"] = { Name = "Server.Punch1", Delay = 0.35, Length = 0.517, Heavy = false },
+    ["rbxassetid://8594363819"] = { Name = "Combat.HeavyPunch", Delay = 0.60, Length = 0.767, Heavy = true },
     ["rbxassetid://9920890274"] = { Name = "Server.Strike", Delay = 0.35, Length = 1.0, Heavy = false },
     ["rbxassetid://11169772012"] = { Name = "Server.GreatswordSprint", Delay = 0.38, Length = 0.699, Heavy = true },
     ["rbxassetid://89652204450491"] = { Name = "Server.Greatsword2", Delay = 0.405, Length = 0.899, Heavy = true },
@@ -7773,7 +7773,7 @@ local AttackConfig = {
     ["rbxassetid://13822736997"] = { Name = "Server.Slam", Delay = 0.577, Length = 1.283, Heavy = true },
     ["rbxassetid://103140391021149"] = { Name = "Server.LizardBoss1", Delay = 0.35, Length = 1.0, Heavy = false },
     ["rbxassetid://96581414677240"] = { Name = "Server.ScytheSprint", Delay = 0.38, Length = 0.8, Heavy = true },
-    ["rbxassetid://85570415456598"] = { Name = "Server.Punch3", Delay = 0.38, Length = 0.483, Heavy = false },
+    ["rbxassetid://85570415456598"] = { Name = "Server.Punch3", Delay = 0.367, Length = 0.483, Heavy = false },
     ["rbxassetid://110876955202970"] = { Name = "Server.LizardBoss2", Delay = 0.362, Length = 1.033, Heavy = false },
     ["rbxassetid://71375698527524"] = { Name = "Server.LizardSoldier1", Delay = 0.315, Length = 0.899, Heavy = false },
     ["rbxassetid://10250846568"] = { Name = "Server.Misdirect", Delay = 0.1, Length = 0.283, Heavy = false },
@@ -7840,18 +7840,27 @@ local lastDodgeTime = 0
 local activeAttackQueues = {}
 
 local function performParry(holdDuration)
-    if parryInProgress then return end
     local now = os.clock()
-    -- Fast 0.12s parry recovery for consecutive combos (Fist M1-M1-M1)
-    if (now - lastParryTime) < 0.12 then return end
+    -- Auto-clear stuck lock if previous parry hung
+    if parryInProgress then
+        if (now - lastParryTime) > 0.14 then
+            parryInProgress = false
+            pcall(function() Packets.Combat.packets.BlockInput.send({ Action = "End Block" }) end)
+        else
+            return
+        end
+    end
+
+    -- Fast 0.08s parry recovery for ultra-rapid gauntlet combos (Fist M1-M1-M1)
+    if (now - lastParryTime) < 0.08 then return end
     parryInProgress = true
     lastParryTime = now
 
     task.spawn(function()
         pcall(function()
-            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.10, 0.08, 0.20)
+            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.07, 0.05, 0.15)
             
-            -- Packet parry tap
+            -- Dispatch block input
             Packets.Combat.packets.BlockInput.send({
                 Action = "Block Input"
             })
@@ -7974,25 +7983,47 @@ local function evaluateTrack(model, track, root, dist)
     local speed = math.max(track.Speed or 1, 0.1)
     local remaining = (delayTime - curPos) / speed
 
-    -- Deduplication key tied to animation cycle (resets every 0.20s for fast combos)
-    local queueKey = tostring(model:GetFullName()) .. "_" .. tostring(animId) .. "_" .. tostring(math.floor(curPos * 4.0))
-    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.20 then
+    -- Deduplication key tied to animation cycle (resets every 0.14s for fast combos)
+    local queueKey = tostring(model:GetFullName()) .. "_" .. tostring(animId) .. "_" .. tostring(math.floor(curPos * 5.0))
+    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.14 then
         return
     end
 
-    -- Hit is connecting RIGHT NOW (within 85ms) -> Trigger instantly!
-    if remaining <= 0.085 and remaining >= -0.065 then
+    -- Multi-hit Barrage support (e.g. ScorchingBarrage, LightningBarrage, RelentlessRush)
+    if cfg and cfg.Barrage then
+        activeAttackQueues[queueKey] = os.clock()
+        local hits = cfg.Hits or 5
+        local interval = cfg.Interval or 0.14
+        local firstHitDelay = math.max(0, remaining - 0.02)
+        task.spawn(function()
+            for h = 1, hits do
+                local delayForHit = firstHitDelay + (h - 1) * interval
+                task.delay(delayForHit, function()
+                    if not Hub.Alive or not Hub.Flags.AutoParry then return end
+                    local char = LocalPlayer.Character
+                    local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not myHrp or not root or not root.Parent then return end
+                    if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 4 then return end
+                    performParry(0.07)
+                end)
+            end
+        end)
+        return
+    end
+
+    -- Hit is connecting RIGHT NOW (within 100ms) -> Trigger instantly!
+    if remaining <= 0.10 and remaining >= -0.08 then
         activeAttackQueues[queueKey] = os.clock()
         if isHeavy then
             performDodge(root)
         else
-            performParry(0.10)
+            performParry(0.07)
         end
         return
     end
 
-    -- Hit is coming in the near future (between 85ms and 750ms) -> Schedule exact arrival
-    if remaining > 0.085 and remaining <= 0.75 then
+    -- Hit is coming in the near future (between 100ms and 750ms) -> Schedule exact arrival
+    if remaining > 0.10 and remaining <= 0.75 then
         activeAttackQueues[queueKey] = os.clock()
         -- For heavy attacks, initiate dodge ~0.14s before impact so i-frames are active at impact!
         local triggerDelay = isHeavy and math.max(0, remaining - 0.14) or math.max(0, remaining - 0.02)
@@ -8006,7 +8037,7 @@ local function evaluateTrack(model, track, root, dist)
             if isHeavy then
                 performDodge(root)
             else
-                performParry(0.10)
+                performParry(0.07)
             end
         end)
     end
@@ -8174,6 +8205,13 @@ local function initParryWatchers()
         local char = LocalPlayer.Character
         local myHrp = char and char:FindFirstChild("HumanoidRootPart")
         if not myHrp then return end
+
+        -- Anti-BlockLock: clear stuck SwordBlocking/Blocking attribute if no parry is actively running
+        if char and not parryInProgress then
+            if char:GetAttribute("State_SwordBlocking") or char:GetAttribute("State_Blocking") then
+                pcall(function() Packets.Combat.packets.BlockInput.send({ Action = "End Block" }) end)
+            end
+        end
 
         local maxRange = Hub.Flags.AutoParryRange or 25
         local function checkFolder(folder)

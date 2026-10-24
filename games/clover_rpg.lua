@@ -7540,6 +7540,17 @@ if not Kyoka then
     return
 end
 
+Kyoka.Blur = false
+if Kyoka.Prefs then Kyoka.Prefs.Blur = false end
+pcall(function()
+    local cam = workspace.CurrentCamera
+    if cam then
+        for _, c in ipairs(cam:GetChildren()) do
+            if c:IsA("BlurEffect") then c:Destroy() end
+        end
+    end
+end)
+
 local Window = Kyoka:CreateWindow({
     Title       = "NW Hub",
     Subtitle    = "Clover RPG",

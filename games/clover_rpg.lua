@@ -7357,6 +7357,183 @@ table.insert(Hub.Connections, clickConn)
 
 
 
+
+-- =====================================================================
+-- COMPLETE ESP SYSTEM (Players in pCharacters, Mobs & NPCs)
+-- =====================================================================
+local ESPFolder = nil
+local ESPEntries = {}
+
+local function ensureESPFolder()
+    if not ESPFolder or not ESPFolder.Parent then
+        local pgui = LocalPlayer:FindFirstChild("PlayerGui")
+        local core = pgui or game:GetService("CoreGui")
+        ESPFolder = Instance.new("Folder")
+        ESPFolder.Name = "Clover_ESP_Container"
+        ESPFolder.Parent = core
+    end
+    return ESPFolder
+end
+
+local function clearESP(key)
+    if ESPEntries[key] then
+        pcall(function()
+            if ESPEntries[key].Gui then ESPEntries[key].Gui:Destroy() end
+            if ESPEntries[key].Highlight then ESPEntries[key].Highlight:Destroy() end
+        end)
+        ESPEntries[key] = nil
+    end
+end
+
+local function clearAllESP()
+    for k, entry in pairs(ESPEntries) do
+        pcall(function()
+            if entry.Gui then entry.Gui:Destroy() end
+            if entry.Highlight then entry.Highlight:Destroy() end
+        end)
+    end
+    table.clear(ESPEntries)
+    if ESPFolder then
+        pcall(function() ESPFolder:Destroy() end)
+        ESPFolder = nil
+    end
+end
+
+local function updateOrCreateESP(key, character, rootPart, labelText, mainColor)
+    if not character or not rootPart then return end
+    local folder = ensureESPFolder()
+    local entry = ESPEntries[key]
+
+    if not entry or not entry.Gui or not entry.Gui.Parent then
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "ESP_" .. tostring(key)
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 240, 0, 42)
+        bbg.StudsOffset = Vector3.new(0, 3.5, 0)
+        bbg.Adornee = rootPart
+        bbg.Parent = folder
+
+        local lbl = Instance.new("TextLabel")
+        lbl.Name = "Text"
+        lbl.BackgroundTransparency = 1
+        lbl.Size = UDim2.new(1, 0, 1, 0)
+        lbl.Font = Enum.Font.GothamBold
+        lbl.TextSize = 12
+        lbl.TextStrokeTransparency = 0.15
+        lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        lbl.TextColor3 = mainColor or Color3.fromRGB(0, 255, 140)
+        lbl.TextWrapped = false
+        lbl.Parent = bbg
+
+        local hl = Instance.new("Highlight")
+        hl.Name = "HL_" .. tostring(key)
+        hl.Adornee = character
+        hl.FillColor = mainColor or Color3.fromRGB(0, 255, 140)
+        hl.FillTransparency = 0.65
+        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+        hl.OutlineTransparency = 0.1
+        hl.Parent = folder
+
+        entry = { Gui = bbg, Label = lbl, Highlight = hl, LastUpdate = os.clock() }
+        ESPEntries[key] = entry
+    end
+
+    entry.Gui.Adornee = rootPart
+    entry.Highlight.Adornee = character
+    entry.Label.Text = labelText
+    entry.Label.TextColor3 = mainColor or Color3.fromRGB(0, 255, 140)
+    entry.Highlight.FillColor = mainColor or Color3.fromRGB(0, 255, 140)
+    entry.LastUpdate = os.clock()
+end
+
+local espConn = RunService.RenderStepped:Connect(function()
+    if not Hub.Alive then
+        clearAllESP()
+        return
+    end
+
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myPos = myRoot and myRoot.Position or Vector3.zero
+    local now = os.clock()
+
+    -- 1. PLAYER ESP (Searches workspace.pCharacters AND Players' Characters)
+    if Hub.Flags.PlayerESP then
+        local pCharacters = WS:FindFirstChild("pCharacters")
+        for _, plr in ipairs(Players:GetPlayers()) do
+            local isSelf = (plr == LocalPlayer)
+            if not isSelf or Hub.Flags.ShowLocalPlayer then
+                -- Locate character: first check workspace.pCharacters, fallback to plr.Character
+                local pChar = (pCharacters and pCharacters:FindFirstChild(plr.Name)) or plr.Character
+                if pChar then
+                    local hrp = pChar:FindFirstChild("HumanoidRootPart")
+                    local hum = pChar:FindFirstChildOfClass("Humanoid")
+                    if hrp and hum and hum.Health > 0 then
+                        local dist = math.floor((hrp.Position - myPos).Magnitude)
+                        local key = "PLR_" .. plr.Name
+                        local magicTag = ""
+                        if Hub.Flags.ShowMagic then
+                            local pf = plr:FindFirstChild("PlayerFolder")
+                            local m = pf and pf:GetAttribute("Magic")
+                            if m and m ~= "" and m ~= "None" then magicTag = " [" .. tostring(m) .. "]" end
+                        end
+                        local txt = string.format("[PLAYER] %s%s
+%d/%d HP (%dm)", plr.Name, magicTag, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
+                        local color = isSelf and Color3.fromRGB(255, 220, 80) or (Hub.Flags.PlayerESPColor or Color3.fromRGB(0, 255, 140))
+                        updateOrCreateESP(key, pChar, hrp, txt, color)
+                    end
+                end
+            end
+        end
+    end
+
+    -- 2. MOB ESP (FightableNPCS)
+    if Hub.Flags.MobESP then
+        local fightable = WS:FindFirstChild("FightableNPCS")
+        if fightable then
+            for _, mob in ipairs(fightable:GetChildren()) do
+                local hrp = mob:FindFirstChild("HumanoidRootPart")
+                local hum = mob:FindFirstChildOfClass("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    local dist = math.floor((hrp.Position - myPos).Magnitude)
+                    if dist <= 600 then
+                        local key = "MOB_" .. tostring(mob:GetDebugId())
+                        local txt = string.format("[MOB] %s
+%d/%d HP (%dm)", mob.Name, math.floor(hum.Health), math.floor(hum.MaxHealth), dist)
+                        updateOrCreateESP(key, mob, hrp, txt, Hub.Flags.MobESPColor or Color3.fromRGB(255, 80, 80))
+                    end
+                end
+            end
+        end
+    end
+
+    -- 3. NPC ESP (Friendly / Quest NPCs)
+    if Hub.Flags.NPCESP then
+        local npcs = WS:FindFirstChild("NPCS")
+        if npcs then
+            for _, npc in ipairs(npcs:GetChildren()) do
+                local hrp = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("Head") or npc.PrimaryPart
+                if hrp then
+                    local dist = math.floor((hrp.Position - myPos).Magnitude)
+                    if dist <= 500 then
+                        local key = "NPC_" .. tostring(npc:GetDebugId())
+                        local txt = string.format("[NPC] %s (%dm)", npc.Name, dist)
+                        updateOrCreateESP(key, npc, hrp, txt, Color3.fromRGB(120, 200, 255))
+                    end
+                end
+            end
+        end
+    end
+
+    -- Clean up stale ESP elements
+    for key, entry in pairs(ESPEntries) do
+        if (now - (entry.LastUpdate or 0)) > 0.3 then
+            clearESP(key)
+        end
+    end
+end)
+table.insert(Hub.Connections, espConn)
+
 -- =====================================================================
 -- KYOKA V2 INTERFACE
 -- =====================================================================

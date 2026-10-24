@@ -7865,7 +7865,6 @@ local function performParry(holdDuration)
         parryInProgress = false
     end)
 end
-end
 
 local function performDodge()
     local now = os.clock()

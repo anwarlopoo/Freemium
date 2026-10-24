@@ -7553,7 +7553,7 @@ table.insert(Hub.Connections, espConn)
 -- KYOKA V2 INTERFACE
 -- =====================================================================
 -- Always reset and enforce freshly bundled, blur-neutered Kyoka library
-local Kyoka = _G.Kyoka or (getgenv and getgenv().Kyoka) or (getgenv and getgenv().KyokaLib)
+local Kyoka = (getgenv and getgenv().Kyoka) or (getgenv and getgenv().KyokaLib) or _G.Kyoka
 if not Kyoka then
     warn("[Clover RPG] Kyoka V2 library required!")
     return

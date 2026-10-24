@@ -6795,6 +6795,11 @@ local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = WS.CurrentCamera
 
+-- Clean up any previously running Clover instance before boot
+if typeof(_G.CloverRPG_Cleanup) == "function" then
+    pcall(_G.CloverRPG_Cleanup)
+end
+
 -- Modules & Remotes
 local Modules = RS:WaitForChild("Modules", 15)
 local Packets = require(Modules:WaitForChild("Packets", 15))

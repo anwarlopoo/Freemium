@@ -7201,7 +7201,7 @@ local function safeMoveTo(targetPos, speed)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum then return end
 
-    speed = math.clamp(speed or Hub.Flags.TravelTweenSpeed or 75, 40, 95)
+    speed = math.clamp(speed or Hub.Flags.TravelTweenSpeed or 85, 45, 120)
 
     -- Activer le statut de vol serveur officiel (Broom)
     ensureBroomMountState()
@@ -7211,28 +7211,50 @@ local function safeMoveTo(targetPos, speed)
     hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
     pcall(function() hum:ChangeState(Enum.HumanoidStateType.Swimming) end)
 
+    local totalDist = (hrp.Position - targetPos).Magnitude
+
+    -- SKY CORRIDOR NAVIGATION :
+    -- Pour eviter les collisions contre les murs/toits qui declenchent le TP back du serveur,
+    -- le vol monte dans le ciel degage, traverse sans obstacle a grande vitesse, puis descend directement sur la cible.
+    local waypoints = {}
+    if totalDist > 35 then
+        local skyAltitude = math.max(hrp.Position.Y, targetPos.Y) + 32
+        -- Verifier que l'altitude est suffisamment haute pour survoler les batiments
+        if skyAltitude < 155 then skyAltitude = 155 end
+
+        local p1 = Vector3.new(hrp.Position.X, skyAltitude, hrp.Position.Z)
+        local p2 = Vector3.new(targetPos.X, skyAltitude, targetPos.Z)
+
+        table.insert(waypoints, p1)
+        table.insert(waypoints, p2)
+    end
+    table.insert(waypoints, targetPos)
+
     local step = 0.03
     local stepDist = speed * step
-    local t0 = os.clock()
-    while Hub.Alive and char and hrp and (hrp.Position - targetPos).Magnitude > 5 and (os.clock() - t0 < 60) do
-        -- Noclip constant pour eviter les collisions
-        for _, p in ipairs(char:GetChildren()) do
-            if p:IsA("BasePart") then p.CanCollide = false end
+
+    for _, wp in ipairs(waypoints) do
+        local wpStart = os.clock()
+        while Hub.Alive and char and hrp and (hrp.Position - wp).Magnitude > 5 and (os.clock() - wpStart < 25) do
+            -- Noclip constant pour fluidifier les micro-collisions
+            for _, p in ipairs(char:GetChildren()) do
+                if p:IsA("BasePart") then p.CanCollide = false end
+            end
+
+            local cur = hrp.Position
+            local diff = wp - cur
+            local moveStep = math.min(stepDist, diff.Magnitude)
+            local nextPos = cur + (diff.Unit * moveStep)
+
+            hrp.CFrame = CFrame.new(nextPos, wp)
+            
+            -- Annulation totale de la velocite physique pour que le serveur lise 0
+            hrp.Velocity = Vector3.zero
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            hrp.AssemblyAngularVelocity = Vector3.zero
+
+            task.wait(step)
         end
-
-        local cur = hrp.Position
-        local diff = targetPos - cur
-        local moveStep = math.min(stepDist, diff.Magnitude)
-        local nextPos = cur + (diff.Unit * moveStep)
-
-        hrp.CFrame = CFrame.new(nextPos, targetPos)
-        
-        -- Annulation totale de la velocite physique pour que le serveur lise 0
-        hrp.Velocity = Vector3.new(0, 0, 0)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-        hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-
-        task.wait(step)
     end
 
     hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
@@ -7648,7 +7670,10 @@ local moveConn = RunService.RenderStepped:Connect(function(dt)
 
         if moveDir.Magnitude > 0 then
             moveDir = moveDir.Unit
-            local speed = Hub.Flags.FlySpeed or 52
+            local speed = Hub.Flags.FlySpeed or 65
+            for _, p in ipairs(char:GetChildren()) do
+                if p:IsA("BasePart") then p.CanCollide = false end
+            end
             hrp.CFrame = hrp.CFrame + (moveDir * (speed * math.clamp(dt, 0.005, 0.05)))
         end
     else

@@ -7620,31 +7620,136 @@ task.spawn(function()
 end)
 
 -- ---------------------------------------------------------------------
--- INSTANT PERFECT AUTO-PARRY SYSTEM
+-- PRECISE PARRY & AUTO-DODGE ENGINE (TIMED PER ATTACK ANIMATION)
 -- ---------------------------------------------------------------------
+-- Auto-Generated Attack Timings & Parry Config for Clover RPG
+local AttackConfig = {
+    ["rbxassetid://88525660121099"] = { Name = "Rapier2", Delay = 0.1, Length = 0.7, Heavy = false },
+    ["rbxassetid://89849437438829"] = { Name = "Greatsword1", Delay = 0.13, Length = 0.917, Heavy = false },
+    ["rbxassetid://18192998083"] = { Name = "ElkStomp2", Delay = 0.35, Length = 3.458, Heavy = true },
+    ["rbxassetid://11100897909"] = { Name = "Greataxe3", Delay = 0.13, Length = 0.7, Heavy = false },
+    ["rbxassetid://75088128678260"] = { Name = "HeavySword", Delay = 0.34, Length = 1.133, Heavy = true },
+    ["rbxassetid://85982255640312"] = { Name = "BlightSlashLeft", Delay = 0.35, Length = 1.667, Heavy = false },
+    ["rbxassetid://9920882854"] = { Name = "", Delay = 0.3, Length = 1.233, Heavy = false },
+    ["rbxassetid://10017557380"] = { Name = "Staff3", Delay = 0.125, Length = 0.583, Heavy = false },
+    ["rbxassetid://122307357536158"] = { Name = "Spear3", Delay = 0.27, Length = 0.9, Heavy = false },
+    ["rbxassetid://111510911006717"] = { Name = "Punch2", Delay = 0.185, Length = 0.617, Heavy = false },
+    ["rbxassetid://100328615092856"] = { Name = "LizardSoldier3", Delay = 0.28, Length = 0.933, Heavy = false },
+    ["rbxassetid://18320514554"] = { Name = "ElkStomp1", Delay = 0.35, Length = 3.458, Heavy = true },
+    ["rbxassetid://71734496574082"] = { Name = "MushknightGrab", Delay = 0.35, Length = 1.967, Heavy = true },
+    ["rbxassetid://110876955202970"] = { Name = "LizardBoss2", Delay = 0.31, Length = 1.033, Heavy = false },
+    ["rbxassetid://123693468061117"] = { Name = "Punch1", Delay = 0.155, Length = 0.517, Heavy = false },
+    ["rbxassetid://89849437438829"] = { Name = "Sword1", Delay = 0.07, Length = 0.917, Heavy = false },
+    ["rbxassetid://71375698527524"] = { Name = "LizardSoldier1", Delay = 0.27, Length = 0.9, Heavy = false },
+    ["rbxassetid://13822728105"] = { Name = "", Delay = 0.125, Length = 1.033, Heavy = false },
+    ["rbxassetid://125957249913572"] = { Name = "Wolf1", Delay = 0.35, Length = 1.233, Heavy = false },
+    ["rbxassetid://107811934597910"] = { Name = "Spear2", Delay = 0.27, Length = 0.9, Heavy = false },
+    ["rbxassetid://10017557380"] = { Name = "RunningKatana", Delay = 0.175, Length = 0.583, Heavy = false },
+    ["rbxassetid://89652204450491"] = { Name = "Sword2", Delay = 0.03, Length = 0.9, Heavy = false },
+    ["rbxassetid://10250846568"] = { Name = "Misdirect", Delay = 0.085, Length = 0.283, Heavy = false },
+    ["rbxassetid://132013056786173"] = { Name = "HollowseerBite", Delay = 0.35, Length = 3.717, Heavy = false },
+    ["rbxassetid://120283215167024"] = { Name = "Dagger2", Delay = 0.17, Length = 0.567, Heavy = false },
+    ["rbxassetid://90147459897801"] = { Name = "CrawlerCritical", Delay = 0.125, Length = 0.917, Heavy = false },
+    ["rbxassetid://11100897909"] = { Name = "Greataxe1", Delay = 0.13, Length = 0.7, Heavy = false },
+    ["rbxassetid://11169772012"] = { Name = "GreatswordSprint", Delay = 0.21, Length = 0.7, Heavy = false },
+    ["rbxassetid://18334923698"] = { Name = "Spirit2", Delay = 0.15, Length = 0.733, Heavy = false },
+    ["rbxassetid://99787918237880"] = { Name = "Knockback", Delay = 0.18, Length = 0.6, Heavy = false },
+    ["rbxassetid://72354029824787"] = { Name = "", Delay = 0.315, Length = 1.05, Heavy = false },
+    ["rbxassetid://14527234407"] = { Name = "Katana2", Delay = 0.28, Length = 0.933, Heavy = false },
+    ["rbxassetid://18133501787"] = { Name = "GroveTailSwipe", Delay = 0.35, Length = 1.9, Heavy = false },
+    ["rbxassetid://112932641545194"] = { Name = "Katana3", Delay = 0.52, Length = 1.04, Heavy = false },
+    ["rbxassetid://80495839788581"] = { Name = "", Delay = 0.29, Length = 0.967, Heavy = false },
+    ["rbxassetid://115413726601821"] = { Name = "LizardSoldier2", Delay = 0.28, Length = 0.933, Heavy = false },
+    ["rbxassetid://112682800928139"] = { Name = "", Delay = 0.32, Length = 1.067, Heavy = false },
+    ["rbxassetid://89652204450491"] = { Name = "Greatsword2", Delay = 0.1, Length = 0.9, Heavy = false },
+    ["rbxassetid://11100902766"] = { Name = "Greataxe2", Delay = 0.1, Length = 0.66, Heavy = false },
+    ["rbxassetid://9920866928"] = { Name = "", Delay = 0.3, Length = 1.233, Heavy = false },
+    ["rbxassetid://14158953103"] = { Name = "", Delay = 0.24, Length = 0.8, Heavy = false },
+    ["rbxassetid://137057617868950"] = { Name = "BlightSwipes", Delay = 0.35, Length = 2.483, Heavy = false },
+    ["rbxassetid://9557400534"] = { Name = "HeavyDagger", Delay = 0.34, Length = 1.133, Heavy = true },
+    ["rbxassetid://10017557380"] = { Name = "Trident3", Delay = 0.175, Length = 0.583, Heavy = false },
+    ["rbxassetid://87606723288055"] = { Name = "LizardSoldier4", Delay = 0.31, Length = 1.033, Heavy = false },
+    ["rbxassetid://11262591531"] = { Name = "DaggerSpin", Delay = 0.15, Length = 0.5, Heavy = false },
+    ["rbxassetid://13960433818"] = { Name = "", Delay = 0.228, Length = 0.76, Heavy = false },
+    ["rbxassetid://112272302102744"] = { Name = "CrawlerLeft", Delay = 0.15, Length = 0.3, Heavy = false },
+    ["rbxassetid://17861869512"] = { Name = "OgreSwipe2", Delay = 0.2, Length = 1.08, Heavy = false },
+    ["rbxassetid://75576032954820"] = { Name = "CrawlerRight", Delay = 0.15, Length = 0.65, Heavy = false },
+    ["rbxassetid://17564283859"] = { Name = "HeavyGreataxe", Delay = 0.096, Length = 0.32, Heavy = true },
+    ["rbxassetid://120129566668137"] = { Name = "LizardBoss3", Delay = 0.35, Length = 1.333, Heavy = false },
+    ["rbxassetid://13756407921"] = { Name = "", Delay = 0.35, Length = 1.467, Heavy = false },
+    ["rbxassetid://11169772012"] = { Name = "GreataxeSprint", Delay = 0.21, Length = 0.7, Heavy = false },
+    ["rbxassetid://96581414677240"] = { Name = "ScytheSprint", Delay = 0.05, Length = 0.8, Heavy = false },
+    ["rbxassetid://11892996649"] = { Name = "Zombie1", Delay = 0.15, Length = 0.767, Heavy = false },
+    ["rbxassetid://75817196379763"] = { Name = "Rapier3", Delay = 0.15, Length = 0.75, Heavy = false },
+    ["rbxassetid://13960430722"] = { Name = "", Delay = 0.125, Length = 1.16, Heavy = false },
+    ["rbxassetid://18334915919"] = { Name = "Spirit1", Delay = 0.15, Length = 0.783, Heavy = false },
+    ["rbxassetid://73629219095110"] = { Name = "Wolf2", Delay = 0.35, Length = 1.3, Heavy = false },
+    ["rbxassetid://18133497814"] = { Name = "GrovePounce", Delay = 0.35, Length = 2.167, Heavy = false },
+    ["rbxassetid://17861866763"] = { Name = "OgreSwipe1", Delay = 0.625, Length = 1.04, Heavy = false },
+    ["rbxassetid://10017543126"] = { Name = "Trident2", Delay = 0.125, Length = 0.417, Heavy = false },
+    ["rbxassetid://10017994824"] = { Name = "HeavySpear", Delay = 0.215, Length = 0.717, Heavy = true },
+    ["rbxassetid://13822736997"] = { Name = "Slam", Delay = 0.1, Length = 1.283, Heavy = true },
+    ["rbxassetid://86722279259826"] = { Name = "Spear1", Delay = 0.1, Length = 0.95, Heavy = false },
+    ["rbxassetid://13756521296"] = { Name = "", Delay = 0.05, Length = 2.133, Heavy = false },
+    ["rbxassetid://76395852273763"] = { Name = "HeavyScythe", Delay = 0.305, Length = 1.017, Heavy = true },
+    ["rbxassetid://11100915060"] = { Name = "HeavyGreatsword", Delay = 0.215, Length = 0.717, Heavy = true },
+    ["rbxassetid://13822732009"] = { Name = "", Delay = 0.205, Length = 0.683, Heavy = false },
+    ["rbxassetid://103140391021149"] = { Name = "LizardBoss1", Delay = 0.3, Length = 1.0, Heavy = false },
+    ["rbxassetid://14158890923"] = { Name = "", Delay = 0.276, Length = 0.92, Heavy = false },
+    ["rbxassetid://13822736997"] = { Name = "", Delay = 0.1, Length = 1.283, Heavy = false },
+    ["rbxassetid://73042737238490"] = { Name = "LizardBossStomp", Delay = 0.35, Length = 1.833, Heavy = true },
+    ["rbxassetid://11893004134"] = { Name = "ZombieKnockback", Delay = 0.125, Length = 0.883, Heavy = false },
+    ["rbxassetid://10017535748"] = { Name = "Trident1", Delay = 0.1, Length = 0.5, Heavy = false },
+    ["rbxassetid://14527230703"] = { Name = "Katana1", Delay = 0.215, Length = 1.167, Heavy = false },
+    ["rbxassetid://10694823147"] = { Name = "HeavyRapier", Delay = 0.35, Length = 1.2, Heavy = true },
+    ["rbxassetid://136129024555254"] = { Name = "RunningDagger", Delay = 0.185, Length = 0.617, Heavy = false },
+    ["rbxassetid://10017557380"] = { Name = "RunningSword", Delay = 0.175, Length = 0.583, Heavy = false },
+    ["rbxassetid://11893001175"] = { Name = "Zombie2", Delay = 0.15, Length = 0.717, Heavy = false },
+    ["rbxassetid://123565976636065"] = { Name = "Rapier1", Delay = 0.2, Length = 0.75, Heavy = false },
+    ["rbxassetid://70574481445445"] = { Name = "Scythe2", Delay = 0.217, Length = 0.767, Heavy = false },
+    ["rbxassetid://74594683886829"] = { Name = "Sword3", Delay = 0.07, Length = 0.9, Heavy = false },
+    ["rbxassetid://13756358680"] = { Name = "", Delay = 0.15, Length = 1.367, Heavy = false },
+    ["rbxassetid://9920890274"] = { Name = "Strike", Delay = 0.3, Length = 1.0, Heavy = false },
+    ["rbxassetid://12808226586"] = { Name = "Staff1", Delay = 0.1, Length = 0.6, Heavy = false },
+    ["rbxassetid://70936328766912"] = { Name = "Dagger1", Delay = 0.225, Length = 0.733, Heavy = false },
+    ["rbxassetid://12955527930"] = { Name = "HeavyStaff", Delay = 0.35, Length = 1.633, Heavy = true },
+    ["rbxassetid://11893004134"] = { Name = "Spirit3", Delay = 0.125, Length = 0.883, Heavy = false },
+    ["rbxassetid://10230852540"] = { Name = "SprintKick", Delay = 0.08, Length = 0.85, Heavy = false },
+    ["rbxassetid://14452988294"] = { Name = "HeavyKatana", Delay = 0.336, Length = 1.12, Heavy = true },
+    ["rbxassetid://94189509684810"] = { Name = "Dagger3", Delay = 0.225, Length = 0.6, Heavy = false },
+    ["rbxassetid://8594363819"] = { Name = "Heavy", Delay = 0.23, Length = 0.767, Heavy = true },
+    ["rbxassetid://12808233350"] = { Name = "Staff2", Delay = 0.11, Length = 0.367, Heavy = false },
+    ["rbxassetid://89849437438829"] = { Name = "Greatsword3", Delay = 0.13, Length = 0.917, Heavy = false },
+    ["rbxassetid://115704466488110"] = { Name = "Scythe3", Delay = 0.167, Length = 0.75, Heavy = false },
+    ["rbxassetid://106981115410840"] = { Name = "MushmiteHeadbutt", Delay = 0.35, Length = 2.533, Heavy = true },
+    ["rbxassetid://104165983064642"] = { Name = "Scythe1", Delay = 0.267, Length = 0.767, Heavy = false },
+    ["rbxassetid://125482975672454"] = { Name = "BlightSlashRight", Delay = 0.245, Length = 0.817, Heavy = false },
+    ["rbxassetid://85570415456598"] = { Name = "Punch3", Delay = 0.145, Length = 0.483, Heavy = false },
+    ["rbxassetid://14850217335"] = { Name = "HeavyTrident", Delay = 0.35, Length = 3.578, Heavy = true },
+}
+
 local lastParryTime = 0
 local parryInProgress = false
+local lastDodgeTime = 0
 
-local function triggerPerfectParry()
+local function performParry(holdDuration)
     if parryInProgress then return end
-    if (os.clock() - lastParryTime) < 0.22 then return end
+    local now = os.clock()
+    if (now - lastParryTime) < 1.05 then return end -- Strict 1s cooldown enforcement!
     parryInProgress = true
-    lastParryTime = os.clock()
+    lastParryTime = now
 
     task.spawn(function()
         pcall(function()
-            local delayTime = Hub.Flags.AutoParryDelay or 0
-            if delayTime > 0 then task.wait(delayTime) end
-
-            local holdTime = math.clamp(Hub.Flags.AutoParryHold or 0.18, 0.08, 0.35)
-
+            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.16, 0.08, 0.25)
+            
             -- Send Block Input packet (ByteNetMax)
             Packets.Combat.packets.BlockInput.send({
                 Action = "Block Input"
             })
 
             local t0 = os.clock()
-            while (os.clock() - t0) < holdTime and Hub.Alive do
+            while (os.clock() - t0) < hold and Hub.Alive do
                 task.wait()
             end
 
@@ -7657,65 +7762,134 @@ local function triggerPerfectParry()
     end)
 end
 
--- Track all attacking entities in FightableNPCS and pCharacters
+local function performDodge()
+    local now = os.clock()
+    if (now - lastDodgeTime) < 0.85 then return end
+    lastDodgeTime = now
+
+    task.spawn(function()
+        pcall(function()
+            -- Send standard Roll packet
+            Packets.Combat.packets.RollInput.send({
+                Action = "Roll",
+                typeOf = ""
+            })
+        end)
+    end)
+end
+
+-- Process incoming attack track with exact delay schedule
+local activeAttackQueues = {}
+
+local function handleIncomingAttack(model, track)
+    if not Hub.Alive or not Hub.Flags.AutoParry then return end
+    local char = LocalPlayer.Character
+    local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+    local myHum = char and char:FindFirstChildOfClass("Humanoid")
+    if not myHrp or not myHum or myHum.Health <= 0 then return end
+
+    local root = model:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local dist = (root.Position - myHrp.Position).Magnitude
+    local maxRange = Hub.Flags.AutoParryRange or 22
+    if dist > maxRange then return end
+
+    local animObj = track.Animation
+    local animId = animObj and animObj.AnimationId or ""
+    local animName = track.Name:lower()
+
+    -- Exclude non-attack actions
+    if animName:find("idle") or animName:find("walk") or animName:find("run")
+       or animName:find("strafe") or animName:find("emote") or animName:find("down")
+       or animName:find("swim") or animName:find("sit") or animName:find("fall") then
+        return
+    end
+
+    local cfg = AttackConfig[animId]
+    local isHeavy = false
+    local delayTime = 0.15
+
+    if cfg then
+        isHeavy = cfg.Heavy
+        delayTime = cfg.Delay or 0.15
+    else
+        -- Fallback heuristics for unindexed attacks
+        if animName:find("heavy") or animName:find("slam") or animName:find("smash")
+           or animName:find("howl") or animName:find("headbutt") or animName:find("stomp") then
+            isHeavy = true
+            delayTime = 0.28
+        elseif animName:find("swing") or animName:find("attack") or animName:find("slash")
+               or animName:find("punch") or animName:find("strike") or animName:find("m1") then
+            isHeavy = false
+            delayTime = 0.14
+        else
+            return -- Not recognized as an attack
+        end
+    end
+
+    -- Deduplicate track processing per attacker
+    local queueKey = tostring(model:GetDebugId()) .. "_" .. tostring(animId)
+    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.6 then
+        return
+    end
+    activeAttackQueues[queueKey] = os.clock()
+
+    task.spawn(function()
+        -- Compensate for animation speed and current TimePosition
+        local curPos = track.TimePosition or 0
+        local speed = math.max(track.Speed or 1, 0.1)
+        local remaining = math.max(0, (delayTime - curPos) / speed)
+
+        if remaining > 0 then
+            task.wait(remaining)
+        end
+
+        -- Double check distance and player state right at impact
+        if not Hub.Alive or not myHrp or not root then return end
+        if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 22) + 2 then return end
+
+        if isHeavy then
+            -- Unparriable / Heavy Attack -> DODGE
+            performDodge()
+        else
+            -- Normal Attack -> PARI
+            performParry(0.16)
+        end
+    end)
+end
+
+-- Monitor entity animations
 local function monitorAttacker(model)
     if not model or not model:IsA("Model") then return end
     if model == LocalPlayer.Character then return end
 
     local hum = model:FindFirstChildOfClass("Humanoid")
-    local root = model:FindFirstChild("HumanoidRootPart")
-    if not hum or not root then return end
+    if not hum then return end
 
-    local function checkTrack(track)
-        if not Hub.Alive or not Hub.Flags.AutoParry then return end
-        local char = LocalPlayer.Character
-        local myHrp = char and char:FindFirstChild("HumanoidRootPart")
-        local myHum = char and char:FindFirstChildOfClass("Humanoid")
-        if not myHrp or not myHum or myHum.Health <= 0 then return end
-
-        local dist = (root.Position - myHrp.Position).Magnitude
-        local maxRange = Hub.Flags.AutoParryRange or 22
-        if dist > maxRange then return end
-
-        local animName = track.Name:lower()
-        local animObj = track.Animation
-        local animId = animObj and animObj.AnimationId or ""
-
-        -- Exclude idle, walking, running, emote, down, hit-react animations
-        if animName:find("idle") or animName:find("walk") or animName:find("run")
-           or animName:find("strafe") or animName:find("emote") or animName:find("down")
-           or animName:find("swim") or animName:find("sit") or animName:find("fall") then
-            return
-        end
-
-        -- Check if it's an attack, swing, punch, kick, or non-movement action
-        local isAttack = false
-        if animName:find("swing") or animName:find("attack") or animName:find("slash")
-           or animName:find("punch") or animName:find("kick") or animName:find("heavy")
-           or animName:find("crit") or animName:find("strike") or animName:find("lunge")
-           or animName:find("cleave") or animName:find("barrage") or animName:find("slam")
-           or animName:find("bite") or animName:find("claw") or animName:find("rush") then
-            isAttack = true
-        elseif animId ~= "" and animId ~= "rbxassetid://18910040255" and animId ~= "rbxassetid://9839955546"
-               and animId ~= "rbxassetid://9839859772" and animId ~= "rbxassetid://9839879425"
-               and animId ~= "rbxassetid://105273448305185" and animId ~= "rbxassetid://124023674688709"
-               and animId ~= "rbxassetid://103048719190843" and animId ~= "rbxassetid://126657595467301" then
-            isAttack = true
-        end
-
-        if isAttack then
-            triggerPerfectParry()
-        end
-    end
-
-    -- Hook AnimationPlayed
-    local conn = hum.AnimationPlayed:Connect(checkTrack)
+    local conn = hum.AnimationPlayed:Connect(function(track)
+        handleIncomingAttack(model, track)
+    end)
     table.insert(Hub.Connections, conn)
 
-    -- Also check currently playing tracks
-    for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
-        checkTrack(tr)
-    end
+    -- Detect Red unparriable Highlight VFX (e.g. Dire Wolf, Bosses)
+    local redVfxConn = model.DescendantAdded:Connect(function(desc)
+        if not Hub.Alive or not Hub.Flags.AutoParry then return end
+        if desc:IsA("Highlight") then
+            local color = desc.FillColor
+            -- Red warning highlight (RGB ~255, 49, 76)
+            if color.R > 0.8 and color.G < 0.4 and color.B < 0.4 then
+                local char = LocalPlayer.Character
+                local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+                local root = model:FindFirstChild("HumanoidRootPart")
+                if myHrp and root and (root.Position - myHrp.Position).Magnitude <= (Hub.Flags.AutoParryRange or 22) then
+                    -- Red attack is unparriable -> DODGE immediately
+                    task.spawn(performDodge)
+                end
+            end
+        end
+    end)
+    table.insert(Hub.Connections, redVfxConn)
 end
 
 -- Initialize Parry Watchers
@@ -7745,26 +7919,6 @@ local function initParryWatchers()
     end
 end
 initParryWatchers()
-
--- Sound & FX Parry Trigger (Catches un-animated and instant special attacks)
-local soundConn = game:GetService("SoundService").DescendantAdded:Connect(function(snd)
-    if not Hub.Alive or not Hub.Flags.AutoParry then return end
-    if not snd:IsA("Sound") then return end
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local sName = snd.Name:lower()
-    if sName:find("swing") or sName:find("slash") or sName:find("punch") or sName:find("whoosh") then
-        local p = snd.Parent
-        if p and p:IsA("BasePart") then
-            if (p.Position - hrp.Position).Magnitude <= (Hub.Flags.AutoParryRange or 22) then
-                triggerPerfectParry()
-            end
-        end
-    end
-end)
-table.insert(Hub.Connections, soundConn)
 
 -- TAB 2: COMBAT & AIMBOT
 -- ---------------------------------------------------------------------

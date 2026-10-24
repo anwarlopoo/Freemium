@@ -7077,6 +7077,7 @@ local Hub = {
     Connections = {},
     Drawings = {},
 }
+_G.Hub = Hub
 
 -- Cleanup of previous instance
 if _G.CloverRPG_Cleanup then pcall(_G.CloverRPG_Cleanup) end

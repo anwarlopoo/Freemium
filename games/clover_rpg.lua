@@ -6932,9 +6932,30 @@ _G.CloverRPG_Cleanup = function()
     table.clear(Hub.Connections)
     for _, d in ipairs(Hub.Drawings) do pcall(function() d:Remove() end) end
     table.clear(Hub.Drawings)
-    local hui = (gethui and gethui()) or game:GetService("CoreGui")
-    local oldUI = hui:FindFirstChild("Vesper_Kyoka")
-    if oldUI then oldUI:Destroy() end
+    
+    -- Thorough UI cleanup across CoreGui and PlayerGui
+    local core = game:GetService("CoreGui")
+    for _, c in ipairs(core:GetChildren()) do
+        if c.Name:find("Vesper_Kyoka") or c.Name:find("Kyoka") then
+            pcall(function() c:Destroy() end)
+        end
+    end
+    local lp = game:GetService("Players").LocalPlayer
+    if lp and lp:FindFirstChild("PlayerGui") then
+        for _, c in ipairs(lp.PlayerGui:GetChildren()) do
+            if c.Name:find("Vesper_Kyoka") or c.Name:find("Kyoka") then
+                pcall(function() c:Destroy() end)
+            end
+        end
+    end
+    
+    -- Absolute destruction of any BlurEffect in Camera or Lighting
+    local cam = workspace.CurrentCamera
+    if cam then
+        for _, c in ipairs(cam:GetChildren()) do
+            if c:IsA("BlurEffect") then pcall(function() c:Destroy() end) end
+        end
+    end
 end
 
 -- Mobs, Bosses & Locations

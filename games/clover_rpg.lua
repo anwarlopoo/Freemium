@@ -7952,6 +7952,7 @@ local AttackConfig = {
     ["rbxassetid://72354029824787"] = { Name = "Server.Brute Swing 2", Delay = 0.367, Length = 1.049, Heavy = false },
     ["rbxassetid://80495839788581"] = { Name = "Server.Brute Slam", Delay = 0.435, Length = 0.966, Heavy = true },
 }
+local lastEndBlockSent = 0
 local parryInProgress = false
 local lastParryTime = 0
 local lastDodgeTime = 0
@@ -8064,6 +8065,10 @@ local function evaluateTrack(model, track, root, dist)
     if not Hub.Alive or not Hub.Flags.AutoParry then return end
     if not track or not track.IsPlaying then return end
 
+    local char = LocalPlayer.Character
+    local myHrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not myHrp or not root or not root.Parent then return end
+
     local animObj = track.Animation
     local animId = animObj and animObj.AnimationId or ""
     if not animId or animId == "" then return end
@@ -8161,8 +8166,8 @@ local function evaluateTrack(model, track, root, dist)
 
     -- 6. Immediate Hit Delivery (Within 90ms of impact)
     if remaining <= 0.09 and remaining >= -0.06 then
-        local currentDist = (root.Position - myHrp and myHrp.Position or root.Position).Magnitude
-        if dist > maxReach and currentDist > maxReach then
+        local currentDist = (root.Position - myHrp.Position).Magnitude
+        if currentDist > maxReach then
             return -- Out of physical range, do not waste parry
         end
         activeAttackQueues[queueKey] = os.clock()
@@ -8323,7 +8328,7 @@ local function hookSpellRemotes()
 end
 
 local function initParryWatchers()
-    hookSpellRemotes()
+    -- hookSpellRemotes disabled (prevents parrying ambient town VFX)
 
     local monitored = {}
     local function register(m)
@@ -8342,15 +8347,7 @@ local function initParryWatchers()
         table.insert(Hub.Connections, c1)
     end
 
-    local npcs = WS:FindFirstChild("NPCS")
-    if npcs then
-        for _, m in ipairs(npcs:GetChildren()) do register(m) end
-        local cNpcs = npcs.ChildAdded:Connect(function(m)
-            task.wait(0.05)
-            register(m)
-        end)
-        table.insert(Hub.Connections, cNpcs)
-    end
+    -- Town dialogue NPCs (workspace.NPCS) are peaceful and MUST NOT be registered for parries
 
     local pChars = WS:FindFirstChild("pCharacters")
     if pChars then
@@ -8369,9 +8366,10 @@ local function initParryWatchers()
         local myHrp = char and char:FindFirstChild("HumanoidRootPart")
         if not myHrp then return end
 
-        -- Anti-BlockLock: clear stuck SwordBlocking/Blocking attribute if no parry is actively running
-        if char and not parryInProgress then
+        -- Anti-BlockLock: rate-limited to avoid packet flooding
+        if char and not parryInProgress and (os.clock() - lastEndBlockSent) > 0.35 then
             if char:GetAttribute("State_SwordBlocking") or char:GetAttribute("State_Blocking") then
+                lastEndBlockSent = os.clock()
                 pcall(function() Packets.Combat.packets.BlockInput.send({ Action = "End Block" }) end)
             end
         end
@@ -8399,10 +8397,9 @@ local function initParryWatchers()
             end
         end
 
+        -- ONLY scan hostile mobs and other players!
         checkFolder(fightable)
-        checkFolder(npcs)
         checkFolder(pChars)
-        checkFolder(workspace)
     end)
     table.insert(Hub.Connections, scanConn)
 end

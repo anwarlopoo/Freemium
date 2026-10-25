@@ -7594,6 +7594,124 @@ end)
 -- MASTER DUAL AUTO-PARRY & SPELL REFLEX ENGINE (180 ANIMATIONS + REMOTES)
 -- ---------------------------------------------------------------------
 -- Comprehensive Attack & Spell Timings (M1 + Skills + Magic)
+local IgnoredAnims = {
+    ["rbxassetid://8295520005"] = true, -- Animations/Movement/Human/ChatIdle2
+    ["rbxassetid://11159085440"] = true, -- Animations/Movement/Walk/GreataxeWalk
+    ["rbxassetid://100970712574451"] = true, -- Animations/Hit/FlinchLeft
+    ["rbxassetid://89240407551405"] = true, -- Animations/Idles/ScytheIdle
+    ["rbxassetid://18186941606"] = true, -- Animations/Movement/ClimbLedge
+    ["rbxassetid://8359147244"] = true, -- Animations/Hit/Dizzy
+    ["rbxassetid://98048954823229"] = true, -- Animations/Broom/Avatar Glider/Left
+    ["rbxassetid://16270943591"] = true, -- Animations/Emotes/Kneel
+    ["rbxassetid://14430204040"] = true, -- Animations/Movement/Walk/KatanaWalk
+    ["rbxassetid://102942000509372"] = true, -- Animations/Hit/KickVictim
+    ["rbxassetid://9839859772"] = true, -- Animations/Movement/Human/Walk
+    ["rbxassetid://9839892259"] = true, -- Animations/Movement/Roll_Back
+    ["rbxassetid://10059485766"] = true, -- Animations/Hit/Parried
+    ["rbxassetid://10017151218"] = true, -- Animations/Idles/TridentIdle
+    ["rbxassetid://12171859350"] = true, -- Animations/Idles/SwordIdle
+    ["rbxassetid://14919944680"] = true, -- Animations/Movement/GreatswordTwoHand
+    ["rbxassetid://10425029023"] = true, -- Animations/GrimoireReceive
+    ["rbxassetid://10695602175"] = true, -- Animations/Emotes/EmotePack1/Jojo Dance
+    ["rbxassetid://10695609033"] = true, -- Animations/Emotes/EmotePack1/Cool Point
+    ["rbxassetid://139807755784870"] = true, -- Animations/Broom/Avatar Glider/Stall
+    ["rbxassetid://10697403133"] = true, -- Animations/Thinking
+    ["rbxassetid://17350646251"] = true, -- Animations/Emotes/Salute
+    ["rbxassetid://11480400857"] = true, -- Animations/Hit/Grabbed
+    ["rbxassetid://122934392159414"] = true, -- Animations/Blocks/Sword_Block
+    ["rbxassetid://17350993980"] = true, -- Animations/Emotes/EmotePack2/Slide
+    ["rbxassetid://77070708677985"] = true, -- Animations/Movement/Sliding
+    ["rbxassetid://10059604057"] = true, -- Animations/Hit/ParriedAlternative
+    ["rbxassetid://105244904534617"] = true, -- Animations/Idles/DaggerIdle
+    ["rbxassetid://87707218525575"] = true, -- Animations/Blocks/Trident_Block
+    ["rbxassetid://12955148621"] = true, -- Animations/Hit/Knockback
+    ["rbxassetid://9841329423"] = true, -- Animations/Movement/DownedIdle
+    ["rbxassetid://13960305579"] = true, -- Animations/Movement/Walk/MaceWalk
+    ["rbxassetid://134591539679677"] = true, -- Animations/Stagger/Blightseeker
+    ["rbxassetid://109280341798977"] = true, -- Animations/Broom/Crazy Cyclone/Right
+    ["rbxassetid://13756060730"] = true, -- Animations/Hit/Boar/FlinchRight
+    ["rbxassetid://18910040255"] = true, -- Animations/Movement/Human/DefaultIdle
+    ["rbxassetid://13756199097"] = true, -- Animations/Hit/Boar/FlinchLeft
+    ["rbxassetid://9839946429"] = true, -- Animations/Movement/SoftLanding
+    ["rbxassetid://9839879425"] = true, -- Animations/Movement/NightCharmer/Run
+    ["rbxassetid://82914058969022"] = true, -- Animations/Stagger/Hollowseer
+    ["rbxassetid://130310470361406"] = true, -- Animations/Hit/FlinchRight
+    ["rbxassetid://14917713673"] = true, -- Animations/Movement/LevitatingIdle
+    ["rbxassetid://11159096970"] = true, -- Animations/Movement/Run/GreataxeRun
+    ["rbxassetid://10695589488"] = true, -- Animations/Emotes/EmotePack1/Silly Dance
+    ["rbxassetid://18186876507"] = true, -- Animations/Movement/WallBounce
+    ["rbxassetid://10036138066"] = true, -- Animations/Movement/Walk/StaffWalk
+    ["rbxassetid://17211441225"] = true, -- Animations/Rigs/ShadowBeam
+    ["rbxassetid://14919979619"] = true, -- Animations/Movement/KneeDownIdle
+    ["rbxassetid://10695605920"] = true, -- Animations/Emotes/EmotePack1/Flashy Poses
+    ["rbxassetid://14850287020"] = true, -- Animations/Hit/PlayerImpaled
+    ["rbxassetid://10028752861"] = true, -- Animations/Movement/Run/StaffRun
+    ["rbxassetid://10695592840"] = true, -- Animations/Emotes/EmotePack1/Flex
+    ["rbxassetid://13641513163"] = true, -- Animations/Broom/Default/Right
+    ["rbxassetid://115965504538346"] = true, -- Animations/Broom/Mushbroom/Forward
+    ["rbxassetid://115702731975285"] = true, -- Animations/GrimoireAnimations/Idle
+    ["rbxassetid://178130996"] = true, -- Animations/Movement/Human/Sit
+    ["rbxassetid://13641430401"] = true, -- Animations/Broom/Default/Left
+    ["rbxassetid://17345777089"] = true, -- Animations/Emotes/Thinking
+    ["rbxassetid://109745531212190"] = true, -- Animations/GrimoireAnimations/TimeIdle
+    ["rbxassetid://10695611644"] = true, -- Animations/Emotes/EmotePack1/Dio
+    ["rbxassetid://84459500782691"] = true, -- Animations/Movement/Roll_Left
+    ["rbxassetid://113297787658130"] = true, -- Animations/Broom/Crazy Cyclone/Forward
+    ["rbxassetid://9839850611"] = true, -- Animations/Movement/NightCharmer/Fall
+    ["rbxassetid://113967409387277"] = true, -- Animations/Movement/Walk/ScytheWalk
+    ["rbxassetid://9839842355"] = true, -- Animations/Movement/NightCharmer/Jump
+    ["rbxassetid://13621427142"] = true, -- Animations/Broom/Default/Stall
+    ["rbxassetid://11702677529"] = true, -- Animations/Movement/NightCharmer/Walk
+    ["rbxassetid://87685301669572"] = true, -- Animations/Movement/Walk/CombatWalk
+    ["rbxassetid://9839955546"] = true, -- Animations/Movement/NightCharmer/StandIdle
+    ["rbxassetid://8530051817"] = true, -- Animations/Carry
+    ["rbxassetid://10080413418"] = true, -- Animations/Movement/CrouchIdle
+    ["rbxassetid://8530055602"] = true, -- Animations/Carried
+    ["rbxassetid://130216861713427"] = true, -- Animations/Broom/Avatar Glider/Forward
+    ["rbxassetid://14264075211"] = true, -- Animations/Emotes/Meditate
+    ["rbxassetid://17350660770"] = true, -- Animations/Emotes/Laugh
+    ["rbxassetid://13634603521"] = true, -- Animations/Broom/Default/Forward
+    ["rbxassetid://10694850879"] = true, -- Animations/Idles/RapierIdle
+    ["rbxassetid://88706515645638"] = true, -- Animations/Movement/Roll_Right
+    ["rbxassetid://8359106912"] = true, -- Animations/Movement/LowHealth
+    ["rbxassetid://108958175568018"] = true, -- Animations/Parrys/Medium_Parry
+    ["rbxassetid://81682571402531"] = true, -- Animations/Parrys/TwoHand_Parry
+    ["rbxassetid://14147348381"] = true, -- Animations/CarryBox
+    ["rbxassetid://12808180093"] = true, -- Animations/Idles/StaffIdle
+    ["rbxassetid://13908613303"] = true, -- Animations/Hit/PlayerGrabbed
+    ["rbxassetid://14282102053"] = true, -- Animations/Blocks/Dagger_Block
+    ["rbxassetid://14430274114"] = true, -- Animations/Movement/Run/KatanaRun
+    ["rbxassetid://9839904022"] = true, -- Animations/Movement/ClimbUp
+    ["rbxassetid://15668913149"] = true, -- Animations/Hit/Detained
+    ["rbxassetid://17350942315"] = true, -- Animations/Emotes/EmotePack2/Loser
+    ["rbxassetid://134568603422487"] = true, -- Animations/GrimoireAnimations/Open
+    ["rbxassetid://15570676422"] = true, -- Animations/Hit/Knocked
+    ["rbxassetid://14315368558"] = true, -- Animations/Movement/Walk/SwordWalk
+    ["rbxassetid://107757099019069"] = true, -- Animations/Movement/Human/Fall
+    ["rbxassetid://8320172789"] = true, -- Animations/Blocks/Normal_Block
+    ["rbxassetid://10432612284"] = true, -- Animations/Movement/Landing
+    ["rbxassetid://9867300737"] = true, -- Animations/Movement/SwimIdle
+    ["rbxassetid://124092318503545"] = true, -- Animations/Movement/Walk/DaggerWalk
+    ["rbxassetid://10694863437"] = true, -- Animations/Movement/Walk/RapierWalk
+    ["rbxassetid://132146135472531"] = true, -- Animations/Movement/Roll_Air
+    ["rbxassetid://14430099789"] = true, -- Animations/Idles/KatanaIdle
+    ["rbxassetid://132097153915447"] = true, -- Animations/Blocks/Scythe_Block
+    ["rbxassetid://18186354801"] = true, -- Animations/Movement/Vault
+    ["rbxassetid://116214782343706"] = true, -- Animations/Broom/Avatar Glider/Right
+    ["rbxassetid://10529398013"] = true, -- Animations/Emotes/Spit
+    ["rbxassetid://17224517060"] = true, -- Animations/Rigs/HandIdle
+    ["rbxassetid://113867162227858"] = true, -- Animations/Movement/Run/ScytheRun
+    ["rbxassetid://108795185818941"] = true, -- Animations/Broom/Crazy Cyclone/Left
+    ["rbxassetid://10080417512"] = true, -- Animations/Movement/CrouchWalk
+    ["rbxassetid://9831632466"] = true, -- Animations/Movement/NightCharmer/Climb
+    ["rbxassetid://11040563878"] = true, -- Animations/Idles/GreatswordIdle
+    ["rbxassetid://9841377110"] = true, -- Animations/Movement/DownedMove
+    ["rbxassetid://9839887338"] = true, -- Animations/Movement/Roll_Front
+    ["rbxassetid://18633410020"] = true, -- Animations/Emotes/Sit
+    ["rbxassetid://14417052527"] = true, -- Animations/Parrys/Light_Parry
+    ["rbxassetid://9873286798"] = true, -- Animations/Idles/CombatIdle
+}
+
 local AttackConfig = {
     ["rbxassetid://8314692364"] = { Name = "Combat.HammerDown", Delay = 0.2, Length = 0.5, Heavy = false },
     ["rbxassetid://8594363819"] = { Name = "Combat.HeavyPunch", Delay = 0.60, Length = 0.767, Heavy = true },
@@ -7776,7 +7894,7 @@ local AttackConfig = {
     ["rbxassetid://85570415456598"] = { Name = "Server.Punch3", Delay = 0.367, Length = 0.483, Heavy = false },
     ["rbxassetid://110876955202970"] = { Name = "Server.LizardBoss2", Delay = 0.362, Length = 1.033, Heavy = false },
     ["rbxassetid://71375698527524"] = { Name = "Server.LizardSoldier1", Delay = 0.315, Length = 0.899, Heavy = false },
-    ["rbxassetid://10250846568"] = { Name = "Server.Misdirect", Delay = 0.1, Length = 0.283, Heavy = false },
+    ["rbxassetid://10250846568"] = { Name = "Server.Misdirect", Delay = 0.1, Length = 0.283, Heavy = false, Feint = true },
     ["rbxassetid://115413726601821"] = { Name = "Server.LizardSoldier2", Delay = 0.327, Length = 0.933, Heavy = false },
     ["rbxassetid://100328615092856"] = { Name = "Server.LizardSoldier3", Delay = 0.327, Length = 0.933, Heavy = false },
     ["rbxassetid://11893004134"] = { Name = "Server.ZombieKnockback", Delay = 0.309, Length = 0.883, Heavy = false },
@@ -7843,7 +7961,7 @@ local function performParry(holdDuration)
     local now = os.clock()
     -- Auto-clear stuck lock if previous parry hung
     if parryInProgress then
-        if (now - lastParryTime) > 0.14 then
+        if (now - lastParryTime) > 0.12 then
             parryInProgress = false
             pcall(function() Packets.Combat.packets.BlockInput.send({ Action = "End Block" }) end)
         else
@@ -7851,16 +7969,20 @@ local function performParry(holdDuration)
         end
     end
 
-    -- Fast 0.08s parry recovery for ultra-rapid gauntlet combos (Fist M1-M1-M1)
-    if (now - lastParryTime) < 0.08 then return end
+    -- Anti-Spam protection: server parry frames stay active for ~0.20s.
+    -- Tapping F again within this window cancels parry and incurs a 0.8s punishment cooldown!
+    if (now - lastParryTime) < 0.16 then
+        return
+    end
+
     parryInProgress = true
     lastParryTime = now
 
     task.spawn(function()
         pcall(function()
-            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.07, 0.05, 0.15)
+            -- Precise 0.055s tap grants instant server parry frames without entering full block
+            local hold = holdDuration or math.clamp(Hub.Flags.AutoParryHold or 0.055, 0.04, 0.10)
             
-            -- Dispatch block input
             Packets.Combat.packets.BlockInput.send({
                 Action = "Block Input"
             })
@@ -7940,26 +8062,47 @@ end
 
 local function evaluateTrack(model, track, root, dist)
     if not Hub.Alive or not Hub.Flags.AutoParry then return end
-    if not track.IsPlaying then return end
+    if not track or not track.IsPlaying then return end
 
     local animObj = track.Animation
     local animId = animObj and animObj.AnimationId or ""
-    local animName = track.Name:lower()
+    if not animId or animId == "" then return end
 
-    if animName:find("idle") or animName:find("walk") or animName:find("run")
-       or animName:find("strafe") or animName:find("emote") or animName:find("down")
-       or animName:find("swim") or animName:find("sit") or animName:find("fall") then
+    -- 1. Discard all known movement, roll, idle, hit, and emote animations
+    if IgnoredAnims and IgnoredAnims[animId] then
         return
     end
+
+    local animName = track.Name:lower()
+    if animName:find("idle") or animName:find("walk") or animName:find("run")
+       or animName:find("strafe") or animName:find("emote") or animName:find("down")
+       or animName:find("swim") or animName:find("sit") or animName:find("fall")
+       or animName:find("jump") or animName:find("roll") or animName:find("slide")
+       or animName:find("land") or animName:find("flinch") or animName:find("dizzy") then
+        return
+    end
+
+    local isPlayer = (model.Parent and model.Parent.Name == "pCharacters")
+       or (Players:GetPlayerFromCharacter(model) ~= nil)
 
     local cfg = AttackConfig[animId]
     local isHeavy = false
     local delayTime = 0.35
 
     if cfg then
+        -- 2. Feint / Misdirect handling: NEVER parry a feint!
+        if cfg.Feint or animName:find("misdirect") then
+            return
+        end
         isHeavy = cfg.Heavy
         delayTime = cfg.Delay or 0.35
     else
+        -- 3. Unknown tracks: For PLAYERS, NEVER guess! Guessing triggers parry spam on non-attacks.
+        if isPlayer then
+            return
+        end
+
+        -- For MOBS only, allow keyword and length fallbacks
         if animName:find("heavy") or animName:find("slam") or animName:find("smash")
            or animName:find("howl") or animName:find("headbutt") or animName:find("stomp")
            or animName:find("roar") or animName:find("rupture") or animName:find("crush")
@@ -7967,8 +8110,7 @@ local function evaluateTrack(model, track, root, dist)
             isHeavy = true
             delayTime = 0.50
         elseif animName:find("misdirect") then
-            delayTime = 0.10
-            isHeavy = false
+            return
         else
             local len = track.Length or 1.0
             if len > 0.5 then
@@ -7983,61 +8125,80 @@ local function evaluateTrack(model, track, root, dist)
     local speed = math.max(track.Speed or 1, 0.1)
     local remaining = (delayTime - curPos) / speed
 
-    -- Deduplication key tied to animation cycle (resets every 0.14s for fast combos)
-    local queueKey = tostring(model:GetFullName()) .. "_" .. tostring(animId) .. "_" .. tostring(math.floor(curPos * 5.0))
-    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < 0.14 then
+    -- 4. Clean deduplication: exactly 1 parry cycle per attack animation swing
+    local queueKey = tostring(model:GetFullName()) .. "_" .. tostring(animId)
+    local attackDuration = (cfg and cfg.Length) or track.Length or 0.45
+    if activeAttackQueues[queueKey] and (os.clock() - activeAttackQueues[queueKey]) < (attackDuration * 0.85) then
         return
     end
 
-    -- Multi-hit Barrage support (e.g. ScorchingBarrage, LightningBarrage, RelentlessRush)
+    -- Maximum effective melee reach for this attack
+    local maxReach = (cfg and cfg.Reach) or (isPlayer and 11.5 or ((Hub.Flags.AutoParryRange or 25) + 3))
+
+    -- 5. Multi-hit Barrage support (e.g. ScorchingBarrage, LightningBarrage, RelentlessRush)
     if cfg and cfg.Barrage then
         activeAttackQueues[queueKey] = os.clock()
         local hits = cfg.Hits or 5
         local interval = cfg.Interval or 0.14
-        local firstHitDelay = math.max(0, remaining - 0.02)
+        local firstHitDelay = math.max(0, remaining - 0.03)
         task.spawn(function()
             for h = 1, hits do
                 local delayForHit = firstHitDelay + (h - 1) * interval
                 task.delay(delayForHit, function()
                     if not Hub.Alive or not Hub.Flags.AutoParry then return end
+                    if not track.IsPlaying then return end
                     local char = LocalPlayer.Character
                     local myHrp = char and char:FindFirstChild("HumanoidRootPart")
                     if not myHrp or not root or not root.Parent then return end
-                    if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 4 then return end
-                    performParry(0.07)
+                    local curDist = (root.Position - myHrp.Position).Magnitude
+                    if curDist > maxReach then return end
+                    performParry(0.055)
                 end)
             end
         end)
         return
     end
 
-    -- Hit is connecting RIGHT NOW (within 100ms) -> Trigger instantly!
-    if remaining <= 0.10 and remaining >= -0.08 then
+    -- 6. Immediate Hit Delivery (Within 90ms of impact)
+    if remaining <= 0.09 and remaining >= -0.06 then
+        local currentDist = (root.Position - myHrp and myHrp.Position or root.Position).Magnitude
+        if dist > maxReach and currentDist > maxReach then
+            return -- Out of physical range, do not waste parry
+        end
         activeAttackQueues[queueKey] = os.clock()
         if isHeavy then
             performDodge(root)
         else
-            performParry(0.07)
+            performParry(0.055)
         end
         return
     end
 
-    -- Hit is coming in the near future (between 100ms and 750ms) -> Schedule exact arrival
-    if remaining > 0.10 and remaining <= 0.75 then
+    -- 7. Scheduled Hit Delivery (Between 90ms and 750ms before impact)
+    if remaining > 0.09 and remaining <= 0.75 then
         activeAttackQueues[queueKey] = os.clock()
         -- For heavy attacks, initiate dodge ~0.14s before impact so i-frames are active at impact!
-        local triggerDelay = isHeavy and math.max(0, remaining - 0.14) or math.max(0, remaining - 0.02)
+        local triggerDelay = isHeavy and math.max(0, remaining - 0.14) or math.max(0, remaining - 0.035)
         task.delay(triggerDelay, function()
             if not Hub.Alive or not Hub.Flags.AutoParry then return end
+            -- ABORT if attack was cancelled or feinted!
+            if not track.IsPlaying then return end
+
             local char = LocalPlayer.Character
             local myHrp = char and char:FindFirstChild("HumanoidRootPart")
             if not myHrp or not root or not root.Parent then return end
-            if (root.Position - myHrp.Position).Magnitude > (Hub.Flags.AutoParryRange or 25) + 3 then return end
+
+            -- CRITICAL: Check distance AT IMPACT time!
+            -- If opponent clicked from 15 studs away and didn't close in, DO NOT PRESS F!
+            local impactDist = (root.Position - myHrp.Position).Magnitude
+            if impactDist > maxReach then
+                return
+            end
 
             if isHeavy then
                 performDodge(root)
             else
-                performParry(0.07)
+                performParry(0.055)
             end
         end)
     end
@@ -8061,14 +8222,16 @@ local function monitorAttacker(model)
         end
     end
 
-    local conn = hum.AnimationPlayed:Connect(onAnim)
-    table.insert(Hub.Connections, conn)
-
+    -- Single clean listener on Animator (Roblox Humanoid.AnimationPlayed is an alias that duplicates events)
     local animator = hum:FindFirstChildOfClass("Animator")
     if animator then
         local aConn = animator.AnimationPlayed:Connect(onAnim)
         table.insert(Hub.Connections, aConn)
+    else
+        local conn = hum.AnimationPlayed:Connect(onAnim)
+        table.insert(Hub.Connections, conn)
     end
+
     local animAddedConn = hum.ChildAdded:Connect(function(c)
         if c:IsA("Animator") then
             local aConn2 = c.AnimationPlayed:Connect(onAnim)

@@ -6807,6 +6807,8 @@ local StateManager = require(Modules:WaitForChild("StateManager", 15))
 local StatManager = nil
 pcall(function() StatManager = require(Modules:WaitForChild("StatManager", 10)) end)
 local Remotes = RS:FindFirstChild("Remotes")
+local BroomRemote = Remotes and Remotes:FindFirstChild("BroomRemote")
+local VIM = game:GetService("VirtualInputManager")
 
 -- Configuration & State
 local Hub = {
@@ -6827,6 +6829,18 @@ local Hub = {
     },
     DeathCFrame = nil,
     Flags = {
+        -- Auto Farm (Broom Anti-Cheat Bypass)
+        AutoFarm = false,
+        FarmTargetMode = "Selected Boss", -- "Selected Boss", "Selected Mob", "Bosses Only", "All Mobs", "Nearest"
+        SelectedBoss = "Holda the Witch Respawnable",
+        SelectedMob = "All",
+        FarmDistance = 3.5,
+        FarmOffsetY = 0.5,
+        SwingDelay = 0.28,
+        AutoEquipWeapon = true,
+        LowHpBackOff = true,
+        RetreatHP = 25,
+        ResumeHP = 75,
         -- Movement & Travel
         Noclip = false,
         TravelGlideSpeed = 60,
@@ -7508,6 +7522,245 @@ pcall(function()
         end
     end
 end)
+
+-- =====================================================================
+-- BROOM ANTI-CHEAT BYPASS AUTO FARM (ZERO ROLLBACK / ZERO KICK)
+-- =====================================================================
+local function isPlayerFlying()
+    local char = LocalPlayer.Character
+    if not char then return false end
+    if char:GetAttribute("Flying") == true then return true end
+    if char:FindFirstChild("FlightPositionAttachment") then return true end
+    return false
+end
+
+local function mountBroom()
+    if isPlayerFlying() then return true end
+    -- Press Y via VirtualInputManager
+    pcall(function()
+        if VIM then
+            VIM:SendKeyEvent(true, Enum.KeyCode.Y, false, game)
+            task.wait(0.02)
+            VIM:SendKeyEvent(false, Enum.KeyCode.Y, false, game)
+        end
+    end)
+    -- Also invoke BroomRemote to guarantee server flight state
+    if BroomRemote then
+        pcall(function() BroomRemote:InvokeServer("Active") end)
+    end
+    local t0 = os.clock()
+    while os.clock() - t0 < 0.35 do
+        if isPlayerFlying() then return true end
+        task.wait(0.02)
+    end
+    return isPlayerFlying()
+end
+
+local function dismountBroom()
+    if not isPlayerFlying() then return true end
+    -- Press Y via VirtualInputManager
+    pcall(function()
+        if VIM then
+            VIM:SendKeyEvent(true, Enum.KeyCode.Y, false, game)
+            task.wait(0.02)
+            VIM:SendKeyEvent(false, Enum.KeyCode.Y, false, game)
+        end
+    end)
+    -- Invoke BroomRemote without parameters to dismount
+    if BroomRemote then
+        pcall(function() BroomRemote:InvokeServer() end)
+    end
+    local t0 = os.clock()
+    while os.clock() - t0 < 0.35 do
+        if not isPlayerFlying() then return true end
+        task.wait(0.02)
+    end
+    return not isPlayerFlying()
+end
+
+local function getUniqueMobNames()
+    local names = {"All"}
+    local seen = {}
+    local fnpcs = WS:FindFirstChild("FightableNPCS")
+    if fnpcs then
+        for _, mob in ipairs(fnpcs:GetChildren()) do
+            if mob:IsA("Model") and not seen[mob.Name] then
+                seen[mob.Name] = true
+                table.insert(names, mob.Name)
+            end
+        end
+    end
+    table.sort(names, function(a, b)
+        if a == "All" then return true end
+        if b == "All" then return false end
+        return a < b
+    end)
+    return names
+end
+
+local function getUniqueBossNames()
+    local bossNames = {}
+    local seen = {}
+    local fnpcs = WS:FindFirstChild("FightableNPCS")
+    if fnpcs then
+        for _, mob in ipairs(fnpcs:GetChildren()) do
+            if mob:IsA("Model") and not seen[mob.Name] then
+                local nl = mob.Name:lower()
+                if nl:find("respawnable") or nl:find("witch") or nl:find("golem") or nl:find("boss") or nl:find("aldric") or nl:find("brute") then
+                    seen[mob.Name] = true
+                    table.insert(bossNames, mob.Name)
+                end
+            end
+        end
+    end
+    if #bossNames == 0 then
+        bossNames = {"Holda the Witch Respawnable", "WoundedGolem", "Thief Brute"}
+    end
+    table.sort(bossNames)
+    return bossNames
+end
+
+local function findFarmTarget()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local fnpcs = WS:FindFirstChild("FightableNPCS")
+    if not fnpcs then return nil end
+
+    local mode = Hub.Flags.FarmTargetMode or "Selected Boss"
+    local selectedBoss = Hub.Flags.SelectedBoss or "Holda the Witch Respawnable"
+    local selectedMob = Hub.Flags.SelectedMob or "All"
+
+    local bestTarget = nil
+    local minDistance = math.huge
+
+    for _, mob in ipairs(fnpcs:GetChildren()) do
+        if mob:IsA("Model") then
+            local hum = mob:FindFirstChildOfClass("Humanoid")
+            local mHrp = mob:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and mHrp then
+                local isMatch = false
+                if mode == "Selected Boss" then
+                    isMatch = (mob.Name == selectedBoss) or (mob.Name:find(selectedBoss, 1, true) ~= nil)
+                elseif mode == "Selected Mob" then
+                    isMatch = (selectedMob == "All") or (mob.Name == selectedMob)
+                elseif mode == "Bosses Only" then
+                    local nl = mob.Name:lower()
+                    isMatch = nl:find("respawnable") or nl:find("witch") or nl:find("golem") or nl:find("boss") or nl:find("aldric") or nl:find("brute")
+                elseif mode == "Nearest" or mode == "All Mobs" then
+                    isMatch = true
+                end
+
+                if isMatch then
+                    local dist = (mHrp.Position - hrp.Position).Magnitude
+                    if dist < minDistance then
+                        minDistance = dist
+                        bestTarget = mob
+                    end
+                end
+            end
+        end
+    end
+    return bestTarget
+end
+
+local farmRetreating = false
+local lastFarmAttack = 0
+local isFarmingStep = false
+
+local farmLoopConn = RunService.Heartbeat:Connect(function()
+    if not Hub.Alive or not Hub.Flags.AutoFarm then return end
+    if isFarmingStep then return end
+    isFarmingStep = true
+
+    task.spawn(function()
+        local ok, err = pcall(function()
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum or hum.Health <= 0 then
+                farmRetreating = false
+                return
+            end
+
+            -- Low HP Retreat Safety
+            if Hub.Flags.LowHpBackOff then
+                local hpPercent = (hum.Health / hum.MaxHealth) * 100
+                if hpPercent <= (Hub.Flags.RetreatHP or 25) then
+                    farmRetreating = true
+                elseif hpPercent >= (Hub.Flags.ResumeHP or 75) then
+                    farmRetreating = false
+                end
+
+                if farmRetreating then
+                    if not isPlayerFlying() then
+                        mountBroom()
+                    end
+                    hrp.Velocity = Vector3.zero
+                    hrp.AssemblyLinearVelocity = Vector3.zero
+                    hrp.CFrame = hrp.CFrame + Vector3.new(0, 4, 0)
+                    return
+                end
+            end
+
+            local target = findFarmTarget()
+            if not target then return end
+            local tHrp = target:FindFirstChild("HumanoidRootPart")
+            local tHum = target:FindFirstChildOfClass("Humanoid")
+            if not tHrp or not tHum or tHum.Health <= 0 then return end
+
+            local currentDist = (hrp.Position - tHrp.Position).Magnitude
+            local targetBehindOffset = -(tHrp.CFrame.LookVector * (Hub.Flags.FarmDistance or 3.5)) + Vector3.new(0, Hub.Flags.FarmOffsetY or 0.5, 0)
+            local desiredPosition = tHrp.Position + targetBehindOffset
+
+            -- If player is far or target moved:
+            if currentDist > (Hub.Flags.FarmDistance or 3.5) + 3.0 then
+                -- 1. Mount broom (presses Y & activates server flight state)
+                mountBroom()
+                task.wait(0.06)
+
+                -- 2. Teleport behind boss while whitelisted by broom flight state
+                hrp.CFrame = CFrame.lookAt(desiredPosition, tHrp.Position)
+                hrp.Velocity = Vector3.zero
+                hrp.AssemblyLinearVelocity = Vector3.zero
+                task.wait(0.08)
+
+                -- 3. Dismount broom
+                dismountBroom()
+                task.wait(0.06)
+            else
+                -- Already right behind target:
+                if isPlayerFlying() then
+                    dismountBroom()
+                end
+
+                -- Keep facing the boss from behind
+                hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(tHrp.Position.X, hrp.Position.Y, tHrp.Position.Z))
+
+                -- Auto equip combat weapon
+                if Hub.Flags.AutoEquipWeapon then
+                    equipWeapon(Hub.Flags.CombatWeapon)
+                end
+
+                -- Fire M1
+                local now = os.clock()
+                if now - lastFarmAttack >= (Hub.Flags.SwingDelay or 0.28) then
+                    lastFarmAttack = now
+                    pcall(function()
+                        Packets.Combat.packets.AttackInput.send({ Action = "LightAttack", SprintAttack = false })
+                    end)
+
+                    if tHum.Health <= 0 then
+                        Hub.RunStats.Kills = Hub.RunStats.Kills + 1
+                    end
+                end
+            end
+        end)
+        isFarmingStep = false
+    end)
+end)
+table.insert(Hub.Connections, farmLoopConn)
 
 local Window = Kyoka:CreateWindow({
     Title       = "NW Hub",
@@ -8404,6 +8657,114 @@ local function initParryWatchers()
     table.insert(Hub.Connections, scanConn)
 end
 initParryWatchers()
+
+-- ---------------------------------------------------------------------
+-- TAB: AUTO FARM (BROOM BYPASS ENGINE)
+-- ---------------------------------------------------------------------
+local FarmTab = Window:AddTab("Auto Farm")
+local FarmGroup = FarmTab:AddGroup("Broom-Bypass Farm Controls")
+
+FarmGroup:AddToggle("AutoFarmToggle", {
+    Text = "Enable Auto Farm (Broom TP + M1)",
+    Default = false,
+    Tooltip = "Mounts the broom (Y), teleports behind the boss/mob, dismounts and executes M1 attacks continuously with zero rollbacks or kicks!",
+    Callback = function(v)
+        Hub.Flags.AutoFarm = v
+        if not v and isPlayerFlying() then
+            dismountBroom()
+        end
+        Kyoka:Notify({
+            Title = "Auto Farm",
+            Content = v and "Auto Farm activated! Targeting enemies." or "Auto Farm deactivated.",
+            Type = v and "success" or "info",
+            Duration = 3
+        })
+    end,
+})
+
+FarmGroup:AddDropdown("FarmTargetMode", {
+    Text = "Target Selection Mode",
+    Values = {"Selected Boss", "Selected Mob", "Bosses Only", "All Mobs", "Nearest"},
+    Default = "Selected Boss",
+    Callback = function(v) Hub.Flags.FarmTargetMode = v end,
+})
+
+FarmGroup:AddDropdown("SelectedBoss", {
+    Text = "Target Boss",
+    Values = getUniqueBossNames(),
+    Default = "Holda the Witch Respawnable",
+    Callback = function(v) Hub.Flags.SelectedBoss = v end,
+})
+
+FarmGroup:AddDropdown("SelectedMob", {
+    Text = "Target Mob",
+    Values = getUniqueMobNames(),
+    Default = "All",
+    Callback = function(v) Hub.Flags.SelectedMob = v end,
+})
+
+FarmGroup:AddSlider("FarmDistance", {
+    Text = "Distance Behind Target",
+    Min = 2.0, Max = 8.0, Default = 3.5, Float = 0.5,
+    Tooltip = "Studs to stand directly behind the boss.",
+    Callback = function(v) Hub.Flags.FarmDistance = v end,
+})
+
+FarmGroup:AddSlider("FarmOffsetY", {
+    Text = "Height Offset (Y)",
+    Min = -2.0, Max = 6.0, Default = 0.5, Float = 0.5,
+    Callback = function(v) Hub.Flags.FarmOffsetY = v end,
+})
+
+FarmGroup:AddSlider("SwingDelay", {
+    Text = "M1 Attack Delay",
+    Min = 0.15, Max = 0.60, Default = 0.28, Float = 0.01,
+    Tooltip = "Interval between each M1 attack.",
+    Callback = function(v) Hub.Flags.SwingDelay = v end,
+})
+
+local FarmSafetyGroup = FarmTab:AddGroup("Farm Safety & Weapon Settings")
+
+FarmSafetyGroup:AddToggle("AutoEquipWeapon", {
+    Text = "Auto Equip Combat Weapon",
+    Default = true,
+    Callback = function(v) Hub.Flags.AutoEquipWeapon = v end,
+})
+
+FarmSafetyGroup:AddToggle("LowHpBackOff", {
+    Text = "Low HP Retreat (Safety)",
+    Default = true,
+    Tooltip = "Mounts broom and flies up into safety if HP drops below threshold.",
+    Callback = function(v) Hub.Flags.LowHpBackOff = v end,
+})
+
+FarmSafetyGroup:AddSlider("RetreatHP", {
+    Text = "Retreat HP Threshold (%)",
+    Min = 15, Max = 50, Default = 25,
+    Callback = function(v) Hub.Flags.RetreatHP = v end,
+})
+
+FarmSafetyGroup:AddSlider("ResumeHP", {
+    Text = "Resume HP Threshold (%)",
+    Min = 50, Max = 90, Default = 75,
+    Callback = function(v) Hub.Flags.ResumeHP = v end,
+})
+
+FarmSafetyGroup:AddButton("Mount Broom (Y)", {
+    Icon = "wind",
+    Callback = function()
+        mountBroom()
+        Kyoka:Notify({ Title = "Broom", Content = "Mounted Broom!", Type = "info", Duration = 2 })
+    end,
+})
+
+FarmSafetyGroup:AddButton("Dismount Broom (Y)", {
+    Icon = "arrow-down",
+    Callback = function()
+        dismountBroom()
+        Kyoka:Notify({ Title = "Broom", Content = "Dismounted Broom!", Type = "info", Duration = 2 })
+    end,
+})
 
 -- TAB 2: COMBAT & AIMBOT
 -- ---------------------------------------------------------------------

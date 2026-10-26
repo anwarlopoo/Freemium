@@ -17,6 +17,7 @@ Le loader detecte le jeu et charge le fichier correspondant :
 - `games/bloxstrike.lua`
 - `games/forgotten_stories.lua`
 - `games/clover_time.lua`
+- `games/clover_rpg.lua`
 - `games/dahood.lua`
 - `games/morioh_high.lua`
 - `games/ttk.lua`
